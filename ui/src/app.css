@@ -1,0 +1,157 @@
+/* MultiLink compacto: janela vertical, tema escuro fixo, só o essencial na tela inicial. */
+:root {
+  color-scheme: dark;
+  --page: #13171c;      /* fundo da janela */
+  --band: #171b21;      /* faixa de eventos */
+  --raised: #1a1f26;    /* link expandido */
+  --surface: #1a1f26;
+  --surface-2: #20262d;
+  --surface-3: #2c333c;
+  --ink: #e8ecef;
+  --ink-soft: #c9d1d8;
+  --ink-2: #9aa4ae;
+  --ink-3: #7d8792;
+  --ink-4: #4a525c;
+  --line: #242a32;
+  --line-soft: #20262d;
+  --line-strong: #2a3139;  /* divisória dentro de um bloco elevado */
+  --hover-line: #3a434e;   /* borda sob o cursor */
+  --track: #222830;        /* trilho de barras de progresso */
+  --dot-neutral: #5d6670;
+  --scroll-thumb: #2c333c;
+  --scroll-thumb-active: #46505c;
+  --close-hover: #c42b1c;  /* vermelho do botão fechar do Windows */
+  --focus: #5598e7;
+
+  --on: #4cc38a;        /* ligado / online */
+  --on-halo: rgba(76, 195, 138, 0.07);
+
+  /* identidade dos links (ordem validada para daltonismo, passo do tema escuro) */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+
+  --good: #4cc38a;
+  --good-ink: #4cc38a;
+  --critical: #e5534b;
+  --critical-ink: #f0a39e;
+  --critical-wash: #2e1c1f;
+  --critical-hover: #ec6a62;
+
+  --primary: #e8ecef;
+  --primary-ink: #13171c;
+
+  /* raios: menores nos controles, mais suaves nos contêineres */
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+
+  /* sombras tingidas com o azul-grafite do fundo, luz vinda de cima */
+  --shadow-pop: 0 1px 0 rgb(255 255 255 / .04) inset, 0 12px 32px -8px rgb(4 8 14 / .6), 0 2px 6px rgb(4 8 14 / .35);
+
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --press: scale(.97);
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app { height: 100%; }
+
+html, body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--page);
+  color: var(--ink);
+  font: 14px/1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p, ol, dl, dd { margin: 0; }
+
+h2 { font-size: 15px; font-weight: 600; }
+
+button, input, select { font: inherit; color: inherit; }
+
+.num { font-variant-numeric: tabular-nums; }
+
+/* a única rolagem do app: a da janela inteira, fina e discreta */
+.scroll {
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
+}
+.scroll:hover { scrollbar-color: var(--scroll-thumb) transparent; }
+.scroll:active { scrollbar-color: var(--scroll-thumb-active) transparent; }
+
+/* textos corridos sem palavra órfã na última linha */
+p, .help, .desc, .d { text-wrap: pretty; }
+
+/* entrada das telas: sobe e aparece, sem montar tudo de uma vez */
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.enter { animation: rise .32s var(--ease-out) both; }
+
+/* botões de ícone do topo (ajustes, voltar, fechar) */
+.icon-btn {
+  width: 40px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: var(--radius-s); background: transparent; color: var(--ink-3);
+  cursor: pointer; app-region: no-drag;
+  transition: background-color .15s, color .15s, transform .12s var(--ease-out);
+}
+.icon-btn:hover { color: var(--ink); background: var(--surface-2); }
+.icon-btn:active { transform: var(--press); }
+
+/* botões */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 34px; padding: 0 14px;
+  border: 1px solid var(--surface-3); border-radius: var(--radius-s);
+  background: transparent; color: var(--ink);
+  font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: background-color .18s, border-color .18s, color .18s, transform .12s var(--ease-out);
+}
+.btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--hover-line); }
+.btn:active:not(:disabled) { transform: var(--press); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
+.btn.primary:hover:not(:disabled) { background: #ffffff; border-color: #ffffff; }
+.btn.quiet { border-color: transparent; color: var(--ink-2); }
+.btn.quiet:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--ink); }
+.btn.danger:not(.quiet), .btn.quiet.danger:hover:not(:disabled) { color: var(--critical-ink); }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+input[type="text"], input[type="url"], input[type="number"], select {
+  height: 36px; padding: 0 10px;
+  border: 1px solid var(--surface-3); border-radius: var(--radius-s);
+  background: var(--band); color: var(--ink);
+  transition: border-color .18s;
+}
+input:hover:not(:disabled):not(:focus), select:hover:not(:disabled) { border-color: var(--hover-line); }
+input:disabled { opacity: .6; }
+input::placeholder { color: var(--ink-4); }
+input:focus-visible, select:focus-visible { outline-offset: 0; }
+
+.panel {
+  background: var(--band);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}

@@ -1,0 +1,16 @@
+# dependências e build do front
+ui/node_modules/
+ui/dist/
+
+# executável gerado pelo build.ps1 (publicar em Releases)
+MultiLinkBalancer.exe
+
+# Claude Code: configurações locais
+.claude/settings.local.json
+
+# sistema / editores
+Thumbs.db
+Desktop.ini
+.vs/
+.vscode/
+*.log
