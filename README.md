@@ -129,20 +129,20 @@ Medido nesta máquina (memória privada):
 ## Estrutura
 
 ```
-src/                 núcleo e janela (C#, .NET Framework 4.x)
-  Core.cs            proxy SOCKS/HTTP, balanceador, health check, monitor de quedas, download em partes
-  AppCore.cs         estado e comandos do app (sem interface)
-  HostForm.cs        janela + WebView2 + bandeja; ponte de mensagens com a UI
-  Program.cs         inicialização, instância única, extração das DLLs do WebView2
-  Capture.cs         captura de todos os programas (tun2socks + Wintun, IPv4 e IPv6)
-  History.cs         histórico de velocidade, latência e quedas
-  Updater.cs         atualização pelo GitHub Releases
-ui/                  interface (Svelte 5 + Vite)
-  src/lib/bridge.js  ponte com o C# via chrome.webview.postMessage (sem servidor HTTP)
-  src/lib/mock.js    simulador para desenvolver no navegador
+src/                 app em C# (.NET Framework 4.x), uma pasta por camada
+  Links/             links e balanceador          Proxy/       SOCKS4/SOCKS5/HTTP e relé UDP
+  Monitoring/        saúde, quedas, histórico     Downloads/   download acelerado
+  Platform/          Windows: rotas, proxy, captura (tun2socks + Wintun)
+  App/               orquestração e comandos da UI
+  Ui/                janela, bandeja e WebView2   Updates/     atualização pelo GitHub Releases
+ui/src/              interface (Svelte 5 + Vite)
+  api/               ponte com o C# (chrome.webview.postMessage) e simulador do npm run dev
+  screens/           uma pasta por tela (home, history, settings)
 lib/webview2/        DLLs oficiais do pacote NuGet Microsoft.Web.WebView2 1.0.4258.31
 lib/tun2socks/       tun2socks 2.7.0 (MIT) e wintun.dll 0.14.1 (assinado pela WireGuard LLC), sem modificações
 ```
+
+Camadas, regras de dependência e contratos (comandos, estado, arquivos gravados): ver [ARCHITECTURE.md](ARCHITECTURE.md).
 
 A UI não abre nenhuma porta: ela conversa com o C# pelo canal interno do WebView2, e só aceita
 mensagens da própria origem (`https://app.multilink`). O HTML vem embutido no `.exe`.
