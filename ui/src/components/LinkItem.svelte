@@ -3,6 +3,9 @@
   // ao clicar, os detalhes em um bloco de borda a borda.
   import { app, run, ask } from '../lib/store.svelte.js';
   import { rateText, since } from '../lib/format.js';
+  import { slide } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
+  import { dur } from '../lib/motion.js';
 
   let { link: l, color, share, idle, proxyOn, open, ontoggle } = $props();
 
@@ -88,7 +91,7 @@
   {/if}
 
   {#if open}
-    <div class="details">
+    <div class="details" transition:slide={{ duration: dur(260), easing: cubicOut }}>
       {#if down}<p class="diag">{cap(l.diagnosis)}.</p>{/if}
       <dl>
         <div><dt>Endereço</dt><dd class="num">{dash(l.ip)}</dd></div>
@@ -156,7 +159,7 @@
   .fill.idle { opacity: .45; }
   .pct { width: 32px; text-align: right; font-size: 12px; color: var(--ink-3); }
 
-  .details { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-strong); animation: rise .25s var(--ease-out) both; }
+  .details { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-strong); }
   .diag { font-size: 13px; line-height: 1.45; }
   dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
   dl div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
