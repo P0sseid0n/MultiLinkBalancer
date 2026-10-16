@@ -1,3 +1,4 @@
+// Entrada do app: instância única, DPI e carregamento do WebView2 embutido. Ver ARCHITECTURE.md.
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -8,6 +9,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using MultiLink.Platform;
+using MultiLink.Ui;
 
 [assembly: AssemblyTitle("MultiLink Balancer")]
 [assembly: AssemblyProduct("MultiLink Balancer")]
@@ -17,9 +20,10 @@ namespace MultiLink
 {
     static class Program
     {
-        // As DLLs do WebView2 vão embutidas no .exe e são extraídas para cá na primeira execução.
-        static string binDir;
-        public const string ShowEventName = "Local\\MultiLinkBalancer.Show";
+        const string SingleInstanceMutex = "Local\\MultiLinkBalancer.SingleInstance";
+        static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
+
+        static string webView2Folder;
 
         [DllImport("user32.dll")] static extern bool SetProcessDpiAwarenessContext(IntPtr value);
         [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
@@ -27,79 +31,62 @@ namespace MultiLink
         [STAThread]
         static void Main(string[] args)
         {
-            // reinício como administrador: espera a instância anterior fechar e liberar o mutex
-            var wait = args.FirstOrDefault(a => a.StartsWith("/waitpid:", StringComparison.OrdinalIgnoreCase));
-            int pid;
-            if (wait != null && int.TryParse(wait.Substring(9), out pid))
-                try { Process.GetProcessById(pid).WaitForExit(15000); } catch { }
-
-            try { SetProcessDpiAwarenessContext(new IntPtr(-4)); } // per-monitor v2: UI nítida em telas com escala
+            WaitForPreviousInstance(args);
+            // per-monitor v2: interface nítida em telas com escala
+            try { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); }
             catch { try { SetProcessDPIAware(); } catch { } }
 
-            bool created;
-            using (var mutex = new Mutex(true, "Local\\MultiLinkBalancer.SingleInstance", out created))
+            bool firstInstance;
+            using (new Mutex(true, SingleInstanceMutex, out firstInstance))
             {
-                if (!created)
-                {
-                    // já está aberto (talvez na bandeja): pede para a instância existente mostrar a janela
-                    EventWaitHandle show;
-                    if (EventWaitHandle.TryOpenExisting(ShowEventName, out show)) using (show) show.Set();
-                    else MessageBox.Show("O MultiLink Balancer já está em execução (veja a bandeja do sistema).", "MultiLink Balancer");
-                    return;
-                }
+                if (!firstInstance) { ShowExistingInstance(); return; }
                 PrepareWebView2();
                 ServicePointManager.DefaultConnectionLimit = 1000;
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Run(args.Any(a => a.Equals("/tray", StringComparison.OrdinalIgnoreCase)));
+                Run(args.Any(arg => arg.Equals("/tray", StringComparison.OrdinalIgnoreCase)));
             }
+        }
+
+        // Reinício (como administrador ou após atualizar): espera a instância anterior fechar e liberar o mutex.
+        static void WaitForPreviousInstance(string[] args)
+        {
+            const string prefix = "/waitpid:";
+            var waitArgument = args.FirstOrDefault(arg => arg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+            int processId;
+            if (waitArgument != null && int.TryParse(waitArgument.Substring(prefix.Length), out processId))
+                try { Process.GetProcessById(processId).WaitForExit(15000); } catch { }
+        }
+
+        // Já está aberto (talvez na bandeja): pede para a instância existente mostrar o painel.
+        static void ShowExistingInstance()
+        {
+            EventWaitHandle showRequest;
+            if (EventWaitHandle.TryOpenExisting(MainWindow.ShowEventName, out showRequest)) using (showRequest) showRequest.Set();
+            else MessageBox.Show("O MultiLink Balancer já está em execução (veja a bandeja do sistema).", "MultiLink Balancer");
         }
 
         // Separado do Main para que os tipos do WebView2 só sejam carregados depois do AssemblyResolve.
         [MethodImpl(MethodImplOptions.NoInlining)]
-        static void Run(bool tray)
+        static void Run(bool startedFromTray)
         {
-            Application.Run(new HostForm(tray));
+            Application.Run(new MainWindow(startedFromTray));
         }
 
+        // As DLLs do WebView2 vão embutidas no .exe e são extraídas na primeira execução.
         static void PrepareWebView2()
         {
-            var asm = Assembly.GetExecutingAssembly();
-            binDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MultiLinkBalancer", "bin", "1.0.4258.31");
-            Directory.CreateDirectory(binDir);
-            Extract(asm, "wv2.core.dll", Path.Combine(binDir, "Microsoft.Web.WebView2.Core.dll"));
-            Extract(asm, "wv2.loader.dll", Path.Combine(binDir, "WebView2Loader.dll"));
-            AppDomain.CurrentDomain.AssemblyResolve += (s, e) =>
-                new AssemblyName(e.Name).Name == "Microsoft.Web.WebView2.Core"
-                    ? Assembly.LoadFrom(Path.Combine(binDir, "Microsoft.Web.WebView2.Core.dll")) : null;
+            webView2Folder = EmbeddedFiles.ExtractWebView2();
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, e) =>
+                new AssemblyName(e.Name).Name == Path.GetFileNameWithoutExtension(EmbeddedFiles.WebView2Core)
+                    ? Assembly.LoadFrom(Path.Combine(webView2Folder, EmbeddedFiles.WebView2Core)) : null;
             SetLoaderFolder();
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         static void SetLoaderFolder()
         {
-            Microsoft.Web.WebView2.Core.CoreWebView2Environment.SetLoaderDllFolderPath(binDir);
-        }
-
-        // tun2socks + wintun.dll (captura de todos os programas): extraídos só quando a captura é ligada.
-        public static string ExtractTun2Socks(string exeName)
-        {
-            var asm = Assembly.GetExecutingAssembly();
-            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MultiLinkBalancer", "bin", "tun2socks-2.7.0");
-            Directory.CreateDirectory(dir);
-            Extract(asm, "t2s.exe", Path.Combine(dir, exeName));
-            Extract(asm, "t2s.wintun.dll", Path.Combine(dir, "wintun.dll"));
-            return dir;
-        }
-
-        static void Extract(Assembly asm, string resource, string target)
-        {
-            using (var src = asm.GetManifestResourceStream(resource))
-            {
-                if (src == null) throw new FileNotFoundException("Recurso embutido ausente: " + resource);
-                if (File.Exists(target) && new FileInfo(target).Length == src.Length) return;
-                using (var dst = File.Create(target)) src.CopyTo(dst);
-            }
+            Microsoft.Web.WebView2.Core.CoreWebView2Environment.SetLoaderDllFolderPath(webView2Folder);
         }
     }
 }

@@ -22,7 +22,7 @@ $wv = Join-Path $root 'lib\webview2'
 $t2s = Join-Path $root 'lib\tun2socks' # captura de todos os programas (ver lib\tun2socks\README.txt)
 $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 $out = if ($Out) { $Out } else { Join-Path $root 'MultiLinkBalancer.exe' }
-$sources = Get-ChildItem (Join-Path $root 'src') -Filter *.cs | ForEach-Object FullName
+$sources = Get-ChildItem (Join-Path $root 'src') -Filter *.cs -Recurse | ForEach-Object FullName
 
 # versão: comparada com a última release do GitHub pela atualização automática
 if (-not $Version) {
@@ -32,14 +32,14 @@ if (-not $Version) {
 }
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Versão inválida: $Version (use o formato 1.2.3)" }
 
-# ícone do .exe: gerado pelo mesmo desenho do ícone da bandeja (src/AppIcon.cs)
+# ícone do .exe: gerado pelo mesmo desenho do ícone da bandeja (src/Ui/AppIcon.cs)
 $tmp = Join-Path $env:TEMP 'multilink-build'
 New-Item -ItemType Directory -Force $tmp | Out-Null
 $ico = Join-Path $tmp 'app.ico'
 $verCs = Join-Path $tmp 'Version.cs'
 Set-Content $verCs "[assembly: System.Reflection.AssemblyVersion(`"$Version.0`")]`n[assembly: System.Reflection.AssemblyFileVersion(`"$Version.0`")]"
-Set-Content (Join-Path $tmp 'IcoTool.cs') 'namespace MultiLink { static class IcoTool { static void Main(string[] a) { AppIcon.WriteIco(a[0]); } } }'
-& $csc /nologo /target:exe "/out:$tmp\IcoTool.exe" /r:System.Drawing.dll (Join-Path $root 'src\AppIcon.cs') (Join-Path $tmp 'IcoTool.cs')
+Set-Content (Join-Path $tmp 'IcoTool.cs') 'namespace MultiLink { static class IcoTool { static void Main(string[] args) { Ui.AppIcon.WriteIco(args[0]); } } }'
+& $csc /nologo /target:exe "/out:$tmp\IcoTool.exe" /r:System.Drawing.dll (Join-Path $root 'src\Ui\AppIcon.cs') (Join-Path $tmp 'IcoTool.cs')
 if ($LASTEXITCODE) { throw 'compilação do gerador de ícone falhou' }
 & "$tmp\IcoTool.exe" $ico
 if ($LASTEXITCODE) { throw 'geração do ícone falhou' }
