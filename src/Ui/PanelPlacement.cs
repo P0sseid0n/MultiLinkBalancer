@@ -10,11 +10,12 @@ namespace MultiLink.Ui
 {
     class PanelPlacement
     {
-        readonly int gap; // distância do painel até a barra de tarefas
         Point anchor;
         Rectangle trayOverflow; // menu de ícones ocultos (^) aberto no clique; vazio se o ícone está na barra
 
-        public PanelPlacement(int gap) { this.gap = gap; }
+        // Distância do painel até a barra de tarefas. Definida depois de criar a janela (depende do DPI);
+        // até lá vale 0, porque o Windows já pede a posição enquanto a janela está sendo criada.
+        public int Gap { get; set; }
 
         // Aberto pelo ícone da bandeja: junto ao cursor (e acima do menu de ícones ocultos, se for de lá).
         public void AnchorAtCursor(IntPtr ownWindow)
@@ -37,17 +38,17 @@ namespace MultiLink.Ui
             Rectangle workArea = screen.WorkingArea, bounds = screen.Bounds;
             bool taskbarLeft = workArea.Left > bounds.Left, taskbarRight = workArea.Right < bounds.Right, taskbarTop = workArea.Top > bounds.Top;
             int x, y;
-            if (taskbarLeft) { x = workArea.Left + gap; y = anchor.Y - size.Height / 2; }
-            else if (taskbarRight) { x = workArea.Right - size.Width - gap; y = anchor.Y - size.Height / 2; }
+            if (taskbarLeft) { x = workArea.Left + Gap; y = anchor.Y - size.Height / 2; }
+            else if (taskbarRight) { x = workArea.Right - size.Width - Gap; y = anchor.Y - size.Height / 2; }
             else
             {
                 x = anchor.X - size.Width / 2;
-                y = taskbarTop ? workArea.Top + gap : workArea.Bottom - size.Height - gap;
+                y = taskbarTop ? workArea.Top + Gap : workArea.Bottom - size.Height - Gap;
             }
             if (!trayOverflow.IsEmpty) // abre acima (ou abaixo, com a barra em cima) do menu de ícones ocultos
-                y = taskbarTop ? trayOverflow.Bottom + gap : trayOverflow.Top - size.Height - gap;
-            x = Math.Max(workArea.Left + gap, Math.Min(x, workArea.Right - size.Width - gap));
-            y = Math.Max(workArea.Top + gap, Math.Min(y, workArea.Bottom - size.Height - gap));
+                y = taskbarTop ? trayOverflow.Bottom + Gap : trayOverflow.Top - size.Height - Gap;
+            x = Math.Max(workArea.Left + Gap, Math.Min(x, workArea.Right - size.Width - Gap));
+            y = Math.Max(workArea.Top + Gap, Math.Min(y, workArea.Bottom - size.Height - Gap));
             return new Point(x, y);
         }
 

@@ -22,7 +22,7 @@ namespace MultiLink.Ui
         readonly AppController app;
         readonly TrayIcon tray;
         readonly WebViewHost webView;
-        readonly PanelPlacement placement;
+        readonly PanelPlacement placement = new PanelPlacement(); // antes de tudo: o Windows pede a posição já ao criar a janela
         readonly System.Windows.Forms.Timer ticker;
         readonly Size scaledPanelSize;
         GlobalHotkeys hotkeys;
@@ -34,19 +34,19 @@ namespace MultiLink.Ui
         public MainWindow(bool startedFromTray)
         {
             app = new AppController(this);
+            webView = new WebViewHost(this, app); // antes de definir o tamanho: OnResize já o usa
             Text = "MultiLink Balancer" + (app.IsAdmin ? " (administrador)" : "");
             AutoScaleMode = AutoScaleMode.Dpi;
             StartPosition = FormStartPosition.Manual;
             ShowInTaskbar = false; // só a bandeja abre o app
             MaximizeBox = false;   // tamanho fixo: duplo clique no topo não maximiza
             BackColor = Background;
+            placement.Gap = ScaleToDpi(new Size(12, 12)).Width;
             scaledPanelSize = ScaleToDpi(PanelSize);
             Size = scaledPanelSize; // sem moldura: o tamanho da janela é o da interface
-            placement = new PanelPlacement(ScaleToDpi(new Size(12, 12)).Width);
 
             tray = new TrayIcon(app, TogglePanelFromTray, () => ShowPanel(true), Exit);
             Icon = tray.CurrentIcon;
-            webView = new WebViewHost(this, app);
             app.Init(startedFromTray);
             ListenForSecondInstance();
 
