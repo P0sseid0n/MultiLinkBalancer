@@ -22,6 +22,7 @@ namespace MultiLink.Proxy
         const int MaxAttempts = 3;
         const int AddressesPerAttempt = 2;
         const int ConnectTimeoutMs = 8000;
+        const int DnsRetryDelayMs = 1000;
 
         readonly Balancer balancer;
         readonly ActivityLog log;
@@ -35,7 +36,7 @@ namespace MultiLink.Proxy
             try
             {
                 IPAddress literal;
-                resolved = IPAddress.TryParse(host, out literal) ? new[] { literal } : await Dns.GetHostAddressesAsync(host);
+                resolved = IPAddress.TryParse(host, out literal) ? new[] { literal } : await Resolve(host);
             }
             catch (Exception ex) { log.Add("DNS falhou para " + host + ": " + ex.Message); return null; }
 
@@ -79,6 +80,16 @@ namespace MultiLink.Proxy
                     attempt < maxAttempts - 1 ? " - tentando outro link" : ""));
             }
             return null;
+        }
+
+        // Logo que a captura liga, o DNS do Windows passa a sair pelo adaptador virtual e as primeiras
+        // consultas podem falhar ("no data of the requested type"). Uma segunda tentativa resolve.
+        static async Task<IPAddress[]> Resolve(string host)
+        {
+            try { return await Dns.GetHostAddressesAsync(host); }
+            catch (SocketException) { }
+            await Task.Delay(DnsRetryDelayMs);
+            return await Dns.GetHostAddressesAsync(host);
         }
     }
 }
