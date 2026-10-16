@@ -45,11 +45,15 @@ namespace MultiLink.Proxy
             if (useIpv6) targets = resolved.Where(address => address.AddressFamily == AddressFamily.InterNetworkV6).Take(AddressesPerAttempt).ToArray();
             if (targets.Length == 0) { log.Add("Nenhum endereço para " + host); return null; }
 
+            // destino na rede local de um link (modem, aparelho da casa): só ele alcança, nada de balancear
+            var local = useIpv6 ? null : balancer.Snapshot().FirstOrDefault(link => link.Present && link.OnLocalNetwork(targets[0]));
+            int maxAttempts = local != null ? 1 : MaxAttempts;
+
             var tried = new List<Link>();
             if (useIpv6) tried.AddRange(balancer.Snapshot().Where(link => !link.Ipv6Works));
-            for (int attempt = 0; attempt < MaxAttempts; attempt++)
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                var link = balancer.Pick(host, tried);
+                var link = local ?? balancer.Pick(host, tried);
                 if (link == null)
                 {
                     if (useIpv6 && attempt == 0) log.Add("Nenhum link com IPv6 para " + host);
@@ -72,7 +76,7 @@ namespace MultiLink.Proxy
                     catch (Exception ex) { error = ex.Message; socket.CloseQuietly(); }
                 }
                 log.Add(string.Format("[{0}] falha ao conectar {1}:{2} ({3}){4}", link.Name, host, port, error,
-                    attempt < MaxAttempts - 1 ? " - tentando outro link" : ""));
+                    attempt < maxAttempts - 1 ? " - tentando outro link" : ""));
             }
             return null;
         }

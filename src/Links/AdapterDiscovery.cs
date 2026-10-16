@@ -24,14 +24,14 @@ namespace MultiLink.Links
                 var gateway = properties.GatewayAddresses.Select(entry => entry.Address)
                     .FirstOrDefault(address => address.AddressFamily == AddressFamily.InterNetwork && !address.Equals(IPAddress.Any));
                 if (gateway == null) continue;
-                var address4 = properties.UnicastAddresses.Select(entry => entry.Address)
-                    .FirstOrDefault(address => address.AddressFamily == AddressFamily.InterNetwork);
+                var address4 = properties.UnicastAddresses
+                    .FirstOrDefault(entry => entry.Address.AddressFamily == AddressFamily.InterNetwork);
                 if (address4 == null) continue;
 
                 found.Add(new Link
                 {
                     Id = adapter.Id, Name = adapter.Name, Description = adapter.Description,
-                    Address = address4, AddressV6 = GlobalIPv6(properties), InterfaceIndexV6 = IPv6Index(properties), Gateway = gateway.ToString(),
+                    Address = address4.Address, SubnetMask = address4.IPv4Mask, AddressV6 = GlobalIPv6(properties), InterfaceIndexV6 = IPv6Index(properties), Gateway = gateway.ToString(),
                     AdapterSpeedBps = adapter.Speed, Wired = IsWired(adapter.NetworkInterfaceType)
                 });
             }

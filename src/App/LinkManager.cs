@@ -152,6 +152,7 @@ namespace MultiLink.App
             if (!existing.Address.Equals(discovered.Address) && !existing.Address.Equals(IPAddress.None))
                 log.Add(string.Format("[{0}] IP mudou para {1}", existing.Name, discovered.Address));
             existing.Address = discovered.Address;
+            existing.SubnetMask = discovered.SubnetMask;
             existing.AddressV6 = discovered.AddressV6;
             existing.InterfaceIndexV6 = discovered.InterfaceIndexV6;
             if (discovered.AddressV6 == null) existing.Ipv6Works = false;

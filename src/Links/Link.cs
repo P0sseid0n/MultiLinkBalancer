@@ -12,6 +12,7 @@ namespace MultiLink.Links
         public string Name;
         public string Description;
         public IPAddress Address;
+        public IPAddress SubnetMask;             // máscara da rede local do Address
         public IPAddress AddressV6;              // IPv6 global, se houver
         public int InterfaceIndexV6;             // índice IPv6 do adaptador (para prender o socket a ele)
         public string Gateway;
@@ -44,5 +45,16 @@ namespace MultiLink.Links
 
         // estado do round-robin suave do Balancer
         public int RoundRobinWeight;
+
+        // Endereço IPv4 na rede local deste link (ex.: o modem): só é alcançável por ele.
+        public bool OnLocalNetwork(IPAddress target)
+        {
+            var address = Address; var mask = SubnetMask;
+            if (mask == null || address == null || target.AddressFamily != address.AddressFamily) return false;
+            byte[] a = address.GetAddressBytes(), m = mask.GetAddressBytes(), t = target.GetAddressBytes();
+            if (m.Length != t.Length) return false;
+            for (int i = 0; i < t.Length; i++) if ((a[i] & m[i]) != (t[i] & m[i])) return false;
+            return true;
+        }
     }
 }

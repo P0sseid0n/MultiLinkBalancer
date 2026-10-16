@@ -171,7 +171,8 @@ namespace MultiLink.Proxy
             bool ipv6 = target.AddressFamily == AddressFamily.InterNetworkV6;
             var exclude = new List<Link>();
             if (ipv6) exclude.AddRange(balancer.Snapshot().Where(link => !link.Ipv6Works));
-            var chosen = balancer.Pick(target.Address.ToString(), exclude);
+            var chosen = ipv6 ? null : balancer.Snapshot().FirstOrDefault(link => link.Present && link.OnLocalNetwork(target.Address)); // rede local: só esse link alcança
+            if (chosen == null) chosen = balancer.Pick(target.Address.ToString(), exclude);
             if (chosen == null) return null;
 
             var socket = new Socket(target.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
