@@ -153,6 +153,7 @@ namespace MultiLink.App
                 log.Add(string.Format("[{0}] IP mudou para {1}", existing.Name, discovered.Address));
             existing.Address = discovered.Address;
             existing.AddressV6 = discovered.AddressV6;
+            existing.InterfaceIndexV6 = discovered.InterfaceIndexV6;
             existing.Gateway = discovered.Gateway;
             existing.Name = discovered.Name;
             existing.Description = discovered.Description;

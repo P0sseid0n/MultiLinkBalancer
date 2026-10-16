@@ -13,6 +13,7 @@ namespace MultiLink.Links
         public string Description;
         public IPAddress Address;
         public IPAddress AddressV6;              // IPv6 global, se houver
+        public int InterfaceIndexV6;             // índice IPv6 do adaptador (para prender o socket a ele)
         public string Gateway;
         public long AdapterSpeedBps;             // velocidade nominal informada pelo Windows
         public bool Wired;

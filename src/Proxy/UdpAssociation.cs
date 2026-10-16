@@ -179,6 +179,7 @@ namespace MultiLink.Proxy
             {
                 IgnoreConnectionReset(socket);
                 socket.Bind(new IPEndPoint(ipv6 ? chosen.AddressV6 : chosen.Address, 0));
+                if (ipv6) socket.UseInterfaceV6(chosen.InterfaceIndexV6);
             }
             catch { socket.Close(); return null; }
 

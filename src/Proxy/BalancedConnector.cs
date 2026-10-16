@@ -63,6 +63,7 @@ namespace MultiLink.Proxy
                     try
                     {
                         socket.Bind(new IPEndPoint(useIpv6 ? link.AddressV6 : link.Address, 0));
+                        if (useIpv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
                         socket.NoDelay = true;
                         await socket.ConnectWithTimeout(new IPEndPoint(target, port), ConnectTimeoutMs);
                         Interlocked.Increment(ref link.Traffic.TotalConnections);

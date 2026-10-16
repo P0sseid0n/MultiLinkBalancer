@@ -31,7 +31,7 @@ namespace MultiLink.Links
                 found.Add(new Link
                 {
                     Id = adapter.Id, Name = adapter.Name, Description = adapter.Description,
-                    Address = address4, AddressV6 = GlobalIPv6(properties), Gateway = gateway.ToString(),
+                    Address = address4, AddressV6 = GlobalIPv6(properties), InterfaceIndexV6 = IPv6Index(properties), Gateway = gateway.ToString(),
                     AdapterSpeedBps = adapter.Speed, Wired = IsWired(adapter.NetworkInterfaceType)
                 });
             }
@@ -47,6 +47,12 @@ namespace MultiLink.Links
                                 (entry.Address.GetAddressBytes()[0] & 0xFE) != 0xFC)
                 .OrderBy(entry => entry.SuffixOrigin == SuffixOrigin.Random ? 1 : 0)
                 .Select(entry => entry.Address).FirstOrDefault();
+        }
+
+        static int IPv6Index(IPInterfaceProperties properties)
+        {
+            try { var ipv6 = properties.GetIPv6Properties(); return ipv6 == null ? 0 : ipv6.Index; }
+            catch (NetworkInformationException) { return 0; } // IPv6 desligado no adaptador
         }
 
         static bool IsWired(NetworkInterfaceType type)
