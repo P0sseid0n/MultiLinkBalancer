@@ -62,14 +62,21 @@
     event.preventDefault();
   }
 
+  // o gráfico é um controle deslizante pelos instantes: o leitor de tela anuncia o ponto escolhido
+  const selectedText = $derived(
+    hoverIndex == null ? 'Use as setas para ver os valores'
+    : `${clock(times[hoverIndex])}: ` + series.map((line) =>
+        `${line.name} ${line.values[hoverIndex] == null ? 'sem dado' : format(line.values[hoverIndex])}`).join(', '),
+  );
+
   // o quadro fica do lado com mais espaço
   const tooltipOnLeft = $derived(hoverIndex != null && xAt(hoverIndex) > width / 2);
   const tooltipX = $derived(hoverIndex == null ? 0 : tooltipOnLeft ? xAt(hoverIndex) - 8 : xAt(hoverIndex) + 8);
 </script>
 
 <div class="chart" bind:clientWidth={width}>
-  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-  <svg {width} {height} role="img" aria-label={label} tabindex="0"
+  <svg {width} {height} role="slider" aria-label={label} tabindex="0"
+    aria-valuemin={0} aria-valuemax={Math.max(0, times.length - 1)} aria-valuenow={hoverIndex ?? 0} aria-valuetext={selectedText}
     onpointermove={onPointerMove} onpointerleave={() => (hoverIndex = null)} onkeydown={onKeyDown} onblur={() => (hoverIndex = null)}>
     {#each yTicks as tick, index (index)}
       <line class="grid" class:base={index === 0} x1={padding.left} x2={padding.left + plotWidth} y1={yAt(tick)} y2={yAt(tick)} />
