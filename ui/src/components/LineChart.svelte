@@ -1,98 +1,104 @@
 <script>
-  // Gráfico de linhas com um único eixo Y, uma linha por link (cor do link) e mira que
-  // segue o ponteiro: o quadro lista o valor de todos os links no instante apontado.
+  // Gráfico de linhas com um único eixo Y, uma linha por série (cor da série) e mira que
+  // segue o ponteiro: o quadro lista o valor de todas as séries no instante apontado.
   // series: [{ id, name, color, values: (number|null)[] }]  (null = sem dado, a linha é interrompida)
+  // format(value, isAxis): texto de um valor no eixo (curto) ou no quadro (com unidade)
+  import { clock } from '../lib/format.js';
+
   let { times, series, format, label, height = 132 } = $props();
 
+  const padding = { left: 44, right: 8, top: 8, bottom: 20 };
+
   let width = $state(0);
-  let hover = $state(null); // índice do ponto sob a mira
+  let hoverIndex = $state(null); // ponto sob a mira
 
-  const pad = { l: 44, r: 8, t: 8, b: 20 };
-  const w = $derived(Math.max(0, width - pad.l - pad.r));
-  const h = $derived(height - pad.t - pad.b);
+  const plotWidth = $derived(Math.max(0, width - padding.left - padding.right));
+  const plotHeight = $derived(height - padding.top - padding.bottom);
 
-  const max = $derived.by(() => {
-    let m = 0;
-    for (const s of series) for (const v of s.values) if (v != null && v > m) m = v;
-    return niceMax(m);
+  const maxValue = $derived.by(() => {
+    let highest = 0;
+    for (const line of series) for (const value of line.values) if (value != null && value > highest) highest = value;
+    return roundUp(highest);
   });
 
-  function niceMax(m) {
-    if (m <= 0) return 1;
-    const p = Math.pow(10, Math.floor(Math.log10(m)));
-    for (const f of [1, 2, 2.5, 5, 10]) if (m <= f * p) return f * p;
-    return 10 * p;
+  // topo do eixo num valor redondo: 1, 2, 2,5 ou 5 vezes uma potência de 10
+  function roundUp(value) {
+    if (value <= 0) return 1;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(value)));
+    for (const factor of [1, 2, 2.5, 5, 10]) if (value <= factor * magnitude) return factor * magnitude;
+    return 10 * magnitude;
   }
 
-  const x = (i) => pad.l + (times.length < 2 ? w / 2 : (i / (times.length - 1)) * w);
-  const y = (v) => pad.t + h - (v / max) * h;
+  const xAt = (index) => padding.left + (times.length < 2 ? plotWidth / 2 : (index / (times.length - 1)) * plotWidth);
+  const yAt = (value) => padding.top + plotHeight - (value / maxValue) * plotHeight;
 
-  function path(values) {
-    let d = '';
-    let pen = false;
-    values.forEach((v, i) => {
-      if (v == null) { pen = false; return; }
-      d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`;
-      pen = true;
+  function linePath(values) {
+    let path = '';
+    let drawing = false;
+    values.forEach((value, index) => {
+      if (value == null) { drawing = false; return; }
+      path += `${drawing ? 'L' : 'M'}${xAt(index).toFixed(1)},${yAt(value).toFixed(1)}`;
+      drawing = true;
     });
-    return d;
+    return path;
   }
 
-  const ticks = $derived([0, max / 2, max]);
-  const hhmm = (t) => new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  const xLabels = $derived(times.length ? [0, Math.floor((times.length - 1) / 2), times.length - 1] : []);
+  const yTicks = $derived([0, maxValue / 2, maxValue]);
+  const xLabelIndexes = $derived(times.length ? [0, Math.floor((times.length - 1) / 2), times.length - 1] : []);
 
-  function move(e) {
-    if (!times.length || !w) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const px = e.clientX - r.left - pad.l;
-    hover = Math.max(0, Math.min(times.length - 1, Math.round((px / w) * (times.length - 1))));
+  function onPointerMove(event) {
+    if (!times.length || !plotWidth) return;
+    const box = event.currentTarget.getBoundingClientRect();
+    const offset = event.clientX - box.left - padding.left;
+    hoverIndex = Math.max(0, Math.min(times.length - 1, Math.round((offset / plotWidth) * (times.length - 1))));
   }
 
-  function key(e) {
+  function onKeyDown(event) {
     if (!times.length) return;
-    if (e.key === 'ArrowLeft') hover = Math.max(0, (hover ?? times.length) - 1);
-    else if (e.key === 'ArrowRight') hover = Math.min(times.length - 1, (hover ?? -1) + 1);
-    else if (e.key === 'Escape') hover = null;
+    if (event.key === 'ArrowLeft') hoverIndex = Math.max(0, (hoverIndex ?? times.length) - 1);
+    else if (event.key === 'ArrowRight') hoverIndex = Math.min(times.length - 1, (hoverIndex ?? -1) + 1);
+    else if (event.key === 'Escape') hoverIndex = null;
     else return;
-    e.preventDefault();
+    event.preventDefault();
   }
 
-  const tipLeft = $derived(hover == null ? 0 : x(hover) > width / 2 ? x(hover) - 8 : x(hover) + 8);
+  // o quadro fica do lado com mais espaço
+  const tooltipOnLeft = $derived(hoverIndex != null && xAt(hoverIndex) > width / 2);
+  const tooltipX = $derived(hoverIndex == null ? 0 : tooltipOnLeft ? xAt(hoverIndex) - 8 : xAt(hoverIndex) + 8);
 </script>
 
 <div class="chart" bind:clientWidth={width}>
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <svg {width} {height} role="img" aria-label={label} tabindex="0"
-    onpointermove={move} onpointerleave={() => (hover = null)} onkeydown={key} onblur={() => (hover = null)}>
-    {#each ticks as t, i (i)}
-      <line class="grid" class:base={i === 0} x1={pad.l} x2={pad.l + w} y1={y(t)} y2={y(t)} />
-      <text class="axis" x={pad.l - 6} y={y(t)} dy="0.32em" text-anchor="end">{format(t, true)}</text>
+    onpointermove={onPointerMove} onpointerleave={() => (hoverIndex = null)} onkeydown={onKeyDown} onblur={() => (hoverIndex = null)}>
+    {#each yTicks as tick, index (index)}
+      <line class="grid" class:base={index === 0} x1={padding.left} x2={padding.left + plotWidth} y1={yAt(tick)} y2={yAt(tick)} />
+      <text class="axis" x={padding.left - 6} y={yAt(tick)} dy="0.32em" text-anchor="end">{format(tick, true)}</text>
     {/each}
-    {#each xLabels as i, k (k)}
-      <text class="axis" x={x(i)} y={height - 4} text-anchor={k === 0 ? 'start' : k === 2 ? 'end' : 'middle'}>{hhmm(times[i])}</text>
+    {#each xLabelIndexes as timeIndex, position (position)}
+      <text class="axis" x={xAt(timeIndex)} y={height - 4} text-anchor={position === 0 ? 'start' : position === 2 ? 'end' : 'middle'}>{clock(times[timeIndex])}</text>
     {/each}
-    {#each series as s (s.id)}
-      <path d={path(s.values)} stroke={s.color} />
+    {#each series as line (line.id)}
+      <path d={linePath(line.values)} stroke={line.color} />
     {/each}
-    {#if hover != null}
-      <line class="cross" x1={x(hover)} x2={x(hover)} y1={pad.t} y2={pad.t + h} />
-      {#each series as s (s.id)}
-        {#if s.values[hover] != null}
-          <circle cx={x(hover)} cy={y(s.values[hover])} r="4" fill={s.color} />
+    {#if hoverIndex != null}
+      <line class="crosshair" x1={xAt(hoverIndex)} x2={xAt(hoverIndex)} y1={padding.top} y2={padding.top + plotHeight} />
+      {#each series as line (line.id)}
+        {#if line.values[hoverIndex] != null}
+          <circle cx={xAt(hoverIndex)} cy={yAt(line.values[hoverIndex])} r="4" fill={line.color} />
         {/if}
       {/each}
     {/if}
   </svg>
 
-  {#if hover != null}
-    <div class="tip" class:left={x(hover) > width / 2} style="left: {tipLeft}px">
-      <span class="when">{hhmm(times[hover])}</span>
-      {#each series as s (s.id)}
+  {#if hoverIndex != null}
+    <div class="tooltip" class:left={tooltipOnLeft} style="left: {tooltipX}px">
+      <span class="when">{clock(times[hoverIndex])}</span>
+      {#each series as line (line.id)}
         <span class="row">
-          <span class="key" style="background: {s.color}"></span>
-          <strong class="num">{s.values[hover] == null ? '—' : format(s.values[hover])}</strong>
-          <span class="name">{s.name}</span>
+          <span class="key" style="background: {line.color}"></span>
+          <strong class="num">{line.values[hoverIndex] == null ? '—' : format(line.values[hoverIndex])}</strong>
+          <span class="name">{line.name}</span>
         </span>
       {/each}
     </div>
@@ -107,15 +113,15 @@
   .grid.base { stroke: var(--line-strong); }
   .axis { fill: var(--ink-3); font-size: 10.5px; font-variant-numeric: tabular-nums; }
   path { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-  .cross { stroke: var(--ink-4); stroke-width: 1; }
+  .crosshair { stroke: var(--ink-4); stroke-width: 1; }
   circle { stroke: var(--page); stroke-width: 2; }
-  .tip {
+  .tooltip {
     position: absolute; top: 0; z-index: 2; pointer-events: none;
     display: grid; gap: 3px; padding: 7px 9px; min-width: 120px;
     background: var(--surface-2); border: 1px solid var(--surface-3); border-radius: var(--radius-s);
     box-shadow: var(--shadow-pop); font-size: 12px;
   }
-  .tip.left { transform: translateX(-100%); }
+  .tooltip.left { transform: translateX(-100%); }
   .when { color: var(--ink-3); font-size: 11px; }
   .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
   .key { width: 10px; height: 2px; border-radius: 1px; flex: none; }

@@ -2,13 +2,13 @@
   // Faixa do topo: o último evento numa linha; ao clicar, os anteriores.
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
-  import { app } from '../lib/store.svelte.js';
-  import { dur } from '../lib/motion.js';
+  import { app } from '../../state/app.svelte.js';
+  import { dur } from '../../lib/motion.js';
 
   let open = $state(false);
   const events = $derived([...app.log].reverse().slice(0, 8));
   const last = $derived(events[0]);
-  const hhmm = (t) => (t ? t.slice(0, 5) : '');
+  const hoursMinutes = (time) => (time ? time.slice(0, 5) : ''); // "14:05:33" -> "14:05"
 </script>
 
 {#if last}
@@ -22,16 +22,16 @@
           <span class="text" in:fly={{ y: 14, duration: dur(280), easing: cubicOut }} out:fly={{ y: -14, duration: dur(220), easing: cubicOut }}>{last.text}</span>
         {/key}
       </span>
-      <time class="num">{hhmm(last.time)}</time>
+      <time class="num">{hoursMinutes(last.time)}</time>
       <svg class="chev" class:open width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
     </button>
     {#if open}
       <ol>
-        {#each events.slice(1) as e (e.seq)}
+        {#each events.slice(1) as entry (entry.seq)}
           <li>
-            <span class="dot {e.kind}" aria-hidden="true"></span>
-            <span class="t">{e.text}</span>
-            <time class="num">{hhmm(e.time)}</time>
+            <span class="dot {entry.kind}" aria-hidden="true"></span>
+            <span class="entry-text">{entry.text}</span>
+            <time class="num">{hoursMinutes(entry.time)}</time>
           </li>
         {:else}
           <li class="none">Nenhum evento anterior.</li>
@@ -72,7 +72,7 @@
   ol { list-style: none; padding: 0 16px 6px 24px; animation: rise .25s var(--ease-out) both; }
   li { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line-soft); }
   li .dot { margin-top: 6px; }
-  li .t { flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
+  li .entry-text { flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
   li time { line-height: 1.45; }
   .none { color: var(--ink-3); font-size: 12.5px; }
 </style>

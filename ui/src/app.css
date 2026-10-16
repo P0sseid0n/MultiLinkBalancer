@@ -95,7 +95,7 @@ button, input, select { font: inherit; color: inherit; }
 .scroll:active { scrollbar-color: var(--scroll-thumb-active) transparent; }
 
 /* textos corridos sem palavra órfã na última linha */
-p, .help, .desc, .d { text-wrap: pretty; }
+p, .help, .desc, .mode-description { text-wrap: pretty; }
 
 /* entrada das telas: sobe e aparece, sem montar tudo de uma vez */
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }

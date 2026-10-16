@@ -1,5 +1,5 @@
 <script>
-  import { app, answer } from '../lib/store.svelte.js';
+  import { app, answer } from '../state/app.svelte.js';
 
   let dialog;
   $effect(() => {
