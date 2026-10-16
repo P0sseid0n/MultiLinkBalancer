@@ -1,6 +1,9 @@
 <script>
   // Faixa do topo: o último evento numa linha; ao clicar, os anteriores.
+  import { fly } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
   import { app } from '../lib/store.svelte.js';
+  import { dur } from '../lib/motion.js';
 
   let open = $state(false);
   const events = $derived([...app.log].reverse().slice(0, 8));
@@ -13,7 +16,12 @@
     <button aria-expanded={open} onclick={() => (open = !open)}
       aria-label={open ? 'Recolher eventos' : `Último evento: ${last.text}. Ver eventos anteriores`}>
       <span class="dot {last.kind}" aria-hidden="true"></span>
-      <span class="text">{last.text}</span>
+      <!-- evento novo: o anterior sobe e sai, o novo sobe e entra -->
+      <span class="ticker">
+        {#key last.seq}
+          <span class="text" in:fly={{ y: 14, duration: dur(280), easing: cubicOut }} out:fly={{ y: -14, duration: dur(220), easing: cubicOut }}>{last.text}</span>
+        {/key}
+      </span>
       <time class="num">{hhmm(last.time)}</time>
       <svg class="chev" class:open width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
     </button>
@@ -51,7 +59,8 @@
   }
   button:hover { color: var(--ink); background: rgb(255 255 255 / .015); }
   button:focus-visible { outline-offset: -2px; }
-  .text { flex: 1; min-width: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ticker { flex: 1; min-width: 0; display: grid; overflow: hidden; }
+  .text { grid-area: 1 / 1; min-width: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   time { font-size: 12px; color: var(--ink-3); }
   .chev { flex: none; color: var(--ink-3); transition: transform .25s var(--ease-out); }
   .chev.open { transform: rotate(180deg); }
