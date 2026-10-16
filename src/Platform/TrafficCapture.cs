@@ -11,11 +11,13 @@
 // Segurança: o tun2socks roda num JobObject. Se o MultiLink fechar ou travar, o Windows encerra
 // o tun2socks, o adaptador some e as rotas somem junto com ele.
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
+using System.Web.Script.Serialization;
 using MultiLink.Common;
 
 namespace MultiLink.Platform
@@ -166,12 +168,34 @@ namespace MultiLink.Platform
             }
         }
 
+        // O tun2socks escreve o log em JSON: {"level":"warn","ts":...,"caller":"...","msg":"[TCP] dial ..."}.
+        // Ele registra cada conexão que falhou (avisos de rotina): só repassa o que não é rotina, com a mensagem limpa.
         void RelayOutput(string line)
         {
             if (string.IsNullOrWhiteSpace(line)) return;
-            // o tun2socks registra cada conexão que falhou; só repassa o que não é rotina
-            if (line.Contains("[WARN]") && (line.Contains("dial") || line.Contains("i/o timeout"))) return;
-            log.Add("[captura] " + line.Trim(), line.Contains("[ERR") || line.Contains("FATAL") ? ActivityLog.Error : ActivityLog.Info);
+            string level, message;
+            ParseLogLine(line.Trim(), out level, out message);
+            bool routine = level == "warn" && (message.Contains("dial") || message.Contains("i/o timeout"));
+            if (routine || level == "debug") return;
+            bool failure = level == "error" || level == "fatal" || level == "panic" || level == "dpanic";
+            log.Add("[captura] " + message, failure ? ActivityLog.Error : ActivityLog.Info);
+        }
+
+        // Linha que não é JSON (ex.: erro antes do logger iniciar) vale inteira, com nível "info".
+        static void ParseLogLine(string line, out string level, out string message)
+        {
+            level = "info";
+            message = line;
+            if (!line.StartsWith("{")) return;
+            try
+            {
+                var entry = new JavaScriptSerializer().DeserializeObject(line) as Dictionary<string, object>;
+                if (entry == null) return;
+                object value;
+                if (entry.TryGetValue("level", out value) && value != null) level = value.ToString().ToLowerInvariant();
+                if (entry.TryGetValue("msg", out value) && value != null) message = value.ToString();
+            }
+            catch { }
         }
 
         async void OnExited(Process exited, int socksPort)
