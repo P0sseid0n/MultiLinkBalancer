@@ -2,7 +2,7 @@
   // Tela inicial: eventos, botão I/O, total recebido agora e a lista de links.
   import { Tween } from 'svelte/motion';
   import { cubicOut } from 'svelte/easing';
-  import { app, run } from '../../state/app.svelte.js';
+  import { app, run, fire } from '../../state/app.svelte.js';
   import { rate, seriesColor } from '../../lib/format.js';
   import { isDown, isUsable } from '../../lib/health.js';
   import { dur } from '../../lib/motion.js';
@@ -10,6 +10,7 @@
   import EventBar from './EventBar.svelte';
   import PowerButton from './PowerButton.svelte';
   import LinkItem from './LinkItem.svelte';
+  import EmptyState from '../../components/EmptyState.svelte';
 
   let { onSettings, onHistory } = $props();
 
@@ -76,7 +77,11 @@
     <LinkItem {link} color={seriesColor(index)} share={shares[index]} {idle} proxyOn={on}
       open={expandedId === link.id} ontoggle={() => (expandedId = expandedId === link.id ? null : link.id)} />
   {:else}
-    <p class="empty">Nenhuma conexão com internet encontrada. Conecte um cabo de rede.</p>
+    <EmptyState title="Nenhuma conexão encontrada">
+      {#snippet icon()}<path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4" />{/snippet}
+      Conecte um cabo de rede ou ative um adaptador. O MultiLink usa cada conexão com internet como um link.
+      {#snippet action()}<button class="btn" onclick={() => fire('adapters.refresh')}>Procurar de novo</button>{/snippet}
+    </EmptyState>
   {/each}
 </div>
 
@@ -96,5 +101,4 @@
   .total.off .value { color: var(--ink-4); }
 
   .links { border-top: 1px solid var(--line); }
-  .empty { padding: 20px 0; color: var(--ink-3); font-size: 13px; text-align: center; }
 </style>

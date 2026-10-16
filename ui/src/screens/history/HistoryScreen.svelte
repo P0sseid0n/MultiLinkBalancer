@@ -6,6 +6,7 @@
   import { outageLabel } from '../../lib/health.js';
   import PageHeader from '../../components/PageHeader.svelte';
   import LineChart from '../../components/LineChart.svelte';
+  import EmptyState from '../../components/EmptyState.svelte';
 
   let { onBack } = $props();
 
@@ -91,9 +92,22 @@
 </div>
 
 {#if !data}
-  <p class="empty">Carregando…</p>
+  <!-- esqueleto com a forma dos dois gráficos e das legendas -->
+  <div class="charts" role="status" aria-label="Carregando o histórico">
+    {#each [132, 110] as chartHeight (chartHeight)}
+      <div class="skeleton">
+        <span class="bone title"></span>
+        <span class="bone" style:height="{chartHeight}px"></span>
+        <span class="bone legend-line"></span>
+        <span class="bone legend-line short"></span>
+      </div>
+    {/each}
+  </div>
 {:else if !data.points.length}
-  <p class="empty">Ainda não há dados. O histórico guarda um ponto por minuto enquanto o MultiLink está aberto.</p>
+  <EmptyState title="Ainda sem histórico">
+    {#snippet icon()}<path d="M3 3v18h18" /><path d="m7 15 4-5 3 3 5-7" />{/snippet}
+    O histórico guarda um ponto por minuto enquanto o MultiLink está aberto. Volte daqui a alguns minutos.
+  </EmptyState>
 {:else}
   <div class="charts" class:loading>
     <section>
@@ -220,5 +234,9 @@
   td.total { color: var(--ink); font-weight: 600; }
 
   .muted { color: var(--ink-3); font-size: 12.5px; }
-  .empty { padding: 28px 0; color: var(--ink-3); font-size: 13px; text-align: center; }
+
+  .skeleton { display: grid; gap: 10px; }
+  .skeleton .title { width: 150px; height: 13px; }
+  .skeleton .legend-line { height: 12px; }
+  .skeleton .legend-line.short { width: 70%; }
 </style>
