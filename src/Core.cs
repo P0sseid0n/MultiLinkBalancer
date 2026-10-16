@@ -747,7 +747,8 @@ namespace MultiLink
                 var ip = p.UnicastAddresses.Select(u => u.Address).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
                 if (ip == null) continue;
                 var ip6 = p.UnicastAddresses
-                    .Where(u => u.Address.AddressFamily == AddressFamily.InterNetworkV6 && !u.Address.IsIPv6LinkLocal && !u.Address.IsIPv6SiteLocal)
+                    .Where(u => u.Address.AddressFamily == AddressFamily.InterNetworkV6 && !u.Address.IsIPv6LinkLocal && !u.Address.IsIPv6SiteLocal &&
+                                (u.Address.GetAddressBytes()[0] & 0xFE) != 0xFC) // ULA (fc00::/7) não chega à internet
                     .OrderBy(u => u.SuffixOrigin == SuffixOrigin.Random ? 1 : 0).Select(u => u.Address).FirstOrDefault();
                 var t = ni.NetworkInterfaceType;
                 result.Add(new Link

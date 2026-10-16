@@ -62,11 +62,15 @@ SOCKS5 local. Duas rotas `0.0.0.0/1` e `128.0.0.0/1` (mais específicas que a ro
 para esse adaptador; as conexões do próprio MultiLink saem presas ao IP de cada link e por isso continuam indo
 direto pelos adaptadores reais. A rede local (impressoras, roteador, outros PCs) continua direta.
 
+**IPv6**: quando algum link tem IPv6, a rota `2000::/3` (toda a internet IPv6) também vai para o adaptador, que
+recebe um endereço privado (ULA). Com isso o Windows prefere IPv4 nos sites que têm os dois, e os destinos só IPv6
+passam pelo MultiLink e saem pelos links que têm IPv6. Sem nenhum link com IPv6, nada muda no IPv6 do sistema.
+
 - **Segurança**: o tun2socks roda vinculado ao MultiLink (Job Object do Windows). Se o app fechar ou travar, o
   Windows encerra o tun2socks, o adaptador some e as rotas somem junto: a internet volta ao normal sozinha.
   As rotas são criadas como temporárias (`store=active`) e não sobrevivem a um reinício.
 - **DNS**: com a captura ativa, o Windows resolve nomes por 1.1.1.1 e 8.8.8.8 através do MultiLink.
-- **Limitações**: só IPv4 (destinos IPv6 seguem direto); um jogo ou chamada (um fluxo UDP) usa um link só;
+- **Limitações**: um jogo ou chamada (um fluxo UDP) usa um link só;
   VPNs e alguns anti-cheats podem não conviver com o adaptador virtual.
 
 ## Histórico
@@ -124,6 +128,8 @@ src/                 núcleo e janela (C#, .NET Framework 4.x)
   AppCore.cs         estado e comandos do app (sem interface)
   HostForm.cs        janela + WebView2 + bandeja; ponte de mensagens com a UI
   Program.cs         inicialização, instância única, extração das DLLs do WebView2
+  Capture.cs         captura de todos os programas (tun2socks + Wintun, IPv4 e IPv6)
+  History.cs         histórico de velocidade, latência e quedas
 ui/                  interface (Svelte 5 + Vite)
   src/lib/bridge.js  ponte com o C# via chrome.webview.postMessage (sem servidor HTTP)
   src/lib/mock.js    simulador para desenvolver no navegador

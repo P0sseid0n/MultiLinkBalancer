@@ -1,9 +1,12 @@
-// Captura de todo o tráfego IPv4 (inclusive programas que ignoram o proxy do Windows).
+// Captura de todo o tráfego IPv4 e IPv6 (inclusive programas que ignoram o proxy do Windows).
 // O tun2socks cria um adaptador virtual Wintun ("MultiLink") e entrega cada conexão TCP/UDP
 // que chega nele ao proxy SOCKS5 local do MultiLink. Duas rotas /1 (mais específicas que a rota
 // padrão) mandam a internet para esse adaptador; as conexões do próprio MultiLink saem presas ao
 // IP de cada link, então continuam indo direto pelos adaptadores reais (modelo "strong host").
 // A rede local continua direta porque as rotas das sub-redes locais são mais específicas que /1.
+// IPv6 (só quando algum link tem IPv6 global): a rota 2000::/3 cobre toda a internet IPv6 e é mais
+// específica que a padrão (::/0). O adaptador recebe um endereço ULA; com ele o Windows prefere
+// IPv4 nos destinos que têm os dois, e os destinos só IPv6 seguem pelo MultiLink.
 //
 // Segurança: o tun2socks roda num Job Object com KILL_ON_JOB_CLOSE. Se o MultiLink fechar ou
 // travar, o Windows encerra o tun2socks, o adaptador some e as rotas somem junto com ele.
@@ -21,6 +24,7 @@ namespace MultiLink
     {
         public const string AdapterName = "MultiLink";
         const string TunAddress = "198.18.0.1"; // faixa reservada para testes (RFC 2544): não colide com redes reais
+        const string TunAddress6 = "fd4d:4c42::1"; // ULA (rede privada IPv6, RFC 4193)
         const string ExeName = "multilink-tun2socks.exe";
 
         readonly Action<string, string> log;
@@ -35,6 +39,8 @@ namespace MultiLink
         public bool Active { get; private set; }
         public bool Starting { get; private set; }
         public string Error { get; private set; }
+        public bool Ipv6 { get; private set; } // o tráfego IPv6 também está sendo capturado
+        Func<bool> wantIpv6;
 
         // Encerra um tun2socks que tenha sobrado de uma execução anterior (não deveria, por causa do Job).
         public static void KillStale()
@@ -43,9 +49,11 @@ namespace MultiLink
                 try { p.Kill(); p.WaitForExit(3000); } catch { }
         }
 
-        public async Task Start(int socksPort)
+        // hasIpv6: algum link tem IPv6 global? Sem isso, rotear IPv6 para o adaptador deixaria esses destinos sem saída.
+        public async Task Start(int socksPort, Func<bool> hasIpv6)
         {
             if (wanted) return;
+            wantIpv6 = hasIpv6;
             wanted = true;
             Error = null;
             restarts = 0;
@@ -57,6 +65,7 @@ namespace MultiLink
             wanted = false;
             Active = false;
             Starting = false;
+            Ipv6 = false;
             var p = proc;
             proc = null;
             if (p == null) return;
@@ -109,9 +118,23 @@ namespace MultiLink
                 await Netsh("interface ipv4 add route prefix=0.0.0.0/1 interface=" + q + " nexthop=" + TunAddress + " metric=1 store=active");
                 await Netsh("interface ipv4 add route prefix=128.0.0.0/1 interface=" + q + " nexthop=" + TunAddress + " metric=1 store=active");
 
+                Ipv6 = false;
+                if (wantIpv6 != null && wantIpv6())
+                {
+                    // falhar aqui não derruba a captura IPv4: o IPv6 só continua direto, como antes
+                    try
+                    {
+                        await Netsh("interface ipv6 add address interface=" + q + " address=" + TunAddress6 + " store=active");
+                        await Netsh("interface ipv6 set interface interface=" + q + " metric=1");
+                        await Netsh("interface ipv6 add route prefix=2000::/3 interface=" + q + " metric=1 store=active");
+                        Ipv6 = true;
+                    }
+                    catch (Exception ex) { log("A captura vale só para IPv4; o IPv6 segue direto (" + ex.Message + ").", "error"); }
+                }
+
                 if (!wanted || p.HasExited) return;
                 Active = true;
-                log("Captura ligada: todos os programas (inclusive jogos e apps que ignoram o proxy) passam pelo MultiLink.", "info");
+                log("Captura ligada" + (Ipv6 ? " (IPv4 e IPv6)" : "") + ": todos os programas (inclusive jogos e apps que ignoram o proxy) passam pelo MultiLink.", "info");
             }
             catch (Exception ex)
             {
@@ -136,6 +159,7 @@ namespace MultiLink
         {
             if (p != proc) return; // parado de propósito ou já substituído
             Active = false;
+            Ipv6 = false;
             proc = null;
             if (!wanted) return;
             // caiu sozinho: tenta de novo algumas vezes antes de desistir

@@ -215,7 +215,8 @@ namespace MultiLink
                     { "notify", Cfg.GetBool("notify", true) }, { "notifySound", Cfg.GetBool("notifySound", true) },
                     { "hotkeys", Cfg.GetBool("hotkeys", true) } } },
                 { "capture", new Dictionary<string, object> {
-                    { "on", Cfg.GetBool("capture", false) }, { "active", Capture.Active }, { "starting", Capture.Starting }, { "error", Capture.Error } } },
+                    { "on", Cfg.GetBool("capture", false) }, { "active", Capture.Active }, { "starting", Capture.Starting }, { "error", Capture.Error },
+                    { "ipv6", Capture.Ipv6 } } },
                 { "measuring", measuring },
                 { "links", links },
                 { "download", DownloadState() }
@@ -310,7 +311,7 @@ namespace MultiLink
                     Cfg.Set("capture", cap);
                     Cfg.Save();
                     if (!cap) Capture.Stop();
-                    else if (IsAdmin && Proxy.Running) { var ignored = Capture.Start(Cfg.GetInt("port", 1080)); }
+                    else if (IsAdmin && Proxy.Running) { var ignored = Capture.Start(Cfg.GetInt("port", 1080), HasIpv6); }
                     return new Dictionary<string, object> { { "needsAdmin", cap && !IsAdmin } };
                 case "autoRoute":
                     bool on = Convert.ToBoolean(value);
@@ -347,6 +348,8 @@ namespace MultiLink
             Cfg.Save();
         }
 
+        bool HasIpv6() { return Bal.Snapshot().Any(l => l.Present && l.Enabled && l.Address6 != null); }
+
         // ------------------------------------------------------------ proxy
         void StartProxy()
         {
@@ -367,7 +370,7 @@ namespace MultiLink
             if (Proxy.Running && Cfg.GetBool("sysProxy", true)) try { SetSystemProxy(true); } catch { }
             if (Proxy.Running && Cfg.GetBool("capture", false))
             {
-                if (IsAdmin) { var ignored = Capture.Start(Cfg.GetInt("port", 1080)); }
+                if (IsAdmin) { var ignored = Capture.Start(Cfg.GetInt("port", 1080), HasIpv6); }
                 else Log("A captura de todos os programas está ligada, mas só funciona com o MultiLink aberto como administrador.", "error");
             }
         }

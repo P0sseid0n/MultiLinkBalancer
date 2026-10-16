@@ -11,7 +11,7 @@ export function createMock(deliver) {
     admin: false,
     proxy: { running: true, port: 1080, lan: false, system: true, systemApplied: true },
     settings: { mode: 0, affinity: false, quality: true, autoRoute: false, startup: false, notify: true, notifySound: true, hotkeys: true },
-    capture: { on: false, active: false, starting: false, error: null },
+    capture: { on: false, active: false, starting: false, error: null, ipv6: true },
     measuring: false,
     links,
     download: null,

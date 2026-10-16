@@ -39,7 +39,7 @@
   const captureStatus = $derived(
     !c.on ? '' : !s.admin ? '' : !s.proxy.running ? 'Começa quando o MultiLink for ligado.'
     : c.starting ? 'Criando o adaptador virtual…'
-    : c.active ? 'Ativa: todo o tráfego IPv4 passa pelo MultiLink.'
+    : c.active ? `Ativa: todo o tráfego ${c.ipv6 ? 'IPv4 e IPv6' : 'IPv4'} passa pelo MultiLink.`
     : c.error ? `Não funcionou: ${c.error}` : '',
   );
 
