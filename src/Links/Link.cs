@@ -31,6 +31,8 @@ namespace MultiLink.Links
         public double LatencyAverage = -1;       // média móvel, usada no modo "menor latência"
         public int ConsecutiveFailures;
         public volatile bool GatewayReachable = true;
+        public volatile bool Ipv6Works;          // o IPv6 global do link chega mesmo à internet (testado)
+        public DateTime Ipv6CheckedAt;
         public string Health;                    // último estado avaliado pelo LinkMonitor (LinkHealth)
         public DateTime DownSince;
         public volatile bool UserDisabled;       // desativado pelo próprio app: a queda não gera alerta

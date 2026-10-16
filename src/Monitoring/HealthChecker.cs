@@ -1,6 +1,8 @@
 // Verifica se um link chega à internet: conexão TCP de teste a servidores conhecidos, saindo pelo
 // IP do link. Também colhe a amostra de qualidade (perda e jitter) e, quando a internet não
 // responde, testa o gateway para separar "problema na operadora" de "modem desligado/travado".
+// O IPv6 é testado à parte: muita operadora entrega endereço IPv6 global que não chega a lugar nenhum.
+using System;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -19,12 +21,18 @@ namespace MultiLink.Monitoring
             new IPEndPoint(IPAddress.Parse("8.8.8.8"), 443),
             new IPEndPoint(IPAddress.Parse("9.9.9.9"), 443),
         };
+        static readonly IPEndPoint[] ProbesV6 =
+        {
+            new IPEndPoint(IPAddress.Parse("2606:4700:4700::1111"), 443),
+            new IPEndPoint(IPAddress.Parse("2001:4860:4860::8888"), 443),
+        };
         static readonly IPAddress PingTarget = IPAddress.Parse("1.1.1.1");
 
         const int ProbeTimeoutMs = 3000;
         const int SlowAsLostMs = 900;      // o Windows reenvia o SYN após ~1 s: resposta lenta assim conta como perda
         const int FailuresUntilDown = 2;
         const int IcmpTriesBeforeBlocked = 5;
+        static readonly TimeSpan Ipv6RecheckInterval = TimeSpan.FromMinutes(2);
 
         public static async Task Check(Link link)
         {
@@ -40,6 +48,7 @@ namespace MultiLink.Monitoring
                     await socket.ConnectWithTimeout(probe, ProbeTimeoutMs);
                     MarkOnline(link, (int)stopwatch.ElapsedMilliseconds);
                     await SampleQuality(link, lostEarlierProbe || link.LatencyMs >= SlowAsLostMs ? -1 : link.LatencyMs);
+                    await CheckIpv6(link);
                     return;
                 }
                 catch { lostEarlierProbe = true; }
@@ -48,6 +57,31 @@ namespace MultiLink.Monitoring
             link.GatewayReachable = await PingGateway(link.Gateway);
             link.ConsecutiveFailures++;
             if (link.ConsecutiveFailures >= FailuresUntilDown && link.InternetUp) MarkOffline(link);
+        }
+
+        // Sem internet no IPv4 o link já sai do balanceamento; aqui só importa se vale mandar IPv6 por ele.
+        static async Task CheckIpv6(Link link)
+        {
+            var address = link.AddressV6;
+            if (address == null) { link.Ipv6Works = false; return; }
+            if (DateTime.UtcNow - link.Ipv6CheckedAt < Ipv6RecheckInterval) return;
+            link.Ipv6CheckedAt = DateTime.UtcNow;
+            bool works = false;
+            foreach (var probe in ProbesV6)
+            {
+                var socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
+                try
+                {
+                    socket.Bind(new IPEndPoint(address, 0));
+                    socket.UseInterfaceV6(link.InterfaceIndexV6);
+                    await socket.ConnectWithTimeout(probe, ProbeTimeoutMs);
+                    works = true;
+                    break;
+                }
+                catch { }
+                finally { socket.CloseQuietly(); }
+            }
+            link.Ipv6Works = works;
         }
 
         static void MarkOnline(Link link, int latencyMs)

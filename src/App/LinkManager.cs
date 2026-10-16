@@ -48,7 +48,7 @@ namespace MultiLink.App
             return link;
         }
 
-        public bool AnyHasIpv6() { return balancer.Snapshot().Any(link => link.Present && link.Enabled && link.AddressV6 != null); }
+        public bool AnyHasIpv6() { return balancer.Snapshot().Any(link => link.Present && link.Enabled && link.Ipv6Works); }
 
         // Links que o usuário usa e estão fora do ar (sem contar os desativados por ele).
         public List<string> DownLinkNames()
@@ -154,6 +154,8 @@ namespace MultiLink.App
             existing.Address = discovered.Address;
             existing.AddressV6 = discovered.AddressV6;
             existing.InterfaceIndexV6 = discovered.InterfaceIndexV6;
+            if (discovered.AddressV6 == null) existing.Ipv6Works = false;
+            existing.Ipv6CheckedAt = DateTime.MinValue; // endereço pode ter mudado: testa de novo
             existing.Gateway = discovered.Gateway;
             existing.Name = discovered.Name;
             existing.Description = discovered.Description;

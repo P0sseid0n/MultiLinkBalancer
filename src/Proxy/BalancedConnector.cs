@@ -39,14 +39,14 @@ namespace MultiLink.Proxy
             }
             catch (Exception ex) { log.Add("DNS falhou para " + host + ": " + ex.Message); return null; }
 
-            // IPv4 é o padrão; IPv6 só para destinos sem IPv4, e apenas em links que tenham IPv6
+            // IPv4 é o padrão; IPv6 só para destinos sem IPv4, e apenas em links cujo IPv6 passou no teste
             var targets = resolved.Where(address => address.AddressFamily == AddressFamily.InterNetwork).Take(AddressesPerAttempt).ToArray();
             bool useIpv6 = targets.Length == 0;
             if (useIpv6) targets = resolved.Where(address => address.AddressFamily == AddressFamily.InterNetworkV6).Take(AddressesPerAttempt).ToArray();
             if (targets.Length == 0) { log.Add("Nenhum endereço para " + host); return null; }
 
             var tried = new List<Link>();
-            if (useIpv6) tried.AddRange(balancer.Snapshot().Where(link => link.AddressV6 == null));
+            if (useIpv6) tried.AddRange(balancer.Snapshot().Where(link => !link.Ipv6Works));
             for (int attempt = 0; attempt < MaxAttempts; attempt++)
             {
                 var link = balancer.Pick(host, tried);

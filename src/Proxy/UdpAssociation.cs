@@ -170,7 +170,7 @@ namespace MultiLink.Proxy
 
             bool ipv6 = target.AddressFamily == AddressFamily.InterNetworkV6;
             var exclude = new List<Link>();
-            if (ipv6) exclude.AddRange(balancer.Snapshot().Where(link => link.AddressV6 == null));
+            if (ipv6) exclude.AddRange(balancer.Snapshot().Where(link => !link.Ipv6Works));
             var chosen = balancer.Pick(target.Address.ToString(), exclude);
             if (chosen == null) return null;
 

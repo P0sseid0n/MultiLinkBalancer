@@ -103,6 +103,7 @@ namespace MultiLink.App
         public void Tick()
         {
             Links.RefreshIfNetworkChanged();
+            Capture.SyncIpv6();
             var now = DateTime.UtcNow;
             double seconds = Math.Max(0.2, (now - lastTick).TotalSeconds);
             lastTick = now;

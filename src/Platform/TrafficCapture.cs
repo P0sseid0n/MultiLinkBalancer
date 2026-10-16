@@ -4,7 +4,7 @@
 // padrão) mandam a internet para esse adaptador; as conexões do próprio MultiLink saem presas ao
 // IP de cada link, então continuam indo direto pelos adaptadores reais (modelo "strong host").
 // A rede local continua direta porque as rotas das sub-redes locais são mais específicas que /1.
-// IPv6 (só quando algum link tem IPv6 global): a rota 2000::/3 cobre toda a internet IPv6 e é mais
+// IPv6 (só enquanto algum link tem IPv6 que funciona; ver SyncIpv6): a rota 2000::/3 cobre toda a internet IPv6 e é mais
 // específica que a padrão (::/0). O adaptador recebe um endereço ULA; com ele o Windows prefere
 // IPv4 nos destinos que têm os dois, e os destinos só IPv6 seguem pelo MultiLink.
 //
@@ -36,6 +36,8 @@ namespace MultiLink.Platform
         volatile bool wanted;
         Func<bool> anyLinkHasIpv6;
         int restarts;
+        bool syncingIpv6;
+        bool ipv6Failed; // o netsh recusou: não insiste até a captura ser religada
         DateTime restartWindowStart;
 
         public TrafficCapture(ActivityLog log) { this.log = log; }
@@ -52,7 +54,7 @@ namespace MultiLink.Platform
                 try { stale.Kill(); stale.WaitForExit(3000); } catch { }
         }
 
-        // anyLinkHasIpv6: sem um link com IPv6 global, rotear IPv6 para o adaptador deixaria esses destinos sem saída.
+        // anyLinkHasIpv6: sem um link com IPv6 funcionando, rotear IPv6 para o adaptador deixaria esses destinos sem saída.
         public async Task Start(int socksPort, Func<bool> anyLinkHasIpv6)
         {
             if (wanted) return;
@@ -60,6 +62,7 @@ namespace MultiLink.Platform
             wanted = true;
             Error = null;
             restarts = 0;
+            ipv6Failed = false;
             await Launch(socksPort);
         }
 
@@ -163,9 +166,34 @@ namespace MultiLink.Platform
             }
             catch (Exception ex)
             {
+                ipv6Failed = true;
                 log.Add("A captura vale só para IPv4; o IPv6 segue direto (" + ex.Message + ").", ActivityLog.Error);
                 return false;
             }
+        }
+
+        // Chamado a cada segundo: o teste de IPv6 dos links termina depois de a captura ligar, e pode mudar
+        // com o tempo. Liga ou desliga a rota IPv6 para acompanhar.
+        public async void SyncIpv6()
+        {
+            if (!Active || syncingIpv6 || ipv6Failed || anyLinkHasIpv6 == null) return;
+            bool wantIpv6 = anyLinkHasIpv6();
+            if (wantIpv6 == Ipv6) return;
+            syncingIpv6 = true;
+            try
+            {
+                if (wantIpv6) Ipv6 = await TryConfigureIpv6();
+                else Ipv6 = !await TryRemoveIpv6Route();
+                if (Active && Ipv6 == wantIpv6)
+                    log.Add(wantIpv6 ? "A captura passou a incluir o IPv6." : "Nenhum link com IPv6 funcionando: o IPv6 deixou de ser capturado.");
+            }
+            finally { syncingIpv6 = false; }
+        }
+
+        async Task<bool> TryRemoveIpv6Route()
+        {
+            try { await Netsh("interface ipv6 delete route prefix=2000::/3 interface=\"" + AdapterName + "\" store=active"); return true; }
+            catch (Exception ex) { ipv6Failed = true; log.Add("Não foi possível tirar o IPv6 da captura: " + ex.Message, ActivityLog.Error); return false; }
         }
 
         // O tun2socks escreve o log em JSON: {"level":"warn","ts":...,"caller":"...","msg":"[TCP] dial ..."}.
