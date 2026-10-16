@@ -1,0 +1,53 @@
+# Compila o MultiLinkBalancer.exe a cada push na main (o .exe fica nos artefatos da execução).
+# Uma tag vX.Y.Z também publica a release, com o .exe e o .sha256 que a atualização automática confere:
+#   git tag v1.1.0 && git push origin v1.1.0
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # as tags definem a versão gravada no .exe
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Instalar dependências da interface
+        working-directory: ui
+        run: npm ci --no-fund --no-audit
+
+      - name: Compilar
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag') { ./build.ps1 -Version $env:GITHUB_REF_NAME.TrimStart('v') } else { ./build.ps1 }
+          $hash = (Get-FileHash MultiLinkBalancer.exe -Algorithm SHA256).Hash.ToLower()
+          Set-Content MultiLinkBalancer.exe.sha256 "$hash  MultiLinkBalancer.exe" -Encoding ascii -NoNewline
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MultiLinkBalancer
+          path: |
+            MultiLinkBalancer.exe
+            MultiLinkBalancer.exe.sha256
+
+      - name: Publicar release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create $env:GITHUB_REF_NAME MultiLinkBalancer.exe MultiLinkBalancer.exe.sha256 --title $env:GITHUB_REF_NAME --generate-notes

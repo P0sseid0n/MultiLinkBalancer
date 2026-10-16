@@ -166,4 +166,17 @@ Para ver a UI em desenvolvimento dentro do app real (com dados reais), abra o ap
 
 Usa o `csc.exe` do .NET Framework (já incluído no Windows) e Node.js para o front. A versão gravada no `.exe`
 vem da última tag `vX.Y.Z` do git (ou de `-Version 1.2.3`).
+
+### Publicar uma versão
+
+O GitHub Actions (`.github/workflows/build.yml`) compila a cada push na `main` e guarda o `.exe` nos artefatos
+da execução. Para publicar uma release, crie e envie uma tag:
+
+```powershell
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+O workflow compila com essa versão e publica a release com `MultiLinkBalancer.exe` e `MultiLinkBalancer.exe.sha256`,
+que é o que a atualização automática usa.
 As configurações ficam em `%APPDATA%\MultiLinkBalancer\config.ini`.
