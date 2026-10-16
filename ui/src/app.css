@@ -24,7 +24,11 @@
   --focus: #5598e7;
 
   --on: #4cc38a;        /* ligado / online */
-  --on-halo: rgba(76, 195, 138, 0.07);
+  /* tons derivados das cores de estado: halos e lavagens seguem a cor-base */
+  --on-halo: color-mix(in srgb, var(--on) 7%, transparent);
+  --on-wash: color-mix(in srgb, var(--on) 4%, transparent);
+  --on-ring: color-mix(in srgb, var(--on) 14%, transparent);
+  --on-glow: color-mix(in srgb, var(--on) 28%, transparent);
 
   /* identidade dos links (ordem validada para daltonismo, passo do tema escuro) */
   --series-1: #3987e5;
@@ -44,6 +48,8 @@
   --critical-ink: #f0a39e;
   --critical-wash: #2e1c1f;
   --critical-hover: #ec6a62;
+  --critical-ring: color-mix(in srgb, var(--critical) 20%, transparent);
+  --warn-ring: color-mix(in srgb, var(--warn) 20%, transparent);
 
   --primary: #e8ecef;
   --primary-ink: #13171c;

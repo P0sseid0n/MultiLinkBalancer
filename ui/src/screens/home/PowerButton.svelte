@@ -41,8 +41,8 @@
   .io:active:not(:disabled) { transform: scale(.96); }
   .io.on {
     color: var(--on);
-    background: radial-gradient(circle at 50% 28%, rgb(76 195 138 / .10), var(--page) 78%);
-    box-shadow: 0 0 0 10px var(--on-halo), inset 0 1px 0 rgb(255 255 255 / .05), 0 14px 34px -10px rgb(76 195 138 / .28);
+    background: radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--on) 10%, transparent), var(--page) 78%);
+    box-shadow: 0 0 0 10px var(--on-halo), inset 0 1px 0 rgb(255 255 255 / .05), 0 14px 34px -10px var(--on-glow);
   }
   .io.on:hover:not(:disabled) { color: var(--on); }
   /* anel verde: se desenha em volta ao ligar e se desfaz no sentido contrário ao desligar */

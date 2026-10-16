@@ -150,9 +150,9 @@
   .toggle:hover .chevron { color: var(--ink); }
   .toggle:hover .name.dim { color: var(--ink-soft); }
   .led { width: 8px; height: 8px; border-radius: 4px; flex: none; background: var(--ink-4); transition: background-color .2s, box-shadow .2s; }
-  .led.on { background: var(--on); box-shadow: 0 0 0 3px rgb(76 195 138 / .14); }
-  .led.fail { background: var(--critical); box-shadow: 0 0 0 3px rgba(229, 83, 75, 0.2); }
-  .led.warn { background: var(--warn); box-shadow: 0 0 0 3px rgb(217 163 58 / .2); }
+  .led.on { background: var(--on); box-shadow: 0 0 0 3px var(--on-ring); }
+  .led.fail { background: var(--critical); box-shadow: 0 0 0 3px var(--critical-ring); }
+  .led.warn { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-ring); }
   .led.off { background: transparent; border: 1.5px solid var(--ink-4); }
   .name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .name.dim { color: var(--ink-2); }

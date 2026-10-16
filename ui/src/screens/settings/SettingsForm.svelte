@@ -219,7 +219,7 @@
     transition: background-color .18s, border-color .18s, box-shadow .18s;
   }
   .mode:hover { background: var(--band); border-color: var(--hover-line); }
-  .mode.checked, .mode.checked:hover { border-color: var(--on); box-shadow: inset 0 0 0 1px var(--on); background: rgb(76 195 138 / .04); }
+  .mode.checked, .mode.checked:hover { border-color: var(--on); box-shadow: inset 0 0 0 1px var(--on); background: var(--on-wash); }
   .mode input { position: absolute; opacity: 0; pointer-events: none; }
   .mode:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
   .mode-title { font-weight: 600; font-size: 13.5px; }
