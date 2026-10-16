@@ -144,14 +144,9 @@
   .toggle {
     flex: 1; min-width: 0; min-height: 44px;
     display: flex; align-items: center; gap: 10px;
-    /* recuo próprio para o fundo de hover não encostar no texto; a margem devolve o espaço à direita */
-    margin-right: -8px; padding: 0 8px; border: 0; border-radius: var(--radius-s);
-    background: transparent; color: var(--ink);
+    padding: 0; border: 0; background: transparent; color: var(--ink);
     text-align: left; cursor: pointer;
-    transition: background-color .15s;
   }
-  .toggle:hover { background: var(--surface-2); }
-  .item.open .toggle:hover { background: var(--surface-3); }
   .toggle:hover .chevron { color: var(--ink); }
   .toggle:hover .name.dim { color: var(--ink-soft); }
   .led { width: 8px; height: 8px; border-radius: 4px; flex: none; background: var(--ink-4); transition: background-color .2s, box-shadow .2s; }
@@ -167,7 +162,7 @@
   .chevron { flex: none; color: var(--ink-3); transition: transform .25s var(--ease-out), color .15s; }
   .chevron.open { transform: rotate(180deg); }
 
-  .share { display: flex; align-items: center; gap: 10px; padding: 0 26px 0 78px; }
+  .share { display: flex; align-items: center; gap: 10px; padding: 0 26px 0 70px; }
   .share-track { flex: 1; height: 4px; border-radius: 2px; background: var(--track); overflow: hidden; }
   .share-fill { height: 4px; border-radius: 2px; transition: width .45s var(--ease-out); }
   .share-fill.idle { opacity: .45; }
