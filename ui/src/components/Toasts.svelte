@@ -20,7 +20,7 @@
 </div>
 
 <style>
-  .toasts { position: fixed; right: 16px; bottom: 16px; z-index: 20; display: grid; gap: 8px; width: min(420px, calc(100vw - 40px)); }
+  .toasts { position: fixed; right: 16px; bottom: 16px; z-index: var(--z-toast); display: grid; gap: 8px; width: min(420px, calc(100vw - 40px)); }
   .toast {
     display: flex; align-items: flex-start; gap: 8px;
     padding: 10px 6px 10px 14px;

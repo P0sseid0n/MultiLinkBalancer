@@ -123,7 +123,7 @@
   .crosshair { stroke: var(--ink-4); stroke-width: 1; }
   circle { stroke: var(--page); stroke-width: 2; }
   .tooltip {
-    position: absolute; top: 0; z-index: 2; pointer-events: none;
+    position: absolute; top: 0; z-index: var(--z-tooltip); pointer-events: none;
     display: grid; gap: 3px; padding: 7px 9px; min-width: 120px;
     background: var(--surface-2); border: 1px solid var(--surface-3); border-radius: var(--radius-s);
     box-shadow: var(--shadow-pop); font-size: 12px;

@@ -62,6 +62,11 @@
   /* sombras tingidas com o azul-grafite do fundo, luz vinda de cima */
   --shadow-pop: 0 1px 0 rgb(255 255 255 / .04) inset, 0 12px 32px -8px rgb(4 8 14 / .6), 0 2px 6px rgb(4 8 14 / .35);
 
+  /* camadas: grão sobre o conteúdo, quadro do gráfico acima dele, avisos por cima de tudo */
+  --z-grain: 1;
+  --z-tooltip: 2;
+  --z-toast: 20;
+
   --ease-out: cubic-bezier(.22, 1, .36, 1);
   --press: scale(.97);
   --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
@@ -79,6 +84,13 @@ html, body {
   color: var(--ink);
   font: 14px/1.45 var(--font);
   -webkit-font-smoothing: antialiased;
+}
+
+/* grão quase imperceptível: tira a cara de tela chapada do fundo grafite */
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: var(--z-grain); pointer-events: none;
+  opacity: .035; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 h1, h2, h3, p, ol, dl, dd { margin: 0; }
