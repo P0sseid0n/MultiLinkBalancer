@@ -1,6 +1,9 @@
 <script>
+  import { Tween } from 'svelte/motion';
+  import { cubicOut } from 'svelte/easing';
   import { app, run } from '../lib/store.svelte.js';
   import { rate, seriesVar } from '../lib/format.js';
+  import { dur } from '../lib/motion.js';
   import EventBar from './EventBar.svelte';
   import LinkItem from './LinkItem.svelte';
   import WindowControls from './WindowControls.svelte';
@@ -13,7 +16,9 @@
   const down = $derived(links.filter((l) => l.health !== 'ok' && l.health !== 'disabled'));
   const usable = $derived(links.filter((l) => l.health === 'ok' && l.enabled && l.weight > 0));
   const total = $derived(links.reduce((a, l) => a + l.rateDown, 0));
-  const big = $derived(on ? rate(total) : { value: '0', unit: 'Mbps' });
+  // o total desliza até o valor novo a cada segundo, em vez de pular
+  const shown = Tween.of(() => (on ? total : 0), { duration: () => dur(700), easing: cubicOut });
+  const big = $derived(on ? rate(shown.current) : { value: '0', unit: 'Mbps' });
 
   // participação de cada link: tráfego real; sem tráfego, a divisão prevista pelos pesos
   const idle = $derived(!on || total < 12500);
