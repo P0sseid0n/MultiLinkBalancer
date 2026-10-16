@@ -43,6 +43,9 @@ links (bonding), como Speedify ou OpenMPTCProuter. Isso não dá para fazer só 
   Peso 0 = não usar.
 - **Distribuição**: *Proporcional aos pesos* (padrão), *Menos conexões*, *Só um link, com reserva* ou *Menor latência*
   (usa o link de menor ping no momento, pela média móvel; só troca quando outro fica claramente mais rápido).
+- **Considerar perda de pacotes e jitter** (ligado por padrão): um link que está perdendo pacotes recebe menos
+  conexões até melhorar (10% de perda → cerca de 2/3 do peso; 30% ou mais → quase nada). No modo *Menor latência*,
+  perda e jitter também contam, não só o ping.
 - **Manter cada site no mesmo link**: ligue se algum site (banco, login) desconectar por trocar de IP.
   Com isso ligado, downloads de um mesmo site não somam os links.
 - **Aceitar conexões de outros aparelhos da rede**: outros dispositivos podem usar `IP-deste-PC:1080` como proxy.
@@ -95,6 +98,14 @@ O app testa cada link a cada 3 s, mesmo com o proxy desligado, e diz **onde** es
 - **Tirar link caído do roteamento do Windows** (opcional, requer administrador): quando um link cai, ele sai
   do roteamento do sistema inteiro (métrica 9000) e volta sozinho quando a internet dele retorna. Ao fechar o
   app, as rotas originais são restauradas. Como administrador, "Iniciar com o Windows" usa uma tarefa agendada elevada.
+
+## Qualidade dos links
+
+Além do teste a cada 3 s, cada link recebe um ping (ICMP) saindo pelo próprio endereço. Das últimas 20 respostas
+(cerca de 1 minuto) saem a **perda de pacotes** e o **jitter** (variação média entre respostas seguidas), mostrados
+ao expandir o link. Se a rede bloqueia ICMP, a medida usa o tempo das conexões TCP de teste (uma conexão que precisa
+reenviar o pedido conta como perda). Com 10% de perda ou mais o link fica **instável**: ponto amarelo e aviso
+no registro de eventos, até a perda voltar para 3% ou menos.
 
 ## Memória
 

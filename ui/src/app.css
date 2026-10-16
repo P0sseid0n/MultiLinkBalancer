@@ -38,6 +38,8 @@
 
   --good: #4cc38a;
   --good-ink: #4cc38a;
+  --warn: #d9a33a;      /* instável: no ar, mas perdendo pacotes */
+  --warn-ink: #e8c27a;
   --critical: #e5534b;
   --critical-ink: #f0a39e;
   --critical-wash: #2e1c1f;

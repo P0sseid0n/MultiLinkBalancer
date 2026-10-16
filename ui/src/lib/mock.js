@@ -10,7 +10,7 @@ export function createMock(deliver) {
   const state = {
     admin: false,
     proxy: { running: true, port: 1080, lan: false, system: true, systemApplied: true },
-    settings: { mode: 0, affinity: false, autoRoute: false, startup: false, notify: true, notifySound: true, hotkeys: true },
+    settings: { mode: 0, affinity: false, quality: true, autoRoute: false, startup: false, notify: true, notifySound: true, hotkeys: true },
     capture: { on: false, active: false, starting: false, error: null },
     measuring: false,
     links,
@@ -23,7 +23,7 @@ export function createMock(deliver) {
   function link(id, name, description, ip, gateway, weight, measuredMbps) {
     return {
       id, name, description, wired: true, present: true, health: 'ok', healthText: 'Online', diagnosis: '',
-      enabled: true, weight, ip, gateway, latency: 4, measuredMbps, linkSpeed: 1e9,
+      enabled: true, weight, ip, gateway, latency: 4, loss: 0, jitter: 1, measuredMbps, linkSpeed: 1e9,
       rateDown: 0, rateUp: 0, active: 0, total: 0, bytesDown: 0, bytesUp: 0,
       metricRaised: false, userDisabled: false, downSince: null,
     };
@@ -77,6 +77,9 @@ export function createMock(deliver) {
       l.bytesUp += l.rateUp;
       l.total += l.active ? 1 : 0;
       l.latency = l.health === 'ok' ? 3 + Math.round(Math.random() * 3) : -1;
+      // a Principal fica instável (perda alta) por um trecho de cada ciclo
+      l.loss = l.health !== 'ok' ? -1 : l === links[0] && (t % 60) > 40 ? 12 + Math.round(Math.random() * 6) : Math.round(Math.random());
+      l.jitter = l.health !== 'ok' ? -1 : l.loss > 5 ? 18 + Math.round(Math.random() * 10) : 1 + Math.round(Math.random() * 2);
     }
     tickDownload();
     deliver({ type: 'state', data: structuredClone(state) });

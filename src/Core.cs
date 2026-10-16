@@ -39,6 +39,14 @@ namespace MultiLink
         public volatile bool Up = true;
         public volatile int LatencyMs = -1;
         public double LatencyAvg = -1;             // média móvel da latência (modo "menor latência")
+        // qualidade: uma amostra a cada verificação (~3 s); perda e jitter das últimas 20 (~1 min).
+        // A amostra é um ping (ICMP); se a rede bloqueia ICMP, vale o tempo da conexão TCP de teste.
+        public readonly Queue<int> PingWindow = new Queue<int>(); // tempo de resposta em ms, -1 = perdido
+        public bool IcmpOk, IcmpBlocked;           // ICMP já respondeu / nunca respondeu em várias tentativas
+        public int IcmpMisses;
+        public volatile int LossPct = -1;          // -1 = sem dados suficientes
+        public volatile int JitterMs = -1;
+        public bool Unstable;                      // último aviso de instabilidade dado no registro de eventos
         public int ConsecutiveFailures;
         public int Active;
         public long Total;
@@ -57,6 +65,34 @@ namespace MultiLink
         // usados pela UI para calcular taxa
         public long LastUp, LastDown;
         public double RateUp, RateDown;
+
+        // 1 = sem perda; cai rápido com a perda de pacotes (10% -> 0,67; 20% -> 0,33; 30% ou mais -> 0,05)
+        public double Quality
+        {
+            get { int loss = LossPct; return loss <= 0 ? 1 : Math.Max(0.05, 1 - loss / 30.0); }
+        }
+
+        public void AddPing(int rttMs)
+        {
+            lock (PingWindow)
+            {
+                PingWindow.Enqueue(rttMs);
+                while (PingWindow.Count > 20) PingWindow.Dequeue();
+                var w = PingWindow.ToArray();
+                if (w.Length < 5) { LossPct = -1; JitterMs = -1; return; }
+                LossPct = (int)Math.Round(100.0 * w.Count(x => x < 0) / w.Length);
+                // jitter: variação média entre respostas seguidas (como no RTP, RFC 3550)
+                var ok = w.Where(x => x >= 0).ToArray();
+                double sum = 0;
+                for (int i = 1; i < ok.Length; i++) sum += Math.Abs(ok[i] - ok[i - 1]);
+                JitterMs = ok.Length > 1 ? (int)Math.Round(sum / (ok.Length - 1)) : -1;
+            }
+        }
+
+        public void ResetPings()
+        {
+            lock (PingWindow) { PingWindow.Clear(); LossPct = -1; JitterMs = -1; IcmpOk = IcmpBlocked = false; IcmpMisses = 0; }
+        }
     }
 
     // ------------------------------------------------------------------ Balanceador
@@ -69,7 +105,23 @@ namespace MultiLink
         public readonly List<Link> Links = new List<Link>();
         public BalanceMode Mode = BalanceMode.WeightedRoundRobin;
         public bool Affinity = false;
+        public bool QualityAware = true; // perda de pacotes reduz o peso; perda e jitter pesam no modo "menor latência"
         Link lowLatency;
+
+        // peso efetivo em décimos, para a redução pela qualidade não sumir no arredondamento de pesos pequenos
+        int Eff(Link l)
+        {
+            if (l.Weight <= 0) return 0;
+            return QualityAware ? Math.Max(1, (int)Math.Round(l.Weight * 10 * l.Quality)) : l.Weight * 10;
+        }
+
+        // nota para o modo "menor latência": ms equivalentes (cada 1% de perda conta como 10 ms)
+        double Score(Link l)
+        {
+            if (l.LatencyAvg < 0) return double.MaxValue;
+            if (!QualityAware) return l.LatencyAvg;
+            return l.LatencyAvg + Math.Max(0, l.JitterMs) + Math.Max(0, l.LossPct) * 10;
+        }
         public TimeSpan AffinityTtl = TimeSpan.FromMinutes(10);
 
         public List<Link> Snapshot()
@@ -106,25 +158,26 @@ namespace MultiLink
                 switch (Mode)
                 {
                     case BalanceMode.LeastConnections:
-                        chosen = c.OrderBy(l => (Thread.VolatileRead(ref l.Active) + 1) / (double)l.Weight)
+                        chosen = c.OrderBy(l => (Thread.VolatileRead(ref l.Active) + 1) / (double)Eff(l))
                                   .ThenBy(l => Interlocked.Read(ref l.Total)).First();
                         break;
                     case BalanceMode.Failover:
-                        chosen = c.OrderByDescending(l => l.Weight).First();
+                        chosen = c.OrderByDescending(l => Eff(l)).First();
                         break;
                     case BalanceMode.LowestLatency:
-                        // o link atual só perde a vez se outro for claramente mais rápido (evita trocar a cada oscilação)
-                        chosen = c.OrderBy(l => l.LatencyAvg < 0 ? double.MaxValue : l.LatencyAvg).ThenByDescending(l => l.Weight).First();
+                        // o link atual só perde a vez se outro for claramente melhor (evita trocar a cada oscilação)
+                        chosen = c.OrderBy(l => Score(l)).ThenByDescending(l => l.Weight).First();
                         if (lowLatency != null && c.Contains(lowLatency) && lowLatency.LatencyAvg >= 0 &&
-                            lowLatency.LatencyAvg <= chosen.LatencyAvg * 1.2 + 3) chosen = lowLatency;
+                            Score(lowLatency) <= Score(chosen) * 1.2 + 3) chosen = lowLatency;
                         lowLatency = chosen;
                         break;
                     default: // smooth weighted round-robin (algoritmo do nginx)
                         int total = 0; chosen = null;
                         foreach (var l in c)
                         {
-                            l.CurrentWeight += l.Weight;
-                            total += l.Weight;
+                            int w = Eff(l);
+                            l.CurrentWeight += w;
+                            total += w;
                             if (chosen == null || l.CurrentWeight > chosen.CurrentWeight) chosen = l;
                         }
                         chosen.CurrentWeight -= total;
@@ -755,6 +808,7 @@ namespace MultiLink
         public static async Task Check(Link l, Action<string> log)
         {
             if (!l.Present) return;
+            bool lost = false; // um teste anterior desta rodada não respondeu
             foreach (var ep in Probes)
             {
                 var s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -766,6 +820,7 @@ namespace MultiLink
                     if (await Task.WhenAny(ct, Task.Delay(3000)) != ct)
                     {
                         ct.ContinueWith(x => { var ignored = x.Exception; });
+                        lost = true;
                         continue;
                     }
                     await ct;
@@ -774,9 +829,10 @@ namespace MultiLink
                     l.ConsecutiveFailures = 0;
                     l.GatewayReachable = true;
                     l.Up = true;
+                    await SampleQuality(l, lost || l.LatencyMs >= 900 ? -1 : l.LatencyMs);
                     return;
                 }
-                catch { }
+                catch { lost = true; }
                 finally { try { s.Close(); } catch { } }
             }
             // internet não respondeu: o modem/roteador (gateway) responde? Isso separa
@@ -788,7 +844,24 @@ namespace MultiLink
                 l.Up = false;
                 l.LatencyMs = -1;
                 l.LatencyAvg = -1;
+                l.ResetPings(); // ao voltar, a qualidade é medida do zero
             }
+        }
+
+        static readonly IPAddress PingTarget = IPAddress.Parse("1.1.1.1");
+
+        // tcpMs: tempo da conexão de teste, ou -1 se ela se perdeu (o Windows reenvia o SYN após ~1 s)
+        static async Task SampleQuality(Link l, int tcpMs)
+        {
+            int icmp = -1;
+            if (!l.IcmpBlocked)
+            {
+                var src = l.Address;
+                icmp = await Task.Run(() => Icmp.Echo(src, PingTarget, 1000));
+                if (icmp >= 0 && !l.IcmpOk) { l.ResetPings(); l.IcmpOk = true; } // troca para ICMP: recomeça a janela
+                else if (!l.IcmpOk && ++l.IcmpMisses >= 5) l.IcmpBlocked = true;
+            }
+            l.AddPing(l.IcmpOk ? icmp : tcpMs);
         }
 
         static async Task<bool> PingGateway(string gw)
@@ -805,6 +878,38 @@ namespace MultiLink
                 catch { }
             }
             return false;
+        }
+    }
+
+    // Ping saindo por um link específico. O Ping do .NET não escolhe o endereço de origem;
+    // o IcmpSendEcho2Ex escolhe, então cada link é medido pelo seu próprio caminho.
+    public static class Icmp
+    {
+        [DllImport("iphlpapi.dll", SetLastError = true)] static extern IntPtr IcmpCreateFile();
+        [DllImport("iphlpapi.dll")] static extern bool IcmpCloseHandle(IntPtr h);
+        [DllImport("iphlpapi.dll", SetLastError = true)]
+        static extern uint IcmpSendEcho2Ex(IntPtr h, IntPtr evt, IntPtr apc, IntPtr ctx, uint src, uint dst,
+            byte[] data, ushort size, IntPtr options, byte[] reply, uint replySize, uint timeout);
+
+        static readonly byte[] Payload = Encoding.ASCII.GetBytes("MultiLinkBalancer-qualidade-1234");
+
+        // Tempo de resposta em ms, ou -1 se não respondeu.
+        public static int Echo(IPAddress from, IPAddress to, int timeoutMs)
+        {
+            var h = IcmpCreateFile();
+            if (h == IntPtr.Zero || h == new IntPtr(-1)) return -1;
+            try
+            {
+                var reply = new byte[128 + Payload.Length];
+                uint n = IcmpSendEcho2Ex(h, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero,
+                    BitConverter.ToUInt32(from.GetAddressBytes(), 0), BitConverter.ToUInt32(to.GetAddressBytes(), 0),
+                    Payload, (ushort)Payload.Length, IntPtr.Zero, reply, (uint)reply.Length, (uint)timeoutMs);
+                // ICMP_ECHO_REPLY: Address (4), Status (4), RoundTripTime (4)...
+                if (n == 0 || BitConverter.ToUInt32(reply, 4) != 0) return -1;
+                return (int)BitConverter.ToUInt32(reply, 8);
+            }
+            catch { return -1; }
+            finally { IcmpCloseHandle(h); }
         }
     }
 

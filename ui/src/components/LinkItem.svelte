@@ -12,6 +12,7 @@
   const disabled = $derived(l.health === 'disabled');
   const ok = $derived(l.health === 'ok');
   const down = $derived(!ok && !disabled);
+  const unstable = $derived(ok && l.loss >= 10); // no ar, mas perdendo pacotes
 
   // interruptor: mostra o estado pedido enquanto o Windows aplica (pode pedir confirmação de administrador)
   let target = $state(null);
@@ -37,7 +38,7 @@
     target = null;
   }
 
-  const led = $derived(down ? 'fail' : disabled ? 'off' : proxyOn ? 'on' : 'idle');
+  const led = $derived(down ? 'fail' : disabled ? 'off' : unstable ? 'warn' : proxyOn ? 'on' : 'idle');
   const right = $derived(
     disabled ? 'desativado'
     : down ? (l.downSince ? `fora ${since(l.downSince)}` : 'fora do ar')
@@ -93,10 +94,13 @@
   {#if open}
     <div class="details" transition:slide={{ duration: dur(260), easing: cubicOut }}>
       {#if down}<p class="diag">{cap(l.diagnosis)}.</p>{/if}
+      {#if unstable}<p class="diag warn">Instável: {l.loss}% dos pacotes estão se perdendo.{app.state.settings.quality ? ' Menos conexões vão por ele até melhorar.' : ''}</p>{/if}
       <dl>
         <div><dt>Endereço</dt><dd class="num">{dash(l.ip)}</dd></div>
         <div><dt>Gateway</dt><dd class="num">{dash(l.gateway)}</dd></div>
         <div><dt>Latência</dt><dd class="num">{l.latency >= 0 ? `${l.latency} ms` : '—'}</dd></div>
+        <div><dt>Perda de pacotes</dt><dd class="num" class:warn={unstable}>{ok && l.loss >= 0 ? `${l.loss}%` : '—'}</dd></div>
+        <div><dt>Jitter</dt><dd class="num">{ok && l.jitter >= 0 ? `${l.jitter} ms` : '—'}</dd></div>
         <div><dt>Velocidade medida</dt><dd class="num">{l.measuredMbps > 0 ? `${l.measuredMbps} Mbps` : '—'}</dd></div>
         <div><dt>Conexões abertas</dt><dd class="num">{disabled ? '—' : l.active}</dd></div>
         <div><dt>Enviando</dt><dd class="num">{disabled || !proxyOn ? '—' : rateText(l.rateUp)}</dd></div>
@@ -144,6 +148,7 @@
   .led { width: 8px; height: 8px; border-radius: 4px; flex: none; background: var(--ink-4); transition: background-color .2s, box-shadow .2s; }
   .led.on { background: var(--on); box-shadow: 0 0 0 3px rgb(76 195 138 / .14); }
   .led.fail { background: var(--critical); box-shadow: 0 0 0 3px rgba(229, 83, 75, 0.2); }
+  .led.warn { background: var(--warn); box-shadow: 0 0 0 3px rgb(217 163 58 / .2); }
   .led.off { background: transparent; border: 1.5px solid var(--ink-4); }
   .name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .name.dim { color: var(--ink-2); }
@@ -161,6 +166,7 @@
 
   .details { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-strong); }
   .diag { font-size: 13px; line-height: 1.45; }
+  .diag.warn, dd.warn { color: var(--warn-ink); }
   dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
   dl div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   dt { font-size: 11.5px; color: var(--ink-3); }

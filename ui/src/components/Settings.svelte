@@ -95,6 +95,9 @@
         </label>
       {/each}
     </fieldset>
+    <Toggle checked={s.settings.quality} onchange={(v) => set('quality', v)}
+      label="Considerar perda de pacotes e jitter"
+      description="Um link que está perdendo pacotes recebe menos conexões até melhorar. No modo Menor latência, perda e jitter também contam, não só o ping." />
     <Toggle checked={s.settings.affinity} onchange={(v) => set('affinity', v)}
       label="Manter cada site no mesmo link"
       description="Use se algum site (banco, login) desconectar ao trocar de IP. Com isso ligado, downloads de um mesmo site não somam os links." />

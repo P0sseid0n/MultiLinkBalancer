@@ -63,6 +63,7 @@ namespace MultiLink
 
             Bal.Mode = (BalanceMode)Math.Max(0, Math.Min(3, Cfg.GetInt("mode", 0)));
             Bal.Affinity = Cfg.GetBool("affinity", false);
+            Bal.QualityAware = Cfg.GetBool("quality", true);
             Monitor.AutoRoute = Cfg.GetBool("autoRoute", false);
             startup = SystemIntegration.StartupEnabled;
             // como admin: troca o atalho "Run" (sem elevação) pela tarefa agendada elevada
@@ -121,6 +122,7 @@ namespace MultiLink
             }
             Hist.Flush();
             Monitor.Evaluate(links);
+            ReportQuality(links);
             UpdateDownloadRates(dt);
 
             var fresh = new List<Dictionary<string, object>>();
@@ -131,6 +133,27 @@ namespace MultiLink
                 logHistory.AddRange(fresh);
                 if (logHistory.Count > 500) logHistory.RemoveRange(0, logHistory.Count - 500);
                 Emit(new Dictionary<string, object> { { "type", "log" }, { "entries", fresh } });
+            }
+        }
+
+        // Avisa no registro quando um link fica instável (perda alta) e quando melhora. A histerese
+        // (10% para entrar, 3% para sair) evita um aviso a cada oscilação.
+        void ReportQuality(List<Link> links)
+        {
+            foreach (var l in links)
+            {
+                int loss = l.LossPct;
+                if (!l.Unstable && loss >= 10)
+                {
+                    l.Unstable = true;
+                    Log(string.Format("[{0}] instável: {1}% dos pacotes se perdendo{2}", l.Name, loss,
+                        Bal.QualityAware ? ". Menos conexões vão por ele até melhorar." : "."), "error");
+                }
+                else if (l.Unstable && (loss < 0 ? !l.Up : loss <= 3))
+                {
+                    l.Unstable = false;
+                    if (l.Up) Log(string.Format("[{0}] estável de novo: {1}% de perda", l.Name, loss), "up");
+                }
             }
         }
 
@@ -171,6 +194,7 @@ namespace MultiLink
                     { "ip", l.Address == null || l.Address.Equals(IPAddress.None) ? "" : l.Address.ToString() },
                     { "gateway", l.Gateway == "—" ? "" : l.Gateway },
                     { "latency", l.LatencyMs }, { "measuredMbps", Math.Round(l.MeasuredMbps) },
+                    { "loss", l.LossPct }, { "jitter", l.JitterMs },
                     { "linkSpeed", l.SpeedBps },
                     { "rateDown", Math.Round(l.RateDown) }, { "rateUp", Math.Round(l.RateUp) },
                     { "active", Thread.VolatileRead(ref l.Active) }, { "total", Interlocked.Read(ref l.Total) },
@@ -187,7 +211,7 @@ namespace MultiLink
                     { "running", Proxy.Running }, { "port", Cfg.GetInt("port", 1080) }, { "lan", Cfg.GetBool("lan", false) },
                     { "system", Cfg.GetBool("sysProxy", true) }, { "systemApplied", Cfg.GetBool("proxyApplied", false) } } },
                 { "settings", new Dictionary<string, object> {
-                    { "mode", (int)Bal.Mode }, { "affinity", Bal.Affinity }, { "autoRoute", Monitor.AutoRoute }, { "startup", startup },
+                    { "mode", (int)Bal.Mode }, { "affinity", Bal.Affinity }, { "quality", Bal.QualityAware }, { "autoRoute", Monitor.AutoRoute }, { "startup", startup },
                     { "notify", Cfg.GetBool("notify", true) }, { "notifySound", Cfg.GetBool("notifySound", true) },
                     { "hotkeys", Cfg.GetBool("hotkeys", true) } } },
                 { "capture", new Dictionary<string, object> {
@@ -263,6 +287,7 @@ namespace MultiLink
                     break;
                 case "mode": Bal.Mode = (BalanceMode)Math.Max(0, Math.Min(3, Convert.ToInt32(value))); Cfg.Set("mode", (int)Bal.Mode); break;
                 case "affinity": Bal.Affinity = Convert.ToBoolean(value); Cfg.Set("affinity", Bal.Affinity); break;
+                case "quality": Bal.QualityAware = Convert.ToBoolean(value); Cfg.Set("quality", Bal.QualityAware); break;
                 case "lan":
                     Cfg.Set("lan", Convert.ToBoolean(value));
                     if (Proxy.Running) { Proxy.Stop(); StartProxy(); }
