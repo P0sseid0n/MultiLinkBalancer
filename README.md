@@ -111,6 +111,12 @@ ao expandir o link. Se a rede bloqueia ICMP, a medida usa o tempo das conexões 
 reenviar o pedido conta como perda). Com 10% de perda ou mais o link fica **instável**: ponto amarelo e aviso
 no registro de eventos, até a perda voltar para 3% ou menos.
 
+## Atualizações
+
+Uma vez por dia (e 30 s depois de abrir) o app consulta a última release deste repositório no GitHub e avisa se há
+versão nova. Em *Ajustes > Atualizações*, **Atualizar** baixa o `.exe`, confere o SHA-256 publicado junto com ele,
+troca o executável e reinicia. A consulta usa a API pública do GitHub, então só funciona com o repositório público.
+
 ## Memória
 
 Medido nesta máquina (memória privada):
@@ -130,6 +136,7 @@ src/                 núcleo e janela (C#, .NET Framework 4.x)
   Program.cs         inicialização, instância única, extração das DLLs do WebView2
   Capture.cs         captura de todos os programas (tun2socks + Wintun, IPv4 e IPv6)
   History.cs         histórico de velocidade, latência e quedas
+  Updater.cs         atualização pelo GitHub Releases
 ui/                  interface (Svelte 5 + Vite)
   src/lib/bridge.js  ponte com o C# via chrome.webview.postMessage (sem servidor HTTP)
   src/lib/mock.js    simulador para desenvolver no navegador
@@ -157,5 +164,6 @@ Para ver a UI em desenvolvimento dentro do app real (com dados reais), abra o ap
 ./build.ps1 -SkipUi    # só o C#
 ```
 
-Usa o `csc.exe` do .NET Framework (já incluído no Windows) e Node.js para o front.
+Usa o `csc.exe` do .NET Framework (já incluído no Windows) e Node.js para o front. A versão gravada no `.exe`
+vem da última tag `vX.Y.Z` do git (ou de `-Version 1.2.3`).
 As configurações ficam em `%APPDATA%\MultiLinkBalancer\config.ini`.

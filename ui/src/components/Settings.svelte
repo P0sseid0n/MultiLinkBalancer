@@ -43,6 +43,24 @@
     : c.error ? `Não funcionou: ${c.error}` : '',
   );
 
+  const u = $derived(s.update);
+  const updateStatus = $derived(
+    u.state === 'checking' ? 'Procurando…'
+    : u.state === 'uptodate' ? `Você está na versão mais recente (${u.current}).`
+    : u.state === 'available' ? `Versão ${u.latest} disponível. Você tem a ${u.current}.`
+    : u.state === 'downloading' ? `Baixando a versão ${u.latest}… ${u.progress}%`
+    : u.state === 'error' ? `Não foi possível procurar: ${u.error}`
+    : `Versão ${u.current}.`,
+  );
+  async function installUpdate() {
+    const yes = await ask({
+      title: `Atualizar para a versão ${u.latest}?`,
+      body: 'O MultiLink baixa a versão nova, confere o arquivo e reinicia sozinho. As conexões abertas caem por alguns segundos.',
+      confirm: 'Atualizar e reiniciar',
+    });
+    if (yes) run('update.install').catch(() => {});
+  }
+
   async function exitApp() {
     const yes = await ask({
       title: 'Sair do MultiLink?',
@@ -142,6 +160,24 @@
 </section>
 
 <section>
+  <h2>Atualizações</h2>
+  <div class="body">
+    <Toggle checked={s.settings.autoUpdate} onchange={(v) => set('autoUpdate', v)}
+      label="Procurar atualizações automaticamente"
+      description="Uma vez por dia, nas versões publicadas no GitHub. Você escolhe quando instalar." />
+    <div class="field">
+      <p class="update" class:bad={u.state === 'error'} aria-live="polite">{updateStatus}</p>
+      {#if u.state === 'available' && u.error}<p class="update bad">Última tentativa falhou: {u.error}</p>{/if}
+      {#if u.state === 'available'}
+        <button class="btn primary" onclick={installUpdate}>Atualizar para {u.latest}</button>
+      {:else}
+        <button class="btn" onclick={() => run('update.check').catch(() => {})} disabled={u.state === 'checking' || u.state === 'downloading'}>Procurar agora</button>
+      {/if}
+    </div>
+  </div>
+</section>
+
+<section>
   <h2>Sistema</h2>
   <div class="body">
     <Toggle checked={s.settings.startup} onchange={(v) => set('startup', v)}
@@ -178,6 +214,8 @@
   .t { font-weight: 600; font-size: 13.5px; }
   .d { color: var(--ink-3); font-size: 12.5px; }
 
+  .update { font-size: 13px; color: var(--ink-2); }
+  .update.bad { color: var(--critical-ink); }
   .status { margin-top: -10px; padding-left: 52px; color: var(--ink-3); font-size: 12.5px; }
   .status.bad { color: var(--critical-ink); }
   .needs-admin { display: grid; gap: 10px; justify-items: start; margin-top: -6px; padding: 12px; background: var(--band); border-radius: var(--radius-m); font-size: 13px; }

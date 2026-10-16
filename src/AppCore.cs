@@ -23,6 +23,8 @@ namespace MultiLink
         public readonly History Hist = History.Load();
         public readonly Capture Capture;
         public readonly bool IsAdmin = WinNet.IsAdmin;
+        public readonly Updater Upd = new Updater();
+        readonly DateTime openedAt = DateTime.UtcNow;
 
         // Ganchos fornecidos pela janela (sempre chamados na thread da UI)
         public Action<string, string, bool> Notify;     // título, mensagem, é alerta?
@@ -50,6 +52,7 @@ namespace MultiLink
         public void Init(bool startHidden)
         {
             if (IsAdmin) Capture.KillStale();
+            Updater.Cleanup();
             if (Cfg.GetBool("proxyApplied", false))
             {
                 SystemIntegration.RestoreProxy(Cfg);
@@ -123,6 +126,9 @@ namespace MultiLink
             Hist.Flush();
             Monitor.Evaluate(links);
             ReportQuality(links);
+            // procura atualização 30 s depois de abrir e depois uma vez por dia
+            if (Cfg.GetBool("autoUpdate", true) && (now - openedAt).TotalSeconds > 30 && (now - Upd.LastCheck).TotalHours >= 24)
+            { var ignored = CheckUpdate(); }
             UpdateDownloadRates(dt);
 
             var fresh = new List<Dictionary<string, object>>();
@@ -213,11 +219,13 @@ namespace MultiLink
                 { "settings", new Dictionary<string, object> {
                     { "mode", (int)Bal.Mode }, { "affinity", Bal.Affinity }, { "quality", Bal.QualityAware }, { "autoRoute", Monitor.AutoRoute }, { "startup", startup },
                     { "notify", Cfg.GetBool("notify", true) }, { "notifySound", Cfg.GetBool("notifySound", true) },
-                    { "hotkeys", Cfg.GetBool("hotkeys", true) } } },
+                    { "hotkeys", Cfg.GetBool("hotkeys", true) },
+                    { "autoUpdate", Cfg.GetBool("autoUpdate", true) } } },
                 { "capture", new Dictionary<string, object> {
                     { "on", Cfg.GetBool("capture", false) }, { "active", Capture.Active }, { "starting", Capture.Starting }, { "error", Capture.Error },
                     { "ipv6", Capture.Ipv6 } } },
                 { "measuring", measuring },
+                { "update", Upd.ToState() },
                 { "links", links },
                 { "download", DownloadState() }
             };
@@ -250,6 +258,8 @@ namespace MultiLink
                 case "download.clear": if (dl == null) dlState = null; return null;
                 case "history.get": return Hist.Get(Math.Max(10, Math.Min(1440, a.ContainsKey("minutes") ? Convert.ToInt32(a["minutes"]) : 60)), Bal.Snapshot());
                 case "app.restartElevated": RestartElevated(); return null;
+                case "update.check": await CheckUpdate(); return null;
+                case "update.install": await Upd.Install(Log, () => { var ex2 = RequestExit; if (ex2 != null) ex2(); }); return null;
                 case "app.openNetworkConnections": Process.Start("ncpa.cpl"); return null;
                 case "app.exit": var ex = RequestExit; if (ex != null) ex(); return null;
                 default: throw new Exception("Comando desconhecido: " + cmd);
@@ -301,6 +311,7 @@ namespace MultiLink
                     break;
                 case "startup": await SetStartup(Convert.ToBoolean(value)); break;
                 case "notify": Cfg.Set("notify", Convert.ToBoolean(value)); break;
+                case "autoUpdate": Cfg.Set("autoUpdate", Convert.ToBoolean(value)); break;
                 case "notifySound": Cfg.Set("notifySound", Convert.ToBoolean(value)); break;
                 case "hotkeys":
                     Cfg.Set("hotkeys", Convert.ToBoolean(value));
@@ -349,6 +360,18 @@ namespace MultiLink
         }
 
         bool HasIpv6() { return Bal.Snapshot().Any(l => l.Present && l.Enabled && l.Address6 != null); }
+
+        // ------------------------------------------------------------ atualização
+        async Task CheckUpdate()
+        {
+            if (!await Upd.Check()) return;
+            if (Cfg.Get("updateNotified", "") == Upd.Latest) return; // avisa uma vez por versão
+            Cfg.Set("updateNotified", Upd.Latest);
+            Cfg.Save();
+            var msg = "Versão " + Upd.Latest + " disponível (você tem a " + Updater.Current + "). Atualize em Ajustes.";
+            Log(msg, "up");
+            if (Notify != null) Notify("Atualização do MultiLink", msg, false);
+        }
 
         // ------------------------------------------------------------ proxy
         void StartProxy()

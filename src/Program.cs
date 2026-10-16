@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 [assembly: AssemblyTitle("MultiLink Balancer")]
 [assembly: AssemblyProduct("MultiLink Balancer")]
-[assembly: AssemblyVersion("2.0.0.0")]
+// AssemblyVersion vem do build.ps1 (tag do git ou -Version): é a versão comparada nas atualizações
 
 namespace MultiLink
 {

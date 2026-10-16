@@ -10,9 +10,10 @@ export function createMock(deliver) {
   const state = {
     admin: false,
     proxy: { running: true, port: 1080, lan: false, system: true, systemApplied: true },
-    settings: { mode: 0, affinity: false, quality: true, autoRoute: false, startup: false, notify: true, notifySound: true, hotkeys: true },
+    settings: { mode: 0, affinity: false, quality: true, autoUpdate: true, autoRoute: false, startup: false, notify: true, notifySound: true, hotkeys: true },
     capture: { on: false, active: false, starting: false, error: null, ipv6: true },
     measuring: false,
+    update: { current: '1.0.0', latest: null, state: 'idle', progress: 0, error: null, notes: null },
     links,
     download: null,
   };
@@ -179,6 +180,16 @@ export function createMock(deliver) {
         ],
         days: [0, 1, 2, 3].map((n) => ({ day: day(n), v: { '{A1}': [(40 - n * 7) * 1e9, 1e9], '{B2}': [(6 + n) * 1e9, 2e8] } })),
       };
+    },
+    'update.check': async () => {
+      state.update.state = 'checking';
+      await new Promise((r) => setTimeout(r, 800));
+      Object.assign(state.update, { state: 'available', latest: '1.1.0' });
+    },
+    'update.install': async () => {
+      state.update.state = 'downloading';
+      for (let p = 0; p <= 100; p += 20) { state.update.progress = p; await new Promise((r) => setTimeout(r, 300)); }
+      Object.assign(state.update, { state: 'uptodate', current: '1.1.0', progress: 0 });
     },
     'app.restartElevated': () => { state.admin = true; },
     'app.openNetworkConnections': () => {},
