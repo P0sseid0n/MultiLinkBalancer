@@ -20,6 +20,14 @@
   const shown = Tween.of(() => (on ? total : 0), { duration: () => dur(700), easing: cubicOut });
   const big = $derived(on ? rate(shown.current) : { value: '0', unit: 'Mbps' });
 
+  // onda única ao ligar (o anel verde se desenha em seguida pelo CSS)
+  let wave = $state(0);
+  let wasOn; // indefinido na primeira vez: abrir a tela com o MultiLink já ligado não dispara a onda
+  $effect(() => {
+    if (on && wasOn === false) wave++;
+    wasOn = on;
+  });
+
   // participação de cada link: tráfego real; sem tráfego, a divisão prevista pelos pesos
   const idle = $derived(!on || total < 12500);
   const shares = $derived.by(() => {
@@ -64,6 +72,8 @@
 <section class="power">
   <button class="io" class:on aria-pressed={on} aria-label={on ? 'Desligar o MultiLink' : 'Ligar o MultiLink'} disabled={busy} onclick={toggle}>
     <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8" /><path d="M6.4 6.6a8 8 0 1 0 11.2 0" /></svg>
+    <svg class="ring" viewBox="0 0 152 152" aria-hidden="true"><circle cx="76" cy="76" r="75" pathLength="100" /></svg>
+    {#key wave}{#if wave}<span class="wave" aria-hidden="true"></span>{/if}{/key}
   </button>
   <div class="state">
     <span class="label" class:on>{on ? 'Ligado' : 'Desligado'}</span>
@@ -106,16 +116,35 @@
   .io:hover:not(:disabled) { border-color: var(--hover-line); color: var(--ink-2); }
   .io:active:not(:disabled) { transform: scale(.96); }
   .io.on {
-    color: var(--on); border-color: var(--on);
+    color: var(--on);
     background: radial-gradient(circle at 50% 28%, rgb(76 195 138 / .10), var(--page) 78%);
     box-shadow: 0 0 0 10px var(--on-halo), inset 0 1px 0 rgb(255 255 255 / .05), 0 14px 34px -10px rgb(76 195 138 / .28);
   }
-  .io.on:hover:not(:disabled) { border-color: var(--on); color: var(--on); }
-  /* respiração lenta do anel enquanto ligado */
+  .io.on:hover:not(:disabled) { color: var(--on); }
+  /* anel verde: se desenha em volta ao ligar e se desfaz no sentido contrário ao desligar */
+  .ring {
+    position: absolute; inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px);
+    transform: rotate(-90deg); pointer-events: none; overflow: visible;
+  }
+  .ring circle {
+    fill: none; stroke: var(--on); stroke-width: 2; stroke-linecap: round;
+    stroke-dasharray: 100; stroke-dashoffset: 100;
+    transition: stroke-dashoffset .5s cubic-bezier(.55, 0, .7, .4);
+  }
+  .io.on .ring circle { stroke-dashoffset: 0; transition: stroke-dashoffset .8s var(--ease-out) .05s; }
+  /* onda que sai do botão uma vez ao ligar */
+  .wave {
+    position: absolute; inset: -2px; border-radius: 50%;
+    border: 2px solid var(--on); opacity: 0;
+    animation: wave .9s var(--ease-out) both;
+    pointer-events: none;
+  }
+  @keyframes wave { 0% { opacity: .6; transform: scale(1); } 100% { opacity: 0; transform: scale(1.5); } }
+  /* respiração lenta do anel enquanto ligado, depois que ele termina de se desenhar */
   .io.on::after {
     content: ""; position: absolute; inset: -2px; border-radius: 50%;
     border: 2px solid var(--on); opacity: 0;
-    animation: breathe 3.2s var(--ease-out) infinite;
+    animation: breathe 3.2s var(--ease-out) .9s infinite;
     pointer-events: none;
   }
   @keyframes breathe { 0% { opacity: .35; transform: scale(1); } 100% { opacity: 0; transform: scale(1.22); } }
