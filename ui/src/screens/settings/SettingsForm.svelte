@@ -216,8 +216,9 @@
     position: relative; display: grid; gap: 2px; padding: 10px 12px;
     border: 1px solid var(--surface-3); border-radius: var(--radius-m);
     cursor: pointer;
-    transition: background-color .18s, border-color .18s, box-shadow .18s;
+    transition: background-color .18s, border-color .18s, box-shadow .18s, transform .12s var(--ease-out);
   }
+  .mode:active { transform: scale(.99); }
   .mode:hover { background: var(--band); border-color: var(--hover-line); }
   .mode.checked, .mode.checked:hover { border-color: var(--on); box-shadow: inset 0 0 0 1px var(--on); background: var(--on-wash); }
   .mode input { position: absolute; opacity: 0; pointer-events: none; }

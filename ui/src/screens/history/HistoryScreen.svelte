@@ -177,8 +177,12 @@
   .unit { font-weight: 400; color: var(--ink-3); margin-left: 4px; }
 
   .filters { display: inline-flex; gap: 2px; padding: 2px; margin-bottom: 18px; background: var(--surface); border-radius: var(--radius-s); }
-  .filters button { border: 0; background: none; padding: 4px 12px; border-radius: 4px; color: var(--ink-2); font-size: 12.5px; cursor: pointer; }
-  .filters button:hover { color: var(--ink); }
+  .filters button {
+    border: 0; background: none; padding: 4px 12px; border-radius: 4px; color: var(--ink-2); font-size: 12.5px; cursor: pointer;
+    transition: background-color .18s, color .15s, transform .12s var(--ease-out);
+  }
+  .filters button:hover { color: var(--ink); background: var(--surface-2); }
+  .filters button:active { transform: var(--press); }
   .filters button.on { background: var(--surface-3); color: var(--ink); font-weight: 600; }
 
   .charts { display: grid; gap: 26px; transition: opacity .2s; }
