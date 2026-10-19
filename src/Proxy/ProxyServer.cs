@@ -21,6 +21,7 @@ namespace MultiLink.Proxy
 
         readonly Balancer balancer;
         readonly BalancedConnector connector;
+        readonly UdpPorts udpPorts = new UdpPorts();
         readonly ConcurrentDictionary<Socket, byte> openSockets = new ConcurrentDictionary<Socket, byte>();
         TcpListener listener;
         CancellationTokenSource stopping;
@@ -73,7 +74,7 @@ namespace MultiLink.Proxy
                 var client = new NetworkStream(clientSocket, false);
                 var request = await ReadRequest(client);
                 if (request == null) return;
-                if (request.IsUdpAssociate) { await new UdpAssociation(balancer, client, clientSocket).Run(); return; }
+                if (request.IsUdpAssociate) { await new UdpAssociation(balancer, udpPorts, client, clientSocket).Run(); return; }
 
                 var outbound = await connector.Connect(request.Host, request.Port);
                 if (outbound == null) { await request.ReplyFailure(); return; }

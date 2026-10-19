@@ -44,6 +44,14 @@ namespace MultiLink.Common
             try { socket.IOControl(IOControlCode.KeepAliveValues, values, null); } catch { }
         }
 
+        // Sem isso, um ICMP "porta inacessível" faz a próxima leitura do socket UDP falhar.
+        const int SIO_UDP_CONNRESET = unchecked((int)0x9800000C);
+
+        public static void IgnoreUdpConnectionReset(this Socket socket)
+        {
+            try { socket.IOControl(SIO_UDP_CONNRESET, new byte[4], null); } catch { }
+        }
+
         public static void CloseQuietly(this Socket socket)
         {
             if (socket == null) return;

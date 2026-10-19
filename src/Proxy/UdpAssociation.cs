@@ -1,7 +1,7 @@
 // SOCKS5 UDP ASSOCIATE (RFC 1928, seção 7).
 // O cliente manda datagramas com um cabeçalho SOCKS para o relé local. Cada destino novo (fluxo)
-// ganha um socket UDP preso ao IP de um link escolhido pelo Balancer; as respostas voltam
-// com o cabeçalho do remetente. A associação dura enquanto a conexão TCP de controle estiver aberta.
+// sai por um link escolhido pelo Balancer, num socket compartilhado do link (UdpPorts); as respostas
+// voltam com o cabeçalho do remetente. A associação dura enquanto a conexão TCP de controle estiver aberta.
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -21,23 +21,21 @@ namespace MultiLink.Proxy
     {
         const int IdleFlowSeconds = 120;
         const int IdleCheckMs = 15000;
-        const int SIO_UDP_CONNRESET = unchecked((int)0x9800000C);
         const byte AddressIPv4 = 1, AddressDomain = 3, AddressIPv6 = 4;
 
-        // um destino (endereço:porta) com seu socket de saída
-        class Flow { public Socket Socket; public Link Link; public long LastActivity; }
-
         readonly Balancer balancer;
+        readonly UdpPorts ports;
         readonly NetworkStream control;
         readonly IPAddress clientAddress;
         readonly IPAddress localAddress;
-        readonly ConcurrentDictionary<string, Flow> flows = new ConcurrentDictionary<string, Flow>();
+        readonly ConcurrentDictionary<string, UdpPorts.Flow> flows = new ConcurrentDictionary<string, UdpPorts.Flow>();
         Socket relay;
         EndPoint clientEndPoint; // de onde o cliente mandou o último datagrama: as respostas vão para lá
 
-        public UdpAssociation(Balancer balancer, NetworkStream control, Socket controlSocket)
+        public UdpAssociation(Balancer balancer, UdpPorts ports, NetworkStream control, Socket controlSocket)
         {
             this.balancer = balancer;
+            this.ports = ports;
             this.control = control;
             clientAddress = ((IPEndPoint)controlSocket.RemoteEndPoint).Address;
             localAddress = ((IPEndPoint)controlSocket.LocalEndPoint).Address;
@@ -49,7 +47,7 @@ namespace MultiLink.Proxy
             var buffer = BufferPool.Datagram.Rent();
             try
             {
-                IgnoreConnectionReset(relay);
+                relay.IgnoreUdpConnectionReset();
                 relay.Bind(new IPEndPoint(localAddress, 0));
                 await ReplyRelayAddress();
 
@@ -96,7 +94,7 @@ namespace MultiLink.Proxy
                     long cutoff = Stopwatch.GetTimestamp() - Stopwatch.Frequency * IdleFlowSeconds;
                     foreach (var idle in flows.Where(pair => Interlocked.Read(ref pair.Value.LastActivity) < cutoff).ToList())
                     {
-                        Flow removed;
+                        UdpPorts.Flow removed;
                         if (flows.TryRemove(idle.Key, out removed)) CloseFlow(removed);
                     }
                 }
@@ -158,15 +156,15 @@ namespace MultiLink.Proxy
             var flow = FlowFor(target);
             if (flow == null) return;
             Interlocked.Exchange(ref flow.LastActivity, Stopwatch.GetTimestamp());
-            try { Interlocked.Add(ref flow.Link.Traffic.BytesUp, flow.Socket.SendTo(datagram, offset, length - offset, SocketFlags.None, target)); }
+            try { Interlocked.Add(ref flow.Port.Link.Traffic.BytesUp, flow.Port.Socket.SendTo(datagram, offset, length - offset, SocketFlags.None, target)); }
             catch { }
         }
 
         // Fluxo existente para o destino ou um novo, pelo link que o Balancer escolher. null se não houver link.
-        Flow FlowFor(IPEndPoint target)
+        UdpPorts.Flow FlowFor(IPEndPoint target)
         {
             var key = target.ToString();
-            Flow flow;
+            UdpPorts.Flow flow;
             if (flows.TryGetValue(key, out flow)) return flow;
 
             bool ipv6 = target.AddressFamily == AddressFamily.InterNetworkV6;
@@ -176,47 +174,21 @@ namespace MultiLink.Proxy
             if (chosen == null) chosen = balancer.Pick(target.Address.ToString(), exclude);
             if (chosen == null) return null;
 
-            var socket = new Socket(target.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-            try
-            {
-                IgnoreConnectionReset(socket);
-                socket.Bind(new IPEndPoint(ipv6 ? chosen.AddressV6 : chosen.Address, 0));
-                if (ipv6) socket.UseInterfaceV6(chosen.InterfaceIndexV6);
-            }
-            catch { socket.Close(); return null; }
-
-            flow = new Flow { Socket = socket, Link = chosen, LastActivity = Stopwatch.GetTimestamp() };
-            if (!flows.TryAdd(key, flow)) { socket.Close(); return flows[key]; } // outro datagrama criou o fluxo antes
+            flow = ports.Open(chosen, target, this);
+            if (flow == null) return null;
+            if (!flows.TryAdd(key, flow)) { ports.Close(flow); return flows[key]; } // outro datagrama criou o fluxo antes
             Interlocked.Increment(ref chosen.Traffic.ActiveConnections);
             Interlocked.Increment(ref chosen.Traffic.TotalConnections);
-            var ignored = ReturnReplies(flow, target.AddressFamily);
             return flow;
         }
 
-        // Respostas do destino: devolve ao cliente com o cabeçalho SOCKS do remetente.
-        async Task ReturnReplies(Flow flow, AddressFamily family)
+        // Resposta de um destino (UdpPorts): devolve ao cliente com o cabeçalho SOCKS do remetente.
+        public void DeliverReply(IPEndPoint sender, byte[] data, int length)
         {
-            var buffer = BufferPool.Datagram.Rent();
-            try
-            {
-                while (true)
-                {
-                    EndPoint sender = AnyEndPoint(family);
-                    int length;
-                    try
-                    {
-                        length = await Task.Factory.FromAsync((callback, state) => flow.Socket.BeginReceiveFrom(buffer, 0, buffer.Length, SocketFlags.None, ref sender, callback, state),
-                                                              result => flow.Socket.EndReceiveFrom(result, ref sender), null);
-                    }
-                    catch (SocketException ex) { if (ex.SocketErrorCode == SocketError.MessageSize) continue; throw; } // maior que o buffer: só ele se perde
-                    Interlocked.Add(ref flow.Link.Traffic.BytesDown, length);
-                    Interlocked.Exchange(ref flow.LastActivity, Stopwatch.GetTimestamp());
-                    var client = clientEndPoint;
-                    if (client != null) relay.SendTo(WithSocksHeader((IPEndPoint)sender, buffer, length), client);
-                }
-            }
-            catch { } // socket fechado: associação encerrada ou fluxo ocioso
-            BufferPool.Datagram.Return(buffer);
+            var client = clientEndPoint;
+            if (client == null) return;
+            try { relay.SendTo(WithSocksHeader(sender, data, length), client); }
+            catch { } // associação encerrada
         }
 
         static byte[] WithSocksHeader(IPEndPoint sender, byte[] data, int length)
@@ -236,16 +208,9 @@ namespace MultiLink.Proxy
             return new IPEndPoint(family == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Any : IPAddress.Any, 0);
         }
 
-        // Sem isso, um ICMP "porta inacessível" faz a próxima leitura do socket UDP falhar.
-        static void IgnoreConnectionReset(Socket socket)
+        void CloseFlow(UdpPorts.Flow flow)
         {
-            try { socket.IOControl(SIO_UDP_CONNRESET, new byte[4], null); } catch { }
-        }
-
-        static void CloseFlow(Flow flow)
-        {
-            flow.Socket.CloseQuietly();
-            Interlocked.Decrement(ref flow.Link.Traffic.ActiveConnections);
+            if (ports.Close(flow)) Interlocked.Decrement(ref flow.Port.Link.Traffic.ActiveConnections);
         }
     }
 }
