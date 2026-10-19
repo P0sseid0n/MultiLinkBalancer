@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows.Forms;
 using MultiLink.App;
 using MultiLink.Links;
+using MultiLink.Platform;
 
 namespace MultiLink.Ui
 {
@@ -81,6 +82,12 @@ namespace MultiLink.Ui
             menu.Items.Add(new ToolStripMenuItem(measuring ? "Medindo velocidade…" : "Medir velocidade e ajustar pesos", null, (sender, e) => Run("measure", null))
                 { Enabled = !measuring });
             menu.Items.Add(new ToolStripSeparator());
+            if (DevBuild.Available)
+            {
+                bool building = DevBuild.Running;
+                menu.Items.Add(new ToolStripMenuItem(building ? "Recompilando…" : "Recompilar e reiniciar", null, (sender, e) => StartBuild())
+                    { Enabled = !building });
+            }
             menu.Items.Add("Sair", null, (sender, e) => exit());
         }
 
@@ -111,6 +118,12 @@ namespace MultiLink.Ui
             }
             if (linksMenu.DropDownItems.Count == 0) linksMenu.Enabled = false;
             return linksMenu;
+        }
+
+        void StartBuild()
+        {
+            try { DevBuild.Start(); }
+            catch (Exception ex) { ShowBalloon(5000, "MultiLink", ex.Message, ToolTipIcon.Warning); }
         }
 
         async void Run(string command, Dictionary<string, object> args)
