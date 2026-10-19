@@ -9,12 +9,14 @@ using System.Threading;
 using System.Windows.Forms;
 using MultiLink.App;
 using MultiLink.Common;
+using MultiLink.Platform;
 
 namespace MultiLink.Ui
 {
     public class MainWindow : Form, IAppHost
     {
         public const string ShowEventName = "Local\\MultiLinkBalancer.Show"; // segunda execução do .exe pede para mostrar o painel
+        public const string ExitEventName = "Local\\MultiLinkBalancer.Exit"; // build.ps1 -Restart pede para fechar (restaurando proxy e rotas)
         static readonly Size PanelSize = new Size(468, 704);                  // em pixels a 100% de escala
         static readonly Color Background = Color.FromArgb(0x13, 0x17, 0x1c);  // a interface é sempre escura
         const int TrayClickDebounceMs = 400;
@@ -64,14 +66,18 @@ namespace MultiLink.Ui
                 return new Size((int)(size.Width * graphics.DpiX / 96), (int)(size.Height * graphics.DpiY / 96));
         }
 
-        // Segunda execução do .exe: traz o painel para a frente.
+        // Segunda execução do .exe: traz o painel para a frente. build.ps1 -Restart: fecha como pelo "Sair".
         void ListenForSecondInstance()
         {
-            var showRequested = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
+            var requests = new[] { SessionEvent.Create(ShowEventName), SessionEvent.Create(ExitEventName) };
             new Thread(() =>
             {
-                while (showRequested.WaitOne())
-                    try { BeginInvoke(new Action(() => ShowPanel(false))); } catch { return; }
+                while (true)
+                {
+                    bool exit = WaitHandle.WaitAny(requests) == 1;
+                    try { BeginInvoke(exit ? new Action(Exit) : () => ShowPanel(false)); } catch { return; }
+                    if (exit) return;
+                }
             }) { IsBackground = true }.Start();
         }
 
