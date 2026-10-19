@@ -162,6 +162,7 @@ Para ver a UI em desenvolvimento dentro do app real (com dados reais), abra o ap
 ```powershell
 ./build.ps1            # front + app
 ./build.ps1 -SkipUi    # só o C#
+./build.ps1 -Restart   # compila, fecha o MultiLink aberto (como pelo "Sair"), troca o .exe e reabre
 ```
 
 Usa o `csc.exe` do .NET Framework (já incluído no Windows) e Node.js para o front. A versão gravada no `.exe`

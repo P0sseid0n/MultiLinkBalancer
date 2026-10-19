@@ -3,7 +3,8 @@
 #   ./build.ps1            compila tudo
 #   ./build.ps1 -SkipUi    reaproveita ui/dist (só recompila o C#)
 #   ./build.ps1 -Version 1.2.0   versão gravada no .exe (padrão: a última tag vX.Y.Z do git)
-param([switch]$SkipUi, [string]$Out, [string]$Version)
+#   ./build.ps1 -Restart   compila, fecha o MultiLink aberto (como pelo "Sair"), troca o .exe e reabre
+param([switch]$SkipUi, [string]$Out, [string]$Version, [switch]$Restart)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
@@ -22,6 +23,8 @@ $wv = Join-Path $root 'lib\webview2'
 $t2s = Join-Path $root 'lib\tun2socks' # captura de todos os programas (ver lib\tun2socks\README.txt)
 $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 $out = if ($Out) { $Out } else { Join-Path $root 'MultiLinkBalancer.exe' }
+$final = $out
+if ($Restart) { $out = "$final.new" } # o app aberto segura o .exe: compila ao lado e troca depois que ele fechar
 $sources = Get-ChildItem (Join-Path $root 'src') -Filter *.cs -Recurse | ForEach-Object FullName
 
 # versão: comparada com a última release do GitHub pela atualização automática
@@ -55,3 +58,30 @@ if ($LASTEXITCODE) { throw 'geração do ícone falhou' }
     $sources $verCs
 if ($LASTEXITCODE) { throw 'compilação do C# falhou' }
 "OK: $out v$Version ({0:N0} KB)" -f ((Get-Item $out).Length / 1KB)
+if (-not $Restart) { return }
+
+# Fecha o MultiLink aberto pelo evento que ele escuta: sai como pelo "Sair" da bandeja, restaurando o proxy do
+# Windows e as rotas (matar o processo deixaria o Windows apontando para um proxy parado).
+$running = Get-Process MultiLinkBalancer -ErrorAction SilentlyContinue | Select-Object -First 1
+$wasElevated = $false
+if ($running) {
+    $wasElevated = -not $running.Path # sem administrador não dá para ler o caminho de um processo elevado
+    $exitRequest = $null
+    if (-not [System.Threading.EventWaitHandle]::TryOpenExisting('Local\MultiLinkBalancer.Exit', [ref]$exitRequest)) {
+        throw 'O MultiLink aberto é de uma versão sem fechamento automático: feche pelo "Sair" da bandeja e rode de novo.'
+    }
+    $exitRequest.Set() | Out-Null
+    $exitRequest.Dispose()
+    if (-not $running.WaitForExit(30000)) { throw 'O MultiLink não fechou em 30 s.' }
+    "MultiLink fechado."
+}
+Move-Item -Force $out $final
+
+# Reabre como estava. Elevado: pela tarefa agendada do "iniciar com o Windows" (sem pedir confirmação), se ela
+# abre este mesmo .exe; senão o Windows pede a confirmação de administrador.
+$task = Get-ScheduledTask -TaskName MultiLinkBalancer -ErrorAction SilentlyContinue
+$taskRunsThis = $task -and ($task.Actions | Where-Object { $_.Execute -and ([IO.Path]::GetFullPath($_.Execute) -eq [IO.Path]::GetFullPath($final)) })
+if ($wasElevated -and $taskRunsThis) { Start-ScheduledTask -TaskName MultiLinkBalancer }
+elseif ($wasElevated) { Start-Process $final '/tray' -Verb RunAs }
+else { Start-Process $final '/tray' }
+"MultiLink reaberto."
