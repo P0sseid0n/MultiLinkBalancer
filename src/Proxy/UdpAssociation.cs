@@ -25,6 +25,7 @@ namespace MultiLink.Proxy
 
         readonly Balancer balancer;
         readonly UdpPorts ports;
+        readonly UdpBurstLog bursts;
         readonly NetworkStream control;
         readonly IPAddress clientAddress;
         readonly IPAddress localAddress;
@@ -32,10 +33,11 @@ namespace MultiLink.Proxy
         Socket relay;
         EndPoint clientEndPoint; // de onde o cliente mandou o último datagrama: as respostas vão para lá
 
-        public UdpAssociation(Balancer balancer, UdpPorts ports, NetworkStream control, Socket controlSocket)
+        public UdpAssociation(Balancer balancer, UdpPorts ports, UdpBurstLog bursts, NetworkStream control, Socket controlSocket)
         {
             this.balancer = balancer;
             this.ports = ports;
+            this.bursts = bursts;
             this.control = control;
             clientAddress = ((IPEndPoint)controlSocket.RemoteEndPoint).Address;
             localAddress = ((IPEndPoint)controlSocket.LocalEndPoint).Address;
@@ -179,6 +181,7 @@ namespace MultiLink.Proxy
             if (!flows.TryAdd(key, flow)) { ports.Close(flow); return flows[key]; } // outro datagrama criou o fluxo antes
             Interlocked.Increment(ref chosen.Traffic.ActiveConnections);
             Interlocked.Increment(ref chosen.Traffic.TotalConnections);
+            bursts.NewFlow(target);
             return flow;
         }
 
