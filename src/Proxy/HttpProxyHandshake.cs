@@ -10,7 +10,6 @@ namespace MultiLink.Proxy
     static class HttpProxyHandshake
     {
         static readonly Encoding Latin1 = Encoding.GetEncoding(28591);
-        const int MaxHeaderBytes = 65536;
 
         // cabeçalhos do salto até o proxy: não seguem para o servidor
         static readonly string[] HopByHopHeaders = { "proxy-connection", "proxy-authorization", "connection", "keep-alive" };
@@ -27,7 +26,13 @@ namespace MultiLink.Proxy
         // firstByte: o byte já lido para identificar o protocolo.
         public static async Task<ProxyRequest> Read(NetworkStream client, byte firstByte)
         {
-            var buffer = new byte[MaxHeaderBytes];
+            var buffer = BufferPool.Rent(); // o cabeçalho pode ter até BufferPool.Size bytes
+            try { return await Read(client, firstByte, buffer); }
+            finally { BufferPool.Return(buffer); }
+        }
+
+        static async Task<ProxyRequest> Read(NetworkStream client, byte firstByte, byte[] buffer)
+        {
             buffer[0] = firstByte;
             int length = 1, headerEnd;
             while ((headerEnd = FindHeaderEnd(buffer, length)) < 0)
