@@ -25,6 +25,9 @@ namespace MultiLink.Platform
     public class TrafficCapture
     {
         public const string AdapterName = "MultiLink";
+        // Sem GUID pedido, o Wintun sorteia um a cada criação e o Windows vê uma rede nova a cada vez
+        // (perfis "MultiLink 2", "MultiLink 3"...). Fixo, o adaptador volta sempre com o mesmo perfil.
+        const string AdapterGuid = "{4AF01592-B47E-47EA-94E3-D17BFBE4B92E}";
         const string TunAddress = "198.18.0.1";      // faixa reservada para testes (RFC 2544): não colide com redes reais
         const string TunAddressV6 = "fd4d:4c42::1";  // ULA (rede privada IPv6, RFC 4193)
         const string ExeName = "multilink-tun2socks.exe";
@@ -111,7 +114,7 @@ namespace MultiLink.Platform
             var folder = EmbeddedFiles.ExtractTun2Socks(ExeName);
             KillStale();
             var startInfo = new ProcessStartInfo(Path.Combine(folder, ExeName),
-                "--device tun://" + AdapterName + " --proxy socks5://127.0.0.1:" + socksPort + " --loglevel warn --udp-timeout 60s")
+                "--device tun://" + AdapterName + "?guid=" + AdapterGuid + " --proxy socks5://127.0.0.1:" + socksPort + " --loglevel warn --udp-timeout 60s")
             {
                 WorkingDirectory = folder, // o wintun.dll é carregado da mesma pasta
                 UseShellExecute = false, CreateNoWindow = true,
