@@ -1,11 +1,8 @@
 <script>
   // Tela inicial: eventos, botão I/O, total recebido agora e a lista de links.
-  import { Tween } from 'svelte/motion';
-  import { cubicOut } from 'svelte/easing';
   import { app, run, fire } from '../../state/app.svelte.js';
   import { rate, seriesColor } from '../../lib/format.js';
   import { isDown, isUsable } from '../../lib/health.js';
-  import { dur } from '../../lib/motion.js';
   import WindowControls from '../../components/WindowControls.svelte';
   import EventBar from './EventBar.svelte';
   import PowerButton from './PowerButton.svelte';
@@ -21,9 +18,9 @@
   const downLinks = $derived(links.filter(isDown));
   const usableLinks = $derived(links.filter(isUsable));
   const totalRate = $derived(links.reduce((sum, link) => sum + link.rateDown, 0));
-  // o total desliza até o valor novo a cada segundo, em vez de pular
-  const shownRate = Tween.of(() => (on ? totalRate : 0), { duration: () => dur(700), easing: cubicOut });
-  const total = $derived(on ? rate(shownRate.current) : { value: '0', unit: 'Mbps' });
+  // o total pula direto para o valor novo: deslizar a cada segundo mantinha o WebView redesenhando
+  // a 60 quadros por segundo (sem GPU, tudo no processador) enquanto o painel fica aberto
+  const total = $derived(on ? rate(totalRate) : { value: '0', unit: 'Mbps' });
 
   // participação de cada link: tráfego real; sem tráfego, a divisão prevista pelos pesos
   const idle = $derived(!on || totalRate < IDLE_BELOW);

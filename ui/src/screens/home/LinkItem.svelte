@@ -164,7 +164,8 @@
 
   .share { display: flex; align-items: center; gap: 10px; padding: 0 26px 0 70px; }
   .share-track { flex: 1; height: 4px; border-radius: 2px; background: var(--track); overflow: hidden; }
-  .share-fill { height: 4px; border-radius: 2px; transition: width .45s var(--ease-out); }
+  /* sem transição: a participação muda a cada segundo e animar a largura redesenha o painel quase sem parar */
+  .share-fill { height: 4px; border-radius: 2px; }
   .share-fill.idle { opacity: .45; }
   .pct { width: 32px; text-align: right; font-size: 12px; color: var(--ink-3); }
 
