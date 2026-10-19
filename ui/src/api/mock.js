@@ -221,8 +221,8 @@ function fakeHistory(minutes) {
     points.push({
       t: time,
       v: {
-        '{A1}': [Math.round(load * 52e6 * noise()), 1e6, 4 + Math.random() * 3, 1],
-        '{B2}': secondaryDown ? [0, 0, -1, 0] : [Math.round(load * 7e6 * noise()), 2e5, 18 + Math.random() * 10, 1],
+        '{A1}': [Math.round(load * 52e6 * noise()), 1e6, 4 + Math.random() * 3, 1, Math.random() < 0.9 ? 0 : Math.round(Math.random() * 30) / 10],
+        '{B2}': secondaryDown ? [0, 0, -1, 0, -1] : [Math.round(load * 7e6 * noise()), 2e5, 18 + Math.random() * 10, 1, minute % 97 > 84 ? 5 + Math.round(Math.random() * 100) / 10 : Math.round(Math.random() * 15) / 10],
       },
     });
   }

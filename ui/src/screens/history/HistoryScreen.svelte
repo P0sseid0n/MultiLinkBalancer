@@ -1,5 +1,5 @@
 <script>
-  // Histórico: velocidade e latência por link (1 h, 6 h ou 24 h), quedas e dados por dia.
+  // Histórico: velocidade, latência e perda de pacotes por link (1 h, 6 h ou 24 h), quedas e dados por dia.
   import { onMount } from 'svelte';
   import { app, run } from '../../state/app.svelte.js';
   import { rateText, mbpsAxis, bytes, seriesColor, dateTime, duration, dayLabel } from '../../lib/format.js';
@@ -13,8 +13,8 @@
   const RANGES = [[60, '1 h'], [360, '6 h'], [1440, '24 h']]; // [minutos, rótulo]
   const REFRESH_MS = 30000;
   const OUTAGES_SHOWN = 8, DAYS_SHOWN = 14;
-  // posição de cada valor nos pontos do app (UsageHistory): [recebido B/s, enviado B/s, latência ms, fração online]
-  const RECEIVED = 0, LATENCY = 2, ONLINE = 3;
+  // posição de cada valor nos pontos do app (UsageHistory): [recebido B/s, enviado B/s, latência ms, fração online, perda %]
+  const RECEIVED = 0, LATENCY = 2, ONLINE = 3, LOSS = 4;
 
   let minutes = $state(60);
   let data = $state(null);
@@ -60,6 +60,7 @@
   }));
   const speedSeries = $derived(data ? seriesFor(RECEIVED) : []);
   const latencySeries = $derived(data ? seriesFor(LATENCY) : []);
+  const lossSeries = $derived(data ? seriesFor(LOSS) : []);
 
   const average = (values) => values.reduce((sum, value) => sum + value, 0) / values.length;
 
@@ -68,17 +69,22 @@
     const points = data.points.filter((point) => point.v[id]);
     const received = points.map((point) => point.v[id][RECEIVED]);
     const latencies = points.map((point) => point.v[id][LATENCY]).filter((value) => value >= 0);
+    const losses = points.map((point) => point.v[id][LOSS]).filter((value) => value >= 0); // pontos antigos não têm perda
     return {
       id, name: nameOf(id), color: colorOf(id),
       averageRate: received.length ? average(received) : 0,
       peakRate: received.length ? Math.max(...received) : 0,
       averageLatency: latencies.length ? average(latencies) : null,
       online: points.length ? average(points.map((point) => point.v[id][ONLINE])) : null,
+      averageLoss: losses.length ? average(losses) : null,
+      peakLoss: losses.length ? Math.max(...losses) : null,
     };
   }));
 
   const formatSpeed = (value, isAxis) => (isAxis ? mbpsAxis(value) : rateText(value));
   const formatLatency = (value, isAxis) => (isAxis ? Math.round(value).toString() : `${Math.round(value)} ms`);
+  const lossText = (value) => `${value < 10 ? value.toFixed(1).replace('.', ',') : Math.round(value)}%`;
+  const formatLoss = (value, isAxis) => (isAxis ? String(+value.toFixed(2)).replace('.', ',') : lossText(value));
   const outageDuration = (outage) => duration(outage.start, outage.end ?? Date.now());
   const dayTotal = (day) => Object.values(day.v).reduce((sum, values) => sum + values[0], 0);
 </script>
@@ -94,7 +100,7 @@
 {#if !data}
   <!-- esqueleto com a forma dos dois gráficos e das legendas -->
   <div class="charts" role="status" aria-label="Carregando o histórico">
-    {#each [132, 110] as chartHeight (chartHeight)}
+    {#each [132, 110, 96] as chartHeight, index (index)}
       <div class="skeleton">
         <span class="bone title"></span>
         <span class="bone" style:height="{chartHeight}px"></span>
@@ -134,6 +140,21 @@
             <span class="name">{row.name}</span>
             <span class="values">média <strong class="num">{row.averageLatency == null ? '—' : `${Math.round(row.averageLatency)} ms`}</strong>
               · online <strong class="num">{row.online == null ? '—' : `${Math.round(row.online * 100)}%`}</strong></span>
+          </li>
+        {/each}
+      </ul>
+    </section>
+
+    <section>
+      <h2>Perda de pacotes <span class="unit">%</span></h2>
+      <LineChart {times} series={lossSeries} format={formatLoss} label="Perda de pacotes por link" height={96} />
+      <ul class="legend">
+        {#each summary as row (row.id)}
+          <li>
+            <span class="key" style="background: {row.color}"></span>
+            <span class="name">{row.name}</span>
+            <span class="values">média <strong class="num">{row.averageLoss == null ? '—' : lossText(row.averageLoss)}</strong>
+              · pico <strong class="num">{row.peakLoss == null ? '—' : lossText(row.peakLoss)}</strong></span>
           </li>
         {/each}
       </ul>

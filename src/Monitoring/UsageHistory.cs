@@ -1,4 +1,4 @@
-// Histórico de uso: velocidade e latência por link em pontos de 1 minuto (últimas 24 h),
+// Histórico de uso: velocidade, latência e perda de pacotes por link em pontos de 1 minuto (últimas 24 h),
 // quedas (últimos 30 dias) e dados trafegados por dia (últimos 31 dias).
 // Fica em %APPDATA%\MultiLinkBalancer\history.json, gravado a cada 5 min e ao sair.
 using System;
@@ -23,7 +23,8 @@ namespace MultiLink.Monitoring
 
         // ---- formato do history.json: os nomes curtos dos campos são o formato do arquivo, não renomeie.
 
-        // Ponto de 1 minuto. V: por id do link, [download B/s, upload B/s, latência média ms (-1 = sem medida), fração do minuto online]
+        // Ponto de 1 minuto. V: por id do link, [download B/s, upload B/s, latência média ms (-1 = sem medida), fração do minuto online,
+        // perda de pacotes média % (-1 = sem medida; ausente nos pontos gravados antes de existir)]
         public class Point { public long T; public Dictionary<string, double[]> V = new Dictionary<string, double[]>(); }
         // Queda. End = 0: o link ainda está fora.
         public class Outage { public string Id, Name, Health; public long Start, End; }
@@ -31,7 +32,7 @@ namespace MultiLink.Monitoring
         public class Day { public string D; public Dictionary<string, long[]> V = new Dictionary<string, long[]>(); }
 
         // soma das amostras de um link no minuto corrente
-        class MinuteTotals { public long BytesDown, BytesUp; public double LatencySum; public int LatencySamples, OnlineSamples, Samples; }
+        class MinuteTotals { public long BytesDown, BytesUp; public double LatencySum, LossSum; public int LatencySamples, LossSamples, OnlineSamples, Samples; }
 
         readonly object sync = new object();
         readonly List<Point> points = new List<Point>();
@@ -60,6 +61,8 @@ namespace MultiLink.Monitoring
                 bool online = link.Present && link.InternetUp;
                 if (online) totals.OnlineSamples++;
                 if (online && link.LatencyMs >= 0) { totals.LatencySum += link.LatencyMs; totals.LatencySamples++; }
+                int loss = link.Quality.LossPct;
+                if (online && loss >= 0) { totals.LossSum += loss; totals.LossSamples++; }
 
                 if (bytesDown > 0 || bytesUp > 0) AddToToday(link.Id, bytesDown, bytesUp);
             }
@@ -96,7 +99,8 @@ namespace MultiLink.Monitoring
                     {
                         Math.Round(totals.BytesDown / 60.0), Math.Round(totals.BytesUp / 60.0),
                         totals.LatencySamples > 0 ? Math.Round(totals.LatencySum / totals.LatencySamples, 1) : -1,
-                        Math.Round(totals.OnlineSamples / (double)totals.Samples, 2)
+                        Math.Round(totals.OnlineSamples / (double)totals.Samples, 2),
+                        totals.LossSamples > 0 ? Math.Round(totals.LossSum / totals.LossSamples, 1) : -1
                     };
                 }
                 currentMinute.Clear();
@@ -171,7 +175,7 @@ namespace MultiLink.Monitoring
             return new Dictionary<string, object> { { "day", day.D }, { "v", day.V.ToDictionary(pair => pair.Key, pair => (object)pair.Value) } };
         }
 
-        // Média de vários pontos num só (latência: só dos minutos que tiveram medida).
+        // Média de vários pontos num só (latência e perda: só dos minutos que tiveram medida).
         static Point Average(long time, List<Point> group)
         {
             var merged = new Point { T = time };
@@ -179,10 +183,12 @@ namespace MultiLink.Monitoring
             {
                 var values = group.Where(point => point.V.ContainsKey(linkId)).Select(point => point.V[linkId]).ToList();
                 var latencies = values.Where(value => value[2] >= 0).Select(value => value[2]).ToList();
+                var losses = values.Where(value => value.Length > 4 && value[4] >= 0).Select(value => value[4]).ToList();
                 merged.V[linkId] = new[]
                 {
                     Math.Round(values.Average(value => value[0])), Math.Round(values.Average(value => value[1])),
-                    latencies.Count > 0 ? Math.Round(latencies.Average(), 1) : -1, Math.Round(values.Average(value => value[3]), 2)
+                    latencies.Count > 0 ? Math.Round(latencies.Average(), 1) : -1, Math.Round(values.Average(value => value[3]), 2),
+                    losses.Count > 0 ? Math.Round(losses.Average(), 1) : -1
                 };
             }
             return merged;
