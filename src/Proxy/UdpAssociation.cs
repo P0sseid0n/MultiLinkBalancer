@@ -46,6 +46,7 @@ namespace MultiLink.Proxy
         public async Task Run()
         {
             relay = new Socket(localAddress.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
+            var buffer = BufferPool.Rent();
             try
             {
                 IgnoreConnectionReset(relay);
@@ -55,12 +56,13 @@ namespace MultiLink.Proxy
                 var closed = new TaskCompletionSource<bool>();
                 var watchControl = WatchControlConnection(closed);
                 var closeIdle = CloseIdleFlows(closed.Task);
-                await ReceiveFromClient(closed.Task);
+                await ReceiveFromClient(buffer, closed.Task);
             }
             catch { }
             finally
             {
                 relay.CloseQuietly();
+                BufferPool.Return(buffer); // depois de fechar o relé: a leitura pendente não escreve mais nele
                 foreach (var flow in flows.Values) CloseFlow(flow);
             }
         }
@@ -101,9 +103,8 @@ namespace MultiLink.Proxy
             });
         }
 
-        async Task ReceiveFromClient(Task closed)
+        async Task ReceiveFromClient(byte[] buffer, Task closed)
         {
-            var buffer = new byte[65536];
             while (!closed.IsCompleted)
             {
                 EndPoint sender = AnyEndPoint(localAddress.AddressFamily);
@@ -195,7 +196,7 @@ namespace MultiLink.Proxy
         // Respostas do destino: devolve ao cliente com o cabeçalho SOCKS do remetente.
         async Task ReturnReplies(Flow flow, AddressFamily family)
         {
-            var buffer = new byte[65536];
+            var buffer = BufferPool.Rent();
             try
             {
                 while (true)
@@ -210,6 +211,7 @@ namespace MultiLink.Proxy
                 }
             }
             catch { } // socket fechado: associação encerrada ou fluxo ocioso
+            BufferPool.Return(buffer);
         }
 
         static byte[] WithSocksHeader(IPEndPoint sender, byte[] data, int length)

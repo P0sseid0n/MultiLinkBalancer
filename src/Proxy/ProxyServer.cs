@@ -17,7 +17,6 @@ namespace MultiLink.Proxy
     public class ProxyServer
     {
         const int Backlog = 1024;
-        const int CopyBufferBytes = 65536;
         const int HalfCloseGraceMs = 30000; // depois que um lado fecha, espera o outro terminar por até 30 s
 
         readonly Balancer balancer;
@@ -124,7 +123,7 @@ namespace MultiLink.Proxy
         // Copia até a origem fechar e então fecha o envio do destino (meio-fechamento do TCP).
         static async Task Copy(Stream source, Stream destination, Socket destinationSocket, Action<int> countBytes)
         {
-            var buffer = new byte[CopyBufferBytes];
+            var buffer = BufferPool.Rent();
             try
             {
                 int read;
@@ -135,6 +134,7 @@ namespace MultiLink.Proxy
                 }
             }
             catch { }
+            BufferPool.Return(buffer);
             try { destinationSocket.Shutdown(SocketShutdown.Send); } catch { }
         }
 
