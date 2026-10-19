@@ -1,6 +1,6 @@
 <script>
   // Botão I/O da tela inicial com o estado embaixo. Ligado: anel verde que se desenha em volta,
-  // uma onda única ao ligar e uma respiração lenta enquanto fica ligado.
+  // uma onda única ao ligar e algumas respirações lentas logo depois.
   let { on, busy, subtitle, warning = false, onToggle } = $props();
 
   let waves = $state(0);
@@ -64,11 +64,12 @@
     pointer-events: none;
   }
   @keyframes wave { 0% { opacity: .6; transform: scale(1); } 100% { opacity: 0; transform: scale(1.5); } }
-  /* respiração lenta do anel enquanto ligado, depois que ele termina de se desenhar */
+  /* respiração lenta do anel depois que ele termina de se desenhar; poucas vezes e para: sem GPU,
+     uma animação infinita redesenha o painel a 60 quadros por segundo enquanto ele fica aberto */
   .io.on::after {
     content: ""; position: absolute; inset: -2px; border-radius: 50%;
     border: 2px solid var(--on); opacity: 0;
-    animation: breathe 3.2s var(--ease-out) .9s infinite;
+    animation: breathe 3.2s var(--ease-out) .9s 3;
     pointer-events: none;
   }
   @keyframes breathe { 0% { opacity: .35; transform: scale(1); } 100% { opacity: 0; transform: scale(1.22); } }
