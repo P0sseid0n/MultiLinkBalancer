@@ -126,7 +126,7 @@ namespace MultiLink.App
             MemoryTrim.Tick();
             Ports.Tick();
 
-            if (Settings.AutoUpdate && now - openedAt > FirstUpdateCheckDelay && now - Updater.LastCheck >= UpdateCheckInterval)
+            if (Settings.AutoUpdate && !DevBuild.Available && now - openedAt > FirstUpdateCheckDelay && now - Updater.LastCheck >= UpdateCheckInterval)
             { var ignored = CheckUpdate(); }
 
             var newEntries = Log.TakeNew();

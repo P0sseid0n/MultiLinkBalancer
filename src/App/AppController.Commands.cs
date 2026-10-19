@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using MultiLink.Links;
 using MultiLink.Platform;
+using MultiLink.Storage;
 
 namespace MultiLink.App
 {
@@ -42,7 +43,13 @@ namespace MultiLink.App
                     return History.Get(Math.Max(10, Math.Min(1440, minutes)), Links.All());
 
                 case "update.check": await CheckUpdate(); return null;
-                case "update.install": await Updater.Install(Log, host.Exit); return null;
+                case "update.install":
+                    if (DevBuild.Available) throw new Exception("No modo de desenvolvimento a atualização trocaria o build local pelo da release. Use Recompilar e reiniciar.");
+                    await Updater.Install(Log, host.Exit);
+                    return null;
+
+                case "dev.rebuild": DevBuild.Start(); return null;
+                case "dev.openFolder": Process.Start("explorer.exe", "\"" + (Text(args, "folder") == "settings" ? AppPaths.Roaming : AppPaths.Local) + "\""); return null;
 
                 case "app.restartElevated": Elevation.StartElevatedInstance(); host.Exit(); return null;
                 case "app.openNetworkConnections": Process.Start("ncpa.cpl"); return null;

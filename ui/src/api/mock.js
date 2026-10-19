@@ -17,6 +17,7 @@ export function createMock(deliver) {
     capture: { on: false, active: false, starting: false, error: null, ipv6: true },
     measuring: false,
     update: { current: '1.0.0', latest: null, state: 'idle', progress: 0, error: null, notes: null },
+    dev: { builtAt: now() - 5 * 60e3, building: false }, // null imita o .exe da release
     links,
     download: null,
   };
@@ -173,6 +174,14 @@ export function createMock(deliver) {
       for (let progress = 0; progress <= 100; progress += 20) { state.update.progress = progress; await sleep(300); }
       Object.assign(state.update, { state: 'uptodate', current: '1.1.0', progress: 0 });
     },
+    'dev.rebuild': async () => {
+      state.dev.building = true;
+      await sleep(3000);
+      Object.assign(state.dev, { builtAt: now(), building: false });
+    },
+    'dev.devTools': () => {},
+    'dev.reload': () => location.reload(),
+    'dev.openFolder': () => {},
     'app.restartElevated': () => { state.admin = true; },
     'app.openNetworkConnections': () => {},
     'app.exit': () => {},

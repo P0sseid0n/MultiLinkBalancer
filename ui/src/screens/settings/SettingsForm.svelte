@@ -1,7 +1,8 @@
 <script>
-  // Ajustes, em seções: ao ligar, distribuição, quedas, avisos, atualizações e sistema.
+  // Ajustes, em seções: ao ligar, distribuição, quedas, avisos, atualizações (ou desenvolvimento) e sistema.
   import { app, run, fire, ask } from '../../state/app.svelte.js';
   import Toggle from '../../components/Toggle.svelte';
+  import { since } from '../../lib/format.js';
 
   const MODES = [ // [valor, título, descrição]; o valor é o BalanceMode do app
     [0, 'Proporcional aos pesos', 'Cada nova conexão vai para um link, na proporção dos pesos.'],
@@ -13,6 +14,7 @@
   const appState = $derived(app.state);
   const capture = $derived(appState.capture);
   const update = $derived(appState.update);
+  const dev = $derived(appState.dev); // null fora do modo de desenvolvimento
 
   // porta: edição local enquanto o campo tem foco
   let port = $state(1080);
@@ -170,6 +172,26 @@
   </div>
 </section>
 
+{#if dev}
+<section>
+  <h2>Desenvolvimento</h2>
+  <div class="body">
+    <div class="field">
+      <p class="update">Versão {update.current} compilada {since(dev.builtAt)} a partir desta pasta. As atualizações do GitHub ficam desligadas para não trocar este build pelo da release.</p>
+      <button class="btn primary" onclick={() => fire('dev.rebuild')} disabled={dev.building}>{dev.building ? 'Recompilando…' : 'Recompilar e reiniciar'}</button>
+      <span class="help">Roda o build.ps1 -Restart numa janela do PowerShell. Se falhar, a janela mostra o erro e o app continua aberto.</span>
+    </div>
+    <div class="row">
+      <button class="btn" onclick={() => fire('dev.devTools')}>DevTools (F12)</button>
+      <button class="btn" onclick={() => fire('dev.reload')}>Recarregar interface (F5)</button>
+    </div>
+    <div class="row">
+      <button class="btn quiet" onclick={() => fire('dev.openFolder', { folder: 'logs' })}>Pasta de logs</button>
+      <button class="btn quiet" onclick={() => fire('dev.openFolder', { folder: 'settings' })}>Pasta de ajustes</button>
+    </div>
+  </div>
+</section>
+{:else}
 <section>
   <h2>Atualizações</h2>
   <div class="body">
@@ -187,6 +209,7 @@
     </div>
   </div>
 </section>
+{/if}
 
 <section>
   <h2>Sistema</h2>

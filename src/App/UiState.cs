@@ -7,6 +7,7 @@ using System.Net;
 using System.Threading;
 using MultiLink.Common;
 using MultiLink.Links;
+using MultiLink.Platform;
 
 namespace MultiLink.App
 {
@@ -32,6 +33,8 @@ namespace MultiLink.App
                     { "error", capture.Error }, { "ipv6", capture.Ipv6 } } },
                 { "measuring", app.Links.Measuring },
                 { "update", app.Updater.ToState() },
+                { "dev", DevBuild.Available ? new Dictionary<string, object> {
+                    { "builtAt", UnixTime.ToMs(DevBuild.BuiltAt) }, { "building", DevBuild.Running } } : null },
                 { "links", LinksToJson(app.Links.All()) },
                 { "download", app.Downloads.ToState() }
             };

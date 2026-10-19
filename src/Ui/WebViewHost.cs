@@ -76,10 +76,11 @@ namespace MultiLink.Ui
         void Configure(CoreWebView2 webView)
         {
             bool devMode = devServerUrl != null;
+            bool devTools = devMode || DevBuild.Available; // F12, F5 e o menu de contexto
             var settings = webView.Settings;
-            settings.AreDevToolsEnabled = devMode;
-            settings.AreDefaultContextMenusEnabled = devMode;
-            settings.AreBrowserAcceleratorKeysEnabled = devMode;
+            settings.AreDevToolsEnabled = devTools;
+            settings.AreDefaultContextMenusEnabled = devTools;
+            settings.AreBrowserAcceleratorKeysEnabled = devTools;
             settings.IsStatusBarEnabled = false;
             settings.IsZoomControlEnabled = false;
             settings.IsPasswordAutosaveEnabled = false;
@@ -153,6 +154,8 @@ namespace MultiLink.Ui
                     case "ui.ready": result = new Dictionary<string, object> { { "state", app.GetState() }, { "log", app.Log.Backlog() } }; break;
                     case "window.minimize":
                     case "window.close": window.HidePanel(); result = null; break;
+                    case "dev.devTools": controller.CoreWebView2.OpenDevToolsWindow(); result = null; break;
+                    case "dev.reload": controller.CoreWebView2.Reload(); result = null; break;
                     default: result = await app.Handle(command, args); break;
                 }
                 Post(new Dictionary<string, object> { { "type", "reply" }, { "id", id }, { "ok", true }, { "result", result } });

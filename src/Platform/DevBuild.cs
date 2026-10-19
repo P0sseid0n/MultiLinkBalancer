@@ -1,6 +1,7 @@
-// "Recompilar e reiniciar" da bandeja: roda o build.ps1 -Restart numa janela do PowerShell. Só existe quando o
-// .exe está ao lado do build.ps1 (no repositório). O script fecha este MultiLink pelo evento de saída, troca o .exe
-// e reabre; se a compilação falhar, a janela fica aberta com o erro e o MultiLink continua rodando.
+// Modo de desenvolvimento: o .exe está ao lado do build.ps1 (no repositório). Nesse modo o app não se atualiza
+// pelo GitHub (trocaria o build local pelo da release), libera o DevTools e ganha o "Recompilar e reiniciar":
+// roda o build.ps1 -Restart numa janela do PowerShell. O script fecha este MultiLink pelo evento de saída, troca
+// o .exe e reabre; se a compilação falhar, a janela fica aberta com o erro e o MultiLink continua rodando.
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -14,7 +15,10 @@ namespace MultiLink.Platform
 
         static string ScriptPath { get { return Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "build.ps1"); } }
 
-        public static bool Available { get { return File.Exists(ScriptPath); } }
+        public static readonly bool Available = File.Exists(ScriptPath);
+
+        // quando este .exe foi compilado (o build.ps1 -Restart move o arquivo, o que mantém a data)
+        public static readonly DateTime BuiltAt = File.GetLastWriteTimeUtc(Application.ExecutablePath);
 
         public static bool Running { get { return running != null && !running.HasExited; } }
 

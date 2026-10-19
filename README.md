@@ -165,7 +165,10 @@ Para ver a UI em desenvolvimento dentro do app real (com dados reais), abra o ap
 ./build.ps1 -Restart   # compila, fecha o MultiLink aberto (como pelo "Sair"), troca o .exe e reabre
 ```
 
-Com o `.exe` na pasta do repositório (ao lado do `build.ps1`), o menu da bandeja ganha **Recompilar e reiniciar**, que roda o `build.ps1 -Restart` numa janela do PowerShell (se falhar, a janela fica aberta com o erro).
+**Modo de desenvolvimento:** com o `.exe` na pasta do repositório (ao lado do `build.ps1`), o app mostra uma faixa
+nos Ajustes e troca a seção "Atualizações" por "Desenvolvimento". Nesse modo ele não procura nem instala versões do
+GitHub (trocaria o build local pelo da release), libera o DevTools (F12, F5) e tem **Recompilar e reiniciar**, também
+no menu da bandeja, que roda o `build.ps1 -Restart` numa janela do PowerShell (se falhar, a janela fica aberta com o erro).
 
 Usa o `csc.exe` do .NET Framework (já incluído no Windows) e Node.js para o front. A versão gravada no `.exe`
 vem da última tag `vX.Y.Z` do git (ou de `-Version 1.2.3`).
