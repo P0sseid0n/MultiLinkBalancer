@@ -24,6 +24,17 @@ namespace MultiLink.Common
             await connect;
         }
 
+        // Com bind(ip, 0) antes do connect, o Windows reserva uma porta só para o socket e, se as portas efêmeras
+        // acabarem (outro programa abrindo conexões demais), a conexão falha. SO_REUSE_UNICASTPORT adia a escolha
+        // da porta para o connect, que pode reaproveitá-la para outro destino, como faz um connect sem bind.
+        const SocketOptionName ReuseUnicastPort = (SocketOptionName)0x3007;
+
+        public static void BindForConnect(this Socket socket, IPAddress localAddress)
+        {
+            try { socket.SetSocketOption(SocketOptionLevel.Socket, ReuseUnicastPort, true); } catch { }
+            socket.Bind(new IPEndPoint(localAddress, 0));
+        }
+
         // No IPv6 o Windows costuma deixar o "weak host send" ligado: preso só ao IP do link, o socket seguiria a
         // melhor rota do sistema (a 2000::/3 da captura) e voltaria para o próprio MultiLink. IPV6_UNICAST_IF força a saída.
         const SocketOptionName IPv6UnicastInterface = (SocketOptionName)31;

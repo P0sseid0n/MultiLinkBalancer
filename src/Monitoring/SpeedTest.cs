@@ -53,7 +53,7 @@ namespace MultiLink.Monitoring
                 sockets.Add(socket);
                 try
                 {
-                    socket.Bind(new IPEndPoint(link.Address, 0));
+                    socket.BindForConnect(link.Address);
                     await socket.ConnectTaskAsync(new IPEndPoint(server, 443));
                     var tls = new SslStream(new NetworkStream(socket, true));
                     await tls.AuthenticateAsClientAsync(Host, null, SslProtocols.Tls12, false);

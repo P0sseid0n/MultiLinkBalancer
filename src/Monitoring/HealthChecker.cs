@@ -44,7 +44,7 @@ namespace MultiLink.Monitoring
                 try
                 {
                     var stopwatch = Stopwatch.StartNew();
-                    socket.Bind(new IPEndPoint(link.Address, 0));
+                    socket.BindForConnect(link.Address);
                     await socket.ConnectWithTimeout(probe, ProbeTimeoutMs);
                     MarkOnline(link, (int)stopwatch.ElapsedMilliseconds);
                     await SampleQuality(link, lostEarlierProbe || link.LatencyMs >= SlowAsLostMs ? -1 : link.LatencyMs);
@@ -72,7 +72,7 @@ namespace MultiLink.Monitoring
                 var socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
                 try
                 {
-                    socket.Bind(new IPEndPoint(address, 0));
+                    socket.BindForConnect(address);
                     socket.UseInterfaceV6(link.InterfaceIndexV6);
                     await socket.ConnectWithTimeout(probe, ProbeTimeoutMs);
                     works = true;

@@ -206,7 +206,7 @@ namespace MultiLink.Downloads
             Interlocked.Exchange(ref worker.LastActivity, Stopwatch.GetTimestamp());
             try
             {
-                socket.Bind(new IPEndPoint(link.Address, 0));
+                socket.BindForConnect(link.Address);
                 socket.ReceiveBufferSize = 1 << 20;
                 await socket.ConnectWithTimeout(new IPEndPoint(job.Server, job.Uri.Port), ConnectTimeoutMs);
             }

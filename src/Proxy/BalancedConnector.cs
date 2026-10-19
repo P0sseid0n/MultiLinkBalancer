@@ -116,7 +116,7 @@ namespace MultiLink.Proxy
             var socket = new Socket(target.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             try
             {
-                socket.Bind(new IPEndPoint(useIpv6 ? link.AddressV6 : link.Address, 0));
+                socket.BindForConnect(useIpv6 ? link.AddressV6 : link.Address);
                 if (useIpv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
                 socket.NoDelay = true;
                 socket.EnableKeepAlive(KeepAliveIdleMs, KeepAliveIntervalMs);
