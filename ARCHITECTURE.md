@@ -58,7 +58,7 @@ ao `AppController` e publica o estado que ele devolve.
 | `Monitoring/` | Saúde dos links, quedas, failover pelo roteamento, histórico e medição | `HealthChecker`, `IcmpPing`, `LinkMonitor`, `RouteFailover`, `UsageHistory`, `SpeedTest` |
 | `Downloads/` | Download acelerado (HTTP Range por todos os links) | `SegmentedDownload`, `DownloadManager` |
 | `Updates/` | Atualização pelo GitHub Releases | `Updater` |
-| `Platform/` | Tudo que mexe no Windows | `ProcessRunner`, `PowerShell`, `Elevation`, `NetworkAdapters`, `RouteMetrics`, `SystemProxy`, `StartupRegistration`, `TrafficCapture`, `JobObject`, `EmbeddedFiles` |
+| `Platform/` | Tudo que mexe no Windows | `ProcessRunner`, `PowerShell`, `Elevation`, `NetworkAdapters`, `RouteMetrics`, `SystemProxy`, `StartupRegistration`, `TrafficCapture`, `NetworkProfiles`, `JobObject`, `EmbeddedFiles` |
 | `App/` | Orquestração: ciclo de vida, comandos da interface, estado publicado | `AppController`, `LinkManager`, `UiState`, `IAppHost` |
 | `Ui/` | Janela nativa, bandeja, atalhos e WebView2 | `MainWindow`, `TrayIcon`, `PanelPlacement`, `GlobalHotkeys`, `WebViewHost`, `AppIcon` |
 

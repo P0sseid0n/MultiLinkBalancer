@@ -96,6 +96,7 @@ namespace MultiLink.Platform
                 if (!wanted || started.HasExited) return;
                 Active = true;
                 log.Add("Captura ligada" + (Ipv6 ? " (IPv4 e IPv6)" : "") + ": todos os programas (inclusive jogos e apps que ignoram o proxy) passam pelo MultiLink.");
+                TidyNetworkProfiles();
             }
             catch (Exception ex)
             {
@@ -134,6 +135,17 @@ namespace MultiLink.Platform
             started.BeginErrorReadLine();
             process = started;
             return started;
+        }
+
+        // Não atrapalha a captura: se falhar, só ficam os perfis antigos no registro.
+        async void TidyNetworkProfiles()
+        {
+            try
+            {
+                int removed = await NetworkProfiles.Tidy(AdapterName);
+                if (removed > 0) log.Add((removed == 1 ? "Removido 1 perfil de rede antigo" : "Removidos " + removed + " perfis de rede antigos") + " do adaptador " + AdapterName + ".");
+            }
+            catch (Exception ex) { log.Add("Não foi possível limpar os perfis de rede antigos: " + ex.Message, ActivityLog.Error); }
         }
 
         static async Task WaitForAdapter(Process tun2socks)

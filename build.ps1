@@ -48,7 +48,7 @@ if ($LASTEXITCODE) { throw 'compilação do gerador de ícone falhou' }
 if ($LASTEXITCODE) { throw 'geração do ícone falhou' }
 
 & $csc /nologo /target:winexe /optimize+ /platform:x64 /nowarn:4014 "/out:$out" "/win32icon:$ico" `
-    /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll `
+    /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Management.dll `
     "/r:$wv\Microsoft.Web.WebView2.Core.dll" `
     "/resource:$html,ui.index.html" `
     "/resource:$wv\Microsoft.Web.WebView2.Core.dll,wv2.core.dll" `
