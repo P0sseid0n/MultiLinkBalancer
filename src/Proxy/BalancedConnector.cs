@@ -24,6 +24,7 @@ namespace MultiLink.Proxy
         const int ConnectTimeoutMs = 8000;
         const int LocalConnectTimeoutMs = 3000; // aparelho da rede local responde rápido ou não está lá
         const int DnsRetryDelayMs = 1000;
+        const int StaggerMs = 300; // espera pelo primeiro endereço antes de tentar o próximo em paralelo
         const int KeepAliveIdleMs = 30000, KeepAliveIntervalMs = 3000; // conexão morta detectada em ~1 min
 
         readonly Balancer balancer;
@@ -70,27 +71,65 @@ namespace MultiLink.Proxy
                     break;
                 }
                 tried.Add(link);
-                string error = null;
-                foreach (var target in targets)
+                string error;
+                try
                 {
-                    var socket = new Socket(target.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    try
-                    {
-                        socket.Bind(new IPEndPoint(useIpv6 ? link.AddressV6 : link.Address, 0));
-                        if (useIpv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
-                        socket.NoDelay = true;
-                        socket.EnableKeepAlive(KeepAliveIdleMs, KeepAliveIntervalMs);
-                        await socket.ConnectWithTimeout(new IPEndPoint(target, port), local != null ? LocalConnectTimeoutMs : ConnectTimeoutMs);
-                        Interlocked.Increment(ref link.Traffic.TotalConnections);
-                        return new OutboundConnection { Socket = socket, Link = link };
-                    }
-                    catch (Exception ex) { error = ex.Message; socket.CloseQuietly(); }
+                    var socket = await ConnectStaggered(link, targets, port, useIpv6, local != null ? LocalConnectTimeoutMs : ConnectTimeoutMs);
+                    Interlocked.Increment(ref link.Traffic.TotalConnections);
+                    return new OutboundConnection { Socket = socket, Link = link };
                 }
+                catch (Exception ex) { error = ex.Message; }
                 if (local != null) break; // aparelho da rede local desligado: não é falha do link
                 log.Add(string.Format("[{0}] falha ao conectar {1}:{2} ({3}){4}", link.Name, host, port, error,
                     attempt < maxAttempts - 1 ? " - tentando outro link" : ""));
             }
             return null;
+        }
+
+        // Endereços do destino em sequência escalonada (como o Happy Eyeballs, RFC 8305): se um não responde em
+        // StaggerMs, o próximo começa junto, sem esperar o tempo esgotar. Vale o que conectar primeiro; os outros são fechados.
+        static async Task<Socket> ConnectStaggered(Link link, IPAddress[] targets, int port, bool useIpv6, int timeoutMs)
+        {
+            var pending = new List<Task<Socket>>();
+            Exception lastError = null;
+            int next = 0;
+            while (true)
+            {
+                if (next < targets.Length) pending.Add(ConnectOne(link, targets[next++], port, useIpv6, timeoutMs));
+                if (pending.Count == 0) throw lastError;
+                var waitFor = new List<Task>(pending);
+                if (next < targets.Length) waitFor.Add(Task.Delay(StaggerMs));
+                var attempt = await Task.WhenAny(waitFor) as Task<Socket>;
+                if (attempt == null) continue; // ainda sem resposta: o próximo endereço entra na disputa
+                pending.Remove(attempt);
+                if (attempt.Status == TaskStatus.RanToCompletion)
+                {
+                    foreach (var loser in pending) CloseWhenDone(loser);
+                    return attempt.Result;
+                }
+                lastError = attempt.Exception.InnerException;
+            }
+        }
+
+        static async Task<Socket> ConnectOne(Link link, IPAddress target, int port, bool useIpv6, int timeoutMs)
+        {
+            var socket = new Socket(target.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            try
+            {
+                socket.Bind(new IPEndPoint(useIpv6 ? link.AddressV6 : link.Address, 0));
+                if (useIpv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
+                socket.NoDelay = true;
+                socket.EnableKeepAlive(KeepAliveIdleMs, KeepAliveIntervalMs);
+                await socket.ConnectWithTimeout(new IPEndPoint(target, port), timeoutMs);
+                return socket;
+            }
+            catch { socket.CloseQuietly(); throw; }
+        }
+
+        // Tentativa que perdeu a disputa: se ainda conectar, fecha.
+        static void CloseWhenDone(Task<Socket> attempt)
+        {
+            attempt.ContinueWith(task => { if (task.Status == TaskStatus.RanToCompletion) task.Result.CloseQuietly(); else { var ignored = task.Exception; } });
         }
 
         // Logo que a captura liga, o DNS do Windows passa a sair pelo adaptador virtual e as primeiras
