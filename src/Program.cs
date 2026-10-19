@@ -42,6 +42,11 @@ namespace MultiLink
                 if (!firstInstance) { ShowExistingInstance(); return; }
                 PrepareWebView2();
                 ServicePointManager.DefaultConnectionLimit = 1000;
+                // O DNS do .NET Framework ocupa uma thread do pool até responder. Numa rajada de conexões (página
+                // pesada) o pool esgota e só ganha uma thread nova a cada ~0,5 s: as conexões ficam na fila.
+                int workers, io;
+                ThreadPool.GetMinThreads(out workers, out io);
+                ThreadPool.SetMinThreads(Math.Max(workers, 64), Math.Max(io, 64));
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 Run(args.Any(arg => arg.Equals("/tray", StringComparison.OrdinalIgnoreCase)));
