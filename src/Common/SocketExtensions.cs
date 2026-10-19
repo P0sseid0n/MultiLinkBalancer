@@ -33,6 +33,17 @@ namespace MultiLink.Common
             if (interfaceIndex > 0) socket.SetSocketOption(SocketOptionLevel.IPv6, IPv6UnicastInterface, interfaceIndex);
         }
 
+        // Keepalive do TCP: sem ele, uma conexão cujo link caiu fica esperando dados para sempre. O Windows
+        // manda 10 sondas depois do tempo ocioso; sem resposta, a leitura falha e o relé fecha os dois lados.
+        public static void EnableKeepAlive(this Socket socket, int idleMs, int intervalMs)
+        {
+            var values = new byte[12];
+            BitConverter.GetBytes(1).CopyTo(values, 0);
+            BitConverter.GetBytes(idleMs).CopyTo(values, 4);
+            BitConverter.GetBytes(intervalMs).CopyTo(values, 8);
+            try { socket.IOControl(IOControlCode.KeepAliveValues, values, null); } catch { }
+        }
+
         public static void CloseQuietly(this Socket socket)
         {
             if (socket == null) return;

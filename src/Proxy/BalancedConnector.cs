@@ -24,6 +24,7 @@ namespace MultiLink.Proxy
         const int ConnectTimeoutMs = 8000;
         const int LocalConnectTimeoutMs = 3000; // aparelho da rede local responde rápido ou não está lá
         const int DnsRetryDelayMs = 1000;
+        const int KeepAliveIdleMs = 30000, KeepAliveIntervalMs = 3000; // conexão morta detectada em ~1 min
 
         readonly Balancer balancer;
         readonly ActivityLog log;
@@ -78,6 +79,7 @@ namespace MultiLink.Proxy
                         socket.Bind(new IPEndPoint(useIpv6 ? link.AddressV6 : link.Address, 0));
                         if (useIpv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
                         socket.NoDelay = true;
+                        socket.EnableKeepAlive(KeepAliveIdleMs, KeepAliveIntervalMs);
                         await socket.ConnectWithTimeout(new IPEndPoint(target, port), local != null ? LocalConnectTimeoutMs : ConnectTimeoutMs);
                         Interlocked.Increment(ref link.Traffic.TotalConnections);
                         return new OutboundConnection { Socket = socket, Link = link };
