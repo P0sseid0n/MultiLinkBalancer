@@ -46,7 +46,7 @@ namespace MultiLink.Proxy
         public async Task Run()
         {
             relay = new Socket(localAddress.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-            var buffer = BufferPool.Rent();
+            var buffer = BufferPool.Datagram.Rent();
             try
             {
                 IgnoreConnectionReset(relay);
@@ -62,7 +62,7 @@ namespace MultiLink.Proxy
             finally
             {
                 relay.CloseQuietly();
-                BufferPool.Return(buffer); // depois de fechar o relé: a leitura pendente não escreve mais nele
+                BufferPool.Datagram.Return(buffer); // depois de fechar o relé: a leitura pendente não escreve mais nele
                 foreach (var flow in flows.Values) CloseFlow(flow);
             }
         }
@@ -196,14 +196,19 @@ namespace MultiLink.Proxy
         // Respostas do destino: devolve ao cliente com o cabeçalho SOCKS do remetente.
         async Task ReturnReplies(Flow flow, AddressFamily family)
         {
-            var buffer = BufferPool.Rent();
+            var buffer = BufferPool.Datagram.Rent();
             try
             {
                 while (true)
                 {
                     EndPoint sender = AnyEndPoint(family);
-                    int length = await Task.Factory.FromAsync((callback, state) => flow.Socket.BeginReceiveFrom(buffer, 0, buffer.Length, SocketFlags.None, ref sender, callback, state),
+                    int length;
+                    try
+                    {
+                        length = await Task.Factory.FromAsync((callback, state) => flow.Socket.BeginReceiveFrom(buffer, 0, buffer.Length, SocketFlags.None, ref sender, callback, state),
                                                               result => flow.Socket.EndReceiveFrom(result, ref sender), null);
+                    }
+                    catch (SocketException ex) { if (ex.SocketErrorCode == SocketError.MessageSize) continue; throw; } // maior que o buffer: só ele se perde
                     Interlocked.Add(ref flow.Link.Traffic.BytesDown, length);
                     Interlocked.Exchange(ref flow.LastActivity, Stopwatch.GetTimestamp());
                     var client = clientEndPoint;
@@ -211,7 +216,7 @@ namespace MultiLink.Proxy
                 }
             }
             catch { } // socket fechado: associação encerrada ou fluxo ocioso
-            BufferPool.Return(buffer);
+            BufferPool.Datagram.Return(buffer);
         }
 
         static byte[] WithSocksHeader(IPEndPoint sender, byte[] data, int length)

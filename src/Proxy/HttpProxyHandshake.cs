@@ -26,9 +26,9 @@ namespace MultiLink.Proxy
         // firstByte: o byte já lido para identificar o protocolo.
         public static async Task<ProxyRequest> Read(NetworkStream client, byte firstByte)
         {
-            var buffer = BufferPool.Rent(); // o cabeçalho pode ter até BufferPool.Size bytes
+            var buffer = BufferPool.Stream.Rent(); // o cabeçalho pode ter até BufferPool.Stream.Size bytes
             try { return await Read(client, firstByte, buffer); }
-            finally { BufferPool.Return(buffer); }
+            finally { BufferPool.Stream.Return(buffer); }
         }
 
         static async Task<ProxyRequest> Read(NetworkStream client, byte firstByte, byte[] buffer)

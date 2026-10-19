@@ -123,7 +123,7 @@ namespace MultiLink.Proxy
         // Copia até a origem fechar e então fecha o envio do destino (meio-fechamento do TCP).
         static async Task Copy(Stream source, Stream destination, Socket destinationSocket, Action<int> countBytes)
         {
-            var buffer = BufferPool.Rent();
+            var buffer = BufferPool.Stream.Rent();
             try
             {
                 int read;
@@ -134,7 +134,7 @@ namespace MultiLink.Proxy
                 }
             }
             catch { }
-            BufferPool.Return(buffer);
+            BufferPool.Stream.Return(buffer);
             try { destinationSocket.Shutdown(SocketShutdown.Send); } catch { }
         }
 
