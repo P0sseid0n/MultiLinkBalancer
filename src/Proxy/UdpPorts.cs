@@ -36,6 +36,9 @@ namespace MultiLink.Proxy
 
         readonly object sync = new object();
         readonly List<Port> open = new List<Port>();
+        readonly UdpOversizeLog oversize;
+
+        public UdpPorts(UdpOversizeLog oversize) { this.oversize = oversize; }
 
         // null se não deu para abrir um socket no link.
         public Flow Open(Link link, IPEndPoint target, UdpAssociation owner)
@@ -92,7 +95,7 @@ namespace MultiLink.Proxy
         }
 
         // Respostas dos destinos: cada uma vai para a associação que mandou para aquele remetente.
-        static async Task Receive(Port port)
+        async Task Receive(Port port)
         {
             var buffer = BufferPool.Datagram.Rent();
             var family = port.Socket.AddressFamily;
@@ -107,7 +110,12 @@ namespace MultiLink.Proxy
                         length = await Task.Factory.FromAsync((callback, state) => port.Socket.BeginReceiveFrom(buffer, 0, buffer.Length, SocketFlags.None, ref sender, callback, state),
                                                               result => port.Socket.EndReceiveFrom(result, ref sender), null);
                     }
-                    catch (SocketException ex) { if (ex.SocketErrorCode == SocketError.MessageSize) continue; throw; } // maior que o buffer: só ele se perde
+                    catch (SocketException ex) // maior que o buffer: só ele se perde
+                    {
+                        if (ex.SocketErrorCode != SocketError.MessageSize) throw;
+                        oversize.Dropped(true);
+                        continue;
+                    }
                     Flow flow;
                     if (!port.Flows.TryGetValue(sender.ToString(), out flow)) continue; // remetente que nenhuma associação procurou
                     Interlocked.Add(ref port.Link.Traffic.BytesDown, length);

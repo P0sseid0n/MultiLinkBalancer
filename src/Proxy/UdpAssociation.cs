@@ -26,6 +26,7 @@ namespace MultiLink.Proxy
         readonly Balancer balancer;
         readonly UdpPorts ports;
         readonly UdpBurstLog bursts;
+        readonly UdpOversizeLog oversize;
         readonly NetworkStream control;
         readonly IPAddress clientAddress;
         readonly IPAddress localAddress;
@@ -33,11 +34,13 @@ namespace MultiLink.Proxy
         Socket relay;
         EndPoint clientEndPoint; // de onde o cliente mandou o último datagrama: as respostas vão para lá
 
-        public UdpAssociation(Balancer balancer, UdpPorts ports, UdpBurstLog bursts, NetworkStream control, Socket controlSocket)
+        public UdpAssociation(Balancer balancer, UdpPorts ports, UdpBurstLog bursts, UdpOversizeLog oversize,
+                              NetworkStream control, Socket controlSocket)
         {
             this.balancer = balancer;
             this.ports = ports;
             this.bursts = bursts;
+            this.oversize = oversize;
             this.control = control;
             clientAddress = ((IPEndPoint)controlSocket.RemoteEndPoint).Address;
             localAddress = ((IPEndPoint)controlSocket.LocalEndPoint).Address;
@@ -112,7 +115,8 @@ namespace MultiLink.Proxy
                                                      result => relay.EndReceiveFrom(result, ref sender), null);
                 if (await Task.WhenAny(receive, closed) != receive) { receive.ContinueWith(task => { var ignored = task.Exception; }); break; }
                 int length;
-                try { length = await receive; } catch (SocketException) { continue; }
+                try { length = await receive; }
+                catch (SocketException ex) { if (ex.SocketErrorCode == SocketError.MessageSize) oversize.Dropped(false); continue; }
                 // só o dono da associação pode usar o relé
                 var senderAddress = ((IPEndPoint)sender).Address;
                 if (!senderAddress.Equals(clientAddress) && !(IPAddress.IsLoopback(senderAddress) && IPAddress.IsLoopback(clientAddress))) continue;
