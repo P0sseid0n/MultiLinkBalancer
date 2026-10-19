@@ -117,6 +117,9 @@ namespace MultiLink.Platform
                 UseShellExecute = false, CreateNoWindow = true,
                 RedirectStandardOutput = true, RedirectStandardError = true
             };
+            // Sem limite, o Go guarda a memória de um pico de conexões por muito tempo (centenas de MB parados).
+            // Limite flexível: acima dele o coletor roda mais vezes e devolve a sobra ao Windows.
+            startInfo.EnvironmentVariables["GOMEMLIMIT"] = "256MiB";
             var started = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
             started.OutputDataReceived += (sender, e) => RelayOutput(e.Data);
             started.ErrorDataReceived += (sender, e) => RelayOutput(e.Data);
