@@ -32,6 +32,7 @@ namespace MultiLink.App
         internal readonly RouteFailover RouteFailover;
         internal readonly UsageHistory History = UsageHistory.Load();
         internal readonly DownloadManager Downloads;
+        internal readonly PortUsageMonitor Ports;
         internal bool StartupEnabled { get; private set; }
 
         readonly IAppHost host;
@@ -47,6 +48,7 @@ namespace MultiLink.App
             Monitor = new LinkMonitor(Log);
             RouteFailover = new RouteFailover(Settings, Log);
             Downloads = new DownloadManager(Log);
+            Ports = new PortUsageMonitor(Log);
             Monitor.HealthChanged += OnHealthChanged;
         }
 
@@ -64,6 +66,7 @@ namespace MultiLink.App
             if (IsAdmin && StartupRegistration.UsesRunKey) { var ignored = SetStartup(true); }
 
             Links.Start();
+            Ports.Start();
             var names = Links.All().Where(link => link.Present).Select(link => link.Name).OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase).ToList();
             Log.Add(names.Count > 0 ? "MultiLink aberto com " + string.Join(" e ", names) + "." : "MultiLink aberto. Nenhuma conexão com internet encontrada.");
 
@@ -95,6 +98,7 @@ namespace MultiLink.App
             RouteFailover.RestoreAll(Links.All()); // nunca deixar o Windows com rotas alteradas depois de fechar
             Capture.Stop(); // antes do proxy: o tun2socks entrega tudo a ele
             Proxy.Stop();
+            Ports.Stop();
             History.Save();
             Settings.Save();
         }
@@ -120,6 +124,7 @@ namespace MultiLink.App
             RouteFailover.Apply(links);
             Downloads.UpdateRates(seconds);
             MemoryTrim.Tick();
+            Ports.Tick();
 
             if (Settings.AutoUpdate && now - openedAt > FirstUpdateCheckDelay && now - Updater.LastCheck >= UpdateCheckInterval)
             { var ignored = CheckUpdate(); }
