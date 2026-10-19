@@ -119,6 +119,7 @@ namespace MultiLink.App
             Monitor.Evaluate(links, Balancer.QualityAware);
             RouteFailover.Apply(links);
             Downloads.UpdateRates(seconds);
+            MemoryTrim.Tick();
 
             if (Settings.AutoUpdate && now - openedAt > FirstUpdateCheckDelay && now - Updater.LastCheck >= UpdateCheckInterval)
             { var ignored = CheckUpdate(); }
