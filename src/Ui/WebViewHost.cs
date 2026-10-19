@@ -108,6 +108,15 @@ namespace MultiLink.Ui
 
         public void Show() { if (controller != null) controller.IsVisible = true; }
 
+        // Janela do processo do WebView2 (o DevTools, por exemplo).
+        public bool OwnsWindow(IntPtr hwnd)
+        {
+            if (controller == null || hwnd == IntPtr.Zero) return false;
+            uint processId;
+            NativeMethods.GetWindowThreadProcessId(hwnd, out processId);
+            try { return processId == controller.CoreWebView2.BrowserProcessId; } catch { return false; }
+        }
+
         public void NotifyMoved() { if (controller != null) controller.NotifyParentWindowPositionChanged(); }
 
         public void Post(object message)

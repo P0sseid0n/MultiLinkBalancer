@@ -199,11 +199,15 @@ namespace MultiLink.Ui
             app.Links.MeasureOnFirstRun();
         }
 
-        // Clique fora do painel: volta para a bandeja.
+        // Clique fora do painel: volta para a bandeja. O foco indo para o DevTools não conta: esconder destruiria o
+        // WebView e fecharia o DevTools junto. Verificado depois da troca de foco, quando a nova janela já está na frente.
         protected override void OnDeactivate(EventArgs e)
         {
             base.OnDeactivate(e);
-            if (openDialogs == 0 && Visible && !exiting) HidePanel();
+            BeginInvoke(new Action(() =>
+            {
+                if (openDialogs == 0 && Visible && !exiting && !webView.OwnsWindow(NativeMethods.GetForegroundWindow())) HidePanel();
+            }));
         }
 
         protected override void OnVisibleChanged(EventArgs e)
