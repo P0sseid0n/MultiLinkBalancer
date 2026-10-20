@@ -32,7 +32,6 @@ namespace MultiLink.Monitoring
         const int SlowAsLostMs = 900;      // o Windows reenvia o SYN após ~1 s: resposta lenta assim conta como perda
         const int FailuresUntilDown = 2;
         const int IcmpTriesBeforeBlocked = 5;
-        static readonly TimeSpan Ipv6RecheckInterval = TimeSpan.FromMinutes(2);
 
         public static async Task Check(Link link)
         {
@@ -60,13 +59,13 @@ namespace MultiLink.Monitoring
         }
 
         // Sem internet no IPv4 o link já sai do balanceamento; aqui só importa se vale mandar IPv6 por ele.
+        // Precisam responder todas as sondas: num IPv6 instável, uma de duas responde por sorte (ver LinkIpv6).
         static async Task CheckIpv6(Link link)
         {
             var address = link.AddressV6;
-            if (address == null) { link.Ipv6Works = false; return; }
-            if (DateTime.UtcNow - link.Ipv6CheckedAt < Ipv6RecheckInterval) return;
-            link.Ipv6CheckedAt = DateTime.UtcNow;
-            bool works = false;
+            if (address == null) { link.Ipv6.Works = false; return; }
+            if (!link.Ipv6.TryStartCheck(DateTime.UtcNow)) return;
+            bool works = true;
             foreach (var probe in ProbesV6)
             {
                 var socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
@@ -75,13 +74,11 @@ namespace MultiLink.Monitoring
                     socket.BindForConnect(address);
                     socket.UseInterfaceV6(link.InterfaceIndexV6);
                     await socket.ConnectWithTimeout(probe, ProbeTimeoutMs);
-                    works = true;
-                    break;
                 }
-                catch { }
+                catch { works = false; break; }
                 finally { socket.CloseQuietly(); }
             }
-            link.Ipv6Works = works;
+            link.Ipv6.Checked(works, DateTime.UtcNow);
         }
 
         static void MarkOnline(Link link, int latencyMs)

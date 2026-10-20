@@ -65,6 +65,8 @@ direto pelos adaptadores reais. A rede local (impressoras, roteador, outros PCs)
 **IPv6**: quando algum link tem IPv6, a rota `2000::/3` (toda a internet IPv6) também vai para o adaptador, que
 recebe um endereço privado (ULA). Com isso o Windows prefere IPv4 nos sites que têm os dois, e os destinos só IPv6
 passam pelo MultiLink e saem pelos links que têm IPv6. Sem nenhum link com IPv6, nada muda no IPv6 do sistema.
+Um IPv6 instável (o teste falha ou conexões a vários destinos esgotam o tempo) deixa de ser usado e é testado
+de novo depois de 5 min, com a espera dobrando a cada nova queda (até 1 h).
 
 - **Segurança**: o tun2socks roda vinculado ao MultiLink (Job Object do Windows). Se o app fechar ou travar, o
   Windows encerra o tun2socks, o adaptador some e as rotas somem junto: a internet volta ao normal sozinha.

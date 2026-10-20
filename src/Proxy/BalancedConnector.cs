@@ -60,7 +60,7 @@ namespace MultiLink.Proxy
             int maxAttempts = local != null ? 1 : MaxAttempts;
 
             var tried = new List<Link>();
-            if (useIpv6) tried.AddRange(balancer.Snapshot().Where(link => !link.Ipv6Works));
+            if (useIpv6) tried.AddRange(balancer.Snapshot().Where(link => !link.Ipv6.Works));
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
                 var link = local ?? balancer.Pick(host, tried);
@@ -76,9 +76,15 @@ namespace MultiLink.Proxy
                 {
                     var socket = await ConnectStaggered(link, targets, port, useIpv6, local != null ? LocalConnectTimeoutMs : ConnectTimeoutMs);
                     Interlocked.Increment(ref link.Traffic.TotalConnections);
+                    if (useIpv6) link.Ipv6.ConnectSucceeded();
                     return new OutboundConnection { Socket = socket, Link = link };
                 }
-                catch (Exception ex) { error = ex.Message; }
+                catch (Exception ex)
+                {
+                    error = ex.Message;
+                    // sem resposta em vários destinos IPv6: o IPv6 do link é que não funciona (o LinkMonitor avisa)
+                    if (useIpv6 && ex is TimeoutException) link.Ipv6.ConnectTimedOut(host, DateTime.UtcNow);
+                }
                 if (local != null) break; // aparelho da rede local desligado: não é falha do link
                 log.Add(string.Format("[{0}] falha ao conectar {1}:{2} ({3}){4}", link.Name, host, port, error,
                     attempt < maxAttempts - 1 ? " - tentando outro link" : ""));

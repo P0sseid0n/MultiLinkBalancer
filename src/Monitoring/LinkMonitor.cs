@@ -1,5 +1,5 @@
 // Acompanha o estado de cada link a cada segundo: avisa as quedas e voltas (HealthChanged) e
-// registra quando um link fica instável por perda de pacotes e quando melhora.
+// registra quando um link fica instável por perda de pacotes e quando melhora, e quando o IPv6 dele sai e volta.
 using System;
 using System.Collections.Generic;
 using MultiLink.Common;
@@ -24,6 +24,28 @@ namespace MultiLink.Monitoring
             {
                 EvaluateHealth(link);
                 EvaluateStability(link, qualityAware);
+                EvaluateIpv6(link);
+            }
+        }
+
+        // O IPv6 sai de uso pelo teste ou por conexões reais (ver LinkIpv6): avisa uma vez a saída e uma vez a volta.
+        // Um IPv6 que nunca funcionou não é avisado: o aviso da captura já diz se ela inclui o IPv6.
+        void EvaluateIpv6(Link link)
+        {
+            var ipv6 = link.Ipv6;
+            if (ipv6.Works)
+            {
+                ipv6.SeenWorking = true;
+                if (!ipv6.ReportedDown) return;
+                ipv6.ReportedDown = false;
+                log.Add(string.Format("[{0}] IPv6 funcionando de novo: voltou a ser usado.", link.Name), ActivityLog.LinkUp);
+            }
+            else if (ipv6.SeenWorking && !ipv6.ReportedDown && link.AddressV6 != null && link.Present)
+            {
+                ipv6.ReportedDown = true;
+                int minutes = (int)Math.Ceiling((ipv6.NextCheck - DateTime.UtcNow).TotalMinutes);
+                log.Add(string.Format("[{0}] IPv6 instável: deixou de ser usado por este link (novo teste em {1} min).", link.Name, Math.Max(1, minutes)),
+                    ActivityLog.Error);
             }
         }
 

@@ -53,7 +53,7 @@ ao `AppController` e publica o estado que ele devolve.
 | `Program.cs` | Entrada: instância única, DPI, carregamento do WebView2 | `Program` |
 | `Common/` | Utilidades sem regra de negócio | `ActivityLog`, `SocketExtensions`, `StreamExtensions`, `UnixTime` |
 | `Storage/` | Persistência local | `AppPaths`, `AppSettings` (config.ini com propriedades tipadas) |
-| `Links/` | O domínio: links e a escolha do link de cada conexão | `Link`, `LinkQuality`, `LinkTraffic`, `LinkHealth`, `Balancer`, `AdapterDiscovery` |
+| `Links/` | O domínio: links e a escolha do link de cada conexão | `Link`, `LinkQuality`, `LinkTraffic`, `LinkIpv6`, `LinkHealth`, `Balancer`, `AdapterDiscovery` |
 | `Proxy/` | Servidor SOCKS4/SOCKS5/HTTP na porta local e relé UDP | `ProxyServer`, `Socks4Handshake`, `Socks5Handshake`, `HttpProxyHandshake`, `BalancedConnector`, `UdpAssociation` |
 | `Monitoring/` | Saúde dos links, quedas, failover pelo roteamento, histórico e medição | `HealthChecker`, `IcmpPing`, `LinkMonitor`, `RouteFailover`, `PortUsageMonitor`, `UsageHistory`, `SpeedTest` |
 | `Downloads/` | Download acelerado (HTTP Range por todos os links) | `SegmentedDownload`, `DownloadManager` |
