@@ -6,6 +6,8 @@ próprio PC: cada link tem seu gateway e o app distribui o tráfego entre eles. 
 
 ![MultiLink Balancer](screenshot.png)
 
+Licença [GPL-3.0](LICENSE) · [Política de assinatura de código](#política-de-assinatura-de-código) · [Privacidade](#privacidade)
+
 ## Como usar
 
 A janela é compacta e vertical, sem a barra de título do Windows: arraste pelo topo (onde está o nome\nMultiLink) e use os botões de minimizar e fechar ao lado da engrenagem. A tela inicial tem só o essencial:
@@ -127,6 +129,56 @@ Medido nesta máquina (memória privada):
 |---|---|
 | Na bandeja (WebView2 é destruído) | ~29 MB |
 | Janela aberta (app + WebView2, renderização por software) | ~131 MB |
+
+## Política de assinatura de código
+
+Assinatura de código gratuita fornecida por [SignPath.io](https://about.signpath.io), certificado emitido pela
+[SignPath Foundation](https://signpath.org).
+
+Só é assinado o `MultiLinkBalancer.exe` publicado nas [releases](https://github.com/P0sseid0n/MultiLinkBalancer/releases),
+compilado pelo GitHub Actions a partir deste repositório (`.github/workflows/build.yml`). Cada assinatura é aprovada
+manualmente. Builds locais e os artefatos de cada push não são assinados.
+
+| Papel | Quem |
+|---|---|
+| Autores (alteram o código sem revisão adicional) | [P0sseid0n](https://github.com/P0sseid0n) |
+| Revisores (revisam toda contribuição de fora) | [P0sseid0n](https://github.com/P0sseid0n) |
+| Aprovadores (aprovam cada pedido de assinatura) | [P0sseid0n](https://github.com/P0sseid0n) |
+
+O `.exe` leva embutidos, sem modificações, componentes de terceiros que não são assinados por este projeto:
+[tun2socks](https://github.com/xjasonlyu/tun2socks) (MIT), `wintun.dll` (assinada pela WireGuard LLC) e as DLLs do
+carregador do WebView2 (Microsoft).
+
+## Privacidade
+
+O MultiLink Balancer não coleta, não guarda fora do PC e não envia dados sobre quem usa nem sobre o que é acessado.
+Ele só se comunica com outros sistemas para funcionar ou quando o usuário pede:
+
+| Destino | Quando | Para quê |
+|---|---|---|
+| `api.github.com` e `github.com` | uma vez por dia, ou ao clicar em *Atualizar* | procurar e baixar versões novas; desligue em *Ajustes > Procurar atualizações automaticamente* |
+| `speed.cloudflare.com` | na primeira execução e quando o usuário mede a velocidade | medir a velocidade de cada link |
+| 1.1.1.1 (Cloudflare), 8.8.8.8 (Google), 9.9.9.9 (Quad9) | a cada 3 s, por link | testar se o link tem internet (conexão TCP sem dados e ping); com a captura ligada, 1.1.1.1 e 8.8.8.8 também resolvem os nomes (DNS) |
+
+Políticas de privacidade desses serviços: [GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement),
+[Cloudflare](https://www.cloudflare.com/privacypolicy/), [Google](https://policies.google.com/privacy) e
+[Quad9](https://quad9.net/privacy/policy/).
+
+O resto do tráfego vai para os sites e programas que o próprio usuário acessa. Ajustes, histórico e logs ficam só no PC
+(`%APPDATA%\MultiLinkBalancer` e `%LOCALAPPDATA%\MultiLinkBalancer`).
+
+## Desinstalar
+
+O app não tem instalador: é só o `.exe`.
+
+1. Em *Ajustes*, desligue **Iniciar com o Windows** (se ele foi ligado com o app aberto como administrador, desligue
+   também como administrador, para remover a tarefa agendada).
+2. Clique em **Sair**: o proxy do Windows, as rotas e o adaptador de captura voltam ao que eram.
+3. Apague o `MultiLinkBalancer.exe` e as pastas `%APPDATA%\MultiLinkBalancer` e `%LOCALAPPDATA%\MultiLinkBalancer`.
+
+## Licença
+
+[GPL-3.0](LICENSE). Os componentes de terceiros em `lib/` mantêm as próprias licenças.
 
 ## Estrutura
 
