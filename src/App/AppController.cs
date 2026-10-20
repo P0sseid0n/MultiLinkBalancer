@@ -78,6 +78,7 @@ namespace MultiLink.App
             // como administrador: troca o atalho "Run" (sem elevação) pela tarefa agendada elevada
             if (IsAdmin && StartupRegistration.UsesRunKey) { var ignored = SetStartup(true); }
             Ports.Start();
+            RouteFailover.RepairLeftovers(Links.All());
         }
 
         // Um fechamento inesperado pode ter deixado o Windows apontando para o proxy ou com rotas alteradas.

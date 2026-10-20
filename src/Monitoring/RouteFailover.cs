@@ -77,6 +77,20 @@ namespace MultiLink.Monitoring
             finally { link.MetricBusy = false; }
         }
 
+        // Na abertura, sem esperar: versões antigas gravavam a métrica alta também no registro, e o DHCP a levava
+        // para a rota padrão (o Windows deixava de preferir o link mesmo saudável).
+        public async void RepairLeftovers(IEnumerable<Link> links)
+        {
+            if (!Elevation.IsAdmin) return;
+            var adapters = links.Where(link => link.Present).ToDictionary(link => link.Id, link => link.Name);
+            if (adapters.Count == 0) return;
+            var result = await RouteMetrics.RepairLeftovers(adapters);
+            if (!result.Ok) { log.Add("Não foi possível limpar métricas antigas do roteamento: " + result.Output, ActivityLog.Error); return; }
+            var fixedNames = result.Output.Split(new[] { '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries);
+            if (fixedNames.Length > 0)
+                log.Add("Métrica alta deixada por uma versão anterior removida do roteamento de " + string.Join(" e ", fixedNames) + ".");
+        }
+
         // Ao sair, ao desligar a opção ou ao abrir após um fechamento inesperado: devolve todas as métricas alteradas.
         public void RestoreAll(IEnumerable<Link> links)
         {
