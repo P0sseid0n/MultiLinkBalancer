@@ -250,7 +250,7 @@ namespace MultiLink.Ui
             ticker.Stop();
             SetHotkeys(false);
             webView.Destroy();
-            app.Shutdown();
+            app.Shutdown(e.CloseReason == CloseReason.WindowsShutDown);
             tray.Hide();
             base.OnFormClosing(e);
         }

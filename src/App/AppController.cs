@@ -21,7 +21,7 @@ namespace MultiLink.App
         static readonly TimeSpan UpdateCheckInterval = TimeSpan.FromHours(24);
 
         public readonly AppSettings Settings = AppSettings.Load();
-        public readonly ActivityLog Log = new ActivityLog();
+        public readonly ActivityLog Log = new ActivityLog(System.IO.Path.Combine(AppPaths.Local, "eventos.log"));
         public readonly Balancer Balancer = new Balancer();
         public readonly bool IsAdmin = Elevation.IsAdmin;
         public readonly ProxyServer Proxy;
@@ -55,12 +55,16 @@ namespace MultiLink.App
         // ------------------------------------------------------------ ciclo de vida
         public void Init(bool startedFromTray)
         {
+            var processStart = System.Diagnostics.Process.GetCurrentProcess().StartTime;
+            Log.Add(string.Format("Iniciando ({0}; processo aberto às {1:HH:mm:ss}, há {2:0.0} s).",
+                startedFromTray ? "junto com o Windows" : "aberto por você", processStart, (DateTime.Now - processStart).TotalSeconds));
             RecoverFromPreviousSession();
 
             Balancer.Mode = (BalanceMode)Math.Max(0, Math.Min(3, Settings.BalanceMode));
             Balancer.Affinity = Settings.Affinity;
             Balancer.QualityAware = Settings.QualityAware;
             RouteFailover.Enabled = Settings.AutoRoute;
+
             StartupEnabled = StartupRegistration.IsEnabled;
             // como administrador: troca o atalho "Run" (sem elevação) pela tarefa agendada elevada
             if (IsAdmin && StartupRegistration.UsesRunKey) { var ignored = SetStartup(true); }
@@ -71,6 +75,7 @@ namespace MultiLink.App
             Log.Add(names.Count > 0 ? "MultiLink aberto com " + string.Join(" e ", names) + "." : "MultiLink aberto. Nenhuma conexão com internet encontrada.");
 
             if (Settings.WasRunning || startedFromTray) TurnOn();
+            Log.Add(string.Format("Partida concluída {0:0.0} s depois de o processo abrir.", (DateTime.Now - processStart).TotalSeconds));
         }
 
         // Um fechamento inesperado pode ter deixado o Windows apontando para o proxy ou com rotas alteradas.
@@ -90,8 +95,10 @@ namespace MultiLink.App
             }
         }
 
-        public void Shutdown()
+        // windowsEnding: o Windows está desligando ou fazendo logoff (e não o "Sair" do menu).
+        public void Shutdown(bool windowsEnding)
         {
+            Log.Add(windowsEnding ? "Windows desligando: fechando o MultiLink." : "Fechando o MultiLink.");
             Settings.WasRunning = Proxy.Running;
             SystemProxy.Restore(Settings);
             RouteFailover.Enabled = false;
@@ -101,6 +108,8 @@ namespace MultiLink.App
             Ports.Stop();
             History.Save();
             Settings.Save();
+            Log.Add("MultiLink fechado.");
+            Log.Flush();
         }
 
         // Chamado pela janela a cada 1 s.
