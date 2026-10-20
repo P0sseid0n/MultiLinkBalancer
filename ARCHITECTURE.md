@@ -59,7 +59,7 @@ ao `AppController` e publica o estado que ele devolve.
 | `Downloads/` | Download acelerado (HTTP Range por todos os links) | `SegmentedDownload`, `DownloadManager` |
 | `Updates/` | Atualização pelo GitHub Releases | `Updater` |
 | `Platform/` | Tudo que mexe no Windows | `ProcessRunner`, `PowerShell`, `Elevation`, `NetworkAdapters`, `RouteMetrics`, `SystemProxy`, `StartupRegistration`, `TrafficCapture`, `NetworkProfiles`, `JobObject`, `EmbeddedFiles` |
-| `App/` | Orquestração: ciclo de vida, comandos da interface, estado publicado | `AppController`, `LinkManager`, `UiState`, `IAppHost` |
+| `App/` | Orquestração: ciclo de vida, comandos da interface, estado publicado | `AppController`, `LinkManager`, `SumTestResult`, `UiState`, `IAppHost` |
 | `Ui/` | Janela nativa, bandeja, atalhos e WebView2 | `MainWindow`, `TrayIcon`, `PanelPlacement`, `GlobalHotkeys`, `WebViewHost`, `AppIcon` |
 
 ## Interface (Svelte)
@@ -86,6 +86,9 @@ A interface manda `{ id, cmd, args }` e recebe `{ type: "reply", id, ok, result 
 O app também envia, sem pedido, `{ type: "state", data }` a cada segundo e `{ type: "log", entries }`.
 
 - Comandos: `AppController.Handle` (C#) e `api/mock.js` (simulador) — os dois precisam continuar iguais.
+- Medição: `measure` mede cada link e ajusta os pesos (estado `measuring`); `measure.sum` faz o teste
+  da soma, todos os links juntos e depois o melhor sozinho (estado `sumTest: { running, result }`, com
+  o resultado em `SumTestResult`, só na memória).
 - Estado: `UiState.Build` (C#). As chaves desse JSON são o contrato com a interface; renomear
   uma chave exige mudar os dois lados e o `mock.js`.
 

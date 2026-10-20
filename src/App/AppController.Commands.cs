@@ -32,6 +32,9 @@ namespace MultiLink.App
                 case "links.test": Links.CheckAllNow(); return null;
                 case "adapters.refresh": Links.Refresh(); return null;
                 case "measure": await Links.MeasureAndSetWeights(); return null;
+                case "measure.sum":
+                    var sum = await Links.TestSum();
+                    return sum == null ? null : sum.ToState();
 
                 case "download.start": await Downloads.Start(Text(args, "url"), Links.Usable(), host.PickSavePath, NotifyIfEnabled); return null;
                 case "download.cancel": Downloads.Cancel(); return null;

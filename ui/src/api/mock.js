@@ -16,6 +16,7 @@ export function createMock(deliver) {
     settings: { mode: 0, affinity: false, quality: true, autoUpdate: true, autoRoute: false, startup: false, notify: true, notifySound: true, hotkeys: true },
     capture: { on: false, active: false, starting: false, error: null, ipv6: true },
     measuring: false,
+    sumTest: { running: false, result: null },
     update: { current: '1.0.0', latest: null, state: 'idle', progress: 0, error: null, notes: null },
     dev: { builtAt: now() - 5 * 60e3, building: false }, // null imita o .exe da release
     links,
@@ -150,6 +151,18 @@ export function createMock(deliver) {
       addLog('[Principal] 712 Mbps, peso 71');
       primary.measuredMbps = 712;
       primary.weight = 71;
+    },
+    'measure.sum': async () => {
+      state.sumTest.running = true;
+      addLog('Teste da soma: 2 links baixando juntos, depois o melhor sozinho (cerca de 16 s)...');
+      await sleep(3000);
+      state.sumTest.running = false;
+      state.sumTest.result = {
+        at: now(), totalMbps: 790, bestName: 'Principal', bestAloneMbps: 719, gainPct: 10,
+        perLink: [{ name: 'Principal', mbps: 702 }, { name: 'Secundaria', mbps: 88 }],
+      };
+      addLog('Soma: 790 Mbps · melhor link sozinho (Principal): 719 Mbps · ganho de +10% (juntos: Principal 702 Mbps, Secundaria 88 Mbps)');
+      return state.sumTest.result;
     },
     'download.start': ({ url }) => {
       if (!/^https?:\/\//.test(url || '')) throw new Error('Informe um link que comece com http:// ou https://');

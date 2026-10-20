@@ -38,6 +38,8 @@ namespace MultiLink.App
         }
 
         public bool Measuring { get; private set; }
+        public bool TestingSum { get; private set; }
+        public SumTestResult LastSumTest { get; private set; }
 
         public List<Link> All() { return balancer.Snapshot(); }
 
@@ -244,7 +246,7 @@ namespace MultiLink.App
         {
             var links = balancer.Snapshot().Where(link => link.Present && link.InternetUp).ToList();
             if (links.Count == 0) throw new Exception("Nenhum link online para medir.");
-            if (Measuring) return;
+            if (Measuring || TestingSum) return;
             Measuring = true;
             log.Add("Medindo a velocidade de " + links.Count + " link(s) em paralelo (cerca de 8 s)...");
             try
@@ -266,6 +268,35 @@ namespace MultiLink.App
                 settings.Save();
             }
             finally { Measuring = false; }
+        }
+
+        // Teste da soma: mede todos os links ao mesmo tempo e, em seguida, o que mais rendeu sozinho.
+        // O "sozinho" é medido de novo porque a medição dos pesos também roda os links em paralelo.
+        public async Task<SumTestResult> TestSum()
+        {
+            var links = balancer.Snapshot().Where(link => link.Enabled && link.Present && link.InternetUp).ToList();
+            if (links.Count < 2) throw new Exception("O teste da soma precisa de pelo menos dois links online no balanceamento.");
+            if (Measuring || TestingSum) return null;
+            TestingSum = true;
+            log.Add(string.Format("Teste da soma: {0} links baixando juntos, depois o melhor sozinho (cerca de {1} s)...", links.Count, 2 * SpeedTestSeconds));
+            try
+            {
+                var together = await SpeedTest.MeasureTogetherMbps(links, SpeedTestSeconds);
+                double total = together.Sum();
+                if (total < 1) throw new Exception("O teste da soma falhou: nenhum link conseguiu baixar do servidor de teste.");
+                int best = Array.IndexOf(together, together.Max());
+                double alone = await SpeedTest.MeasureMbps(links[best], SpeedTestSeconds);
+                var result = new SumTestResult
+                {
+                    At = DateTime.Now, TotalMbps = total, BestName = links[best].Name, BestAloneMbps = alone,
+                    PerLink = links.Select((link, i) => new KeyValuePair<string, double>(link.Name, together[i])).ToList()
+                };
+                LastSumTest = result;
+                log.Add(result.Summary() + " (juntos: " + string.Join(", ", result.PerLink.Select(pair => string.Format("{0} {1:0} Mbps", pair.Key, pair.Value))) + ")",
+                        alone >= 1 ? ActivityLog.Info : ActivityLog.Error);
+                return result;
+            }
+            finally { TestingSum = false; }
         }
     }
 }

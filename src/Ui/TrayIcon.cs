@@ -79,8 +79,11 @@ namespace MultiLink.Ui
             menu.Items.Add(ModeMenu());
             menu.Items.Add(LinksMenu());
             bool measuring = app.Links.Measuring;
+            bool testingSum = app.Links.TestingSum;
             menu.Items.Add(new ToolStripMenuItem(measuring ? "Medindo velocidade…" : "Medir velocidade e ajustar pesos", null, (sender, e) => Run("measure", null))
-                { Enabled = !measuring });
+                { Enabled = !measuring && !testingSum });
+            menu.Items.Add(new ToolStripMenuItem(testingSum ? "Testando a soma…" : "Testar a soma dos links", null, (sender, e) => TestSum())
+                { Enabled = !measuring && !testingSum });
             menu.Items.Add(new ToolStripSeparator());
             if (DevBuild.Available)
             {
@@ -129,6 +132,17 @@ namespace MultiLink.Ui
         async void Run(string command, Dictionary<string, object> args)
         {
             try { await app.Handle(command, args ?? new Dictionary<string, object>()); }
+            catch (Exception ex) { ShowBalloon(5000, "MultiLink", ex.Message, ToolTipIcon.Warning); }
+        }
+
+        // O teste leva uns 16 s: o resultado chega num aviso, mesmo com o painel fechado.
+        async void TestSum()
+        {
+            try
+            {
+                await app.Handle("measure.sum", new Dictionary<string, object>());
+                if (app.Links.LastSumTest != null) ShowBalloon(10000, "Teste da soma", app.Links.LastSumTest.Summary(), ToolTipIcon.Info);
+            }
             catch (Exception ex) { ShowBalloon(5000, "MultiLink", ex.Message, ToolTipIcon.Warning); }
         }
 

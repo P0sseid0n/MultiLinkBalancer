@@ -32,6 +32,8 @@ namespace MultiLink.App
                     { "on", settings.CaptureAllPrograms }, { "active", capture.Active }, { "starting", capture.Starting },
                     { "error", capture.Error }, { "ipv6", capture.Ipv6 } } },
                 { "measuring", app.Links.Measuring },
+                { "sumTest", new Dictionary<string, object> {
+                    { "running", app.Links.TestingSum }, { "result", app.Links.LastSumTest == null ? null : app.Links.LastSumTest.ToState() } } },
                 { "update", app.Updater.ToState() },
                 { "dev", DevBuild.Available ? new Dictionary<string, object> {
                     { "builtAt", UnixTime.ToMs(DevBuild.BuiltAt) }, { "building", DevBuild.Running } } : null },

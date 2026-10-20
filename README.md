@@ -38,6 +38,14 @@ Fechar a janela mantém o app na bandeja (monitorando quedas). Para encerrar: **
 Somar tudo, inclusive uma conexão única e o upload, exige um servidor externo (VPS) que junte os
 links (bonding), como Speedify ou OpenMPTCProuter. Isso não dá para fazer só do lado do PC.
 
+**Testar a soma dos links** (Ajustes > Distribuição, ou no menu da bandeja) mostra quanto a soma rende de
+verdade: baixa do speed.cloudflare.com por todos os links ativos ao mesmo tempo (4 conexões por link, cerca
+de 8 s) e, em seguida, só pelo link que mais rendeu, sozinho. O resultado sai como, por exemplo,
+*Soma: 790 Mbps · melhor link sozinho (Principal): 719 Mbps · +10%*, com a taxa de cada link no teste
+conjunto, e fica no registro de eventos. O melhor link é medido de novo, sozinho, porque a medição dos pesos
+também roda os links em paralelo. Se o ganho for pequeno, os links podem dividir o mesmo gargalo (o mesmo
+roteador ou a mesma operadora) ou o PC não dá conta de mais tráfego.
+
 ## Ajustes
 
 - **Peso**: proporção de conexões por link. Use *Medir velocidade e ajustar pesos* (ex.: 719 Mbps → 72,
@@ -87,7 +95,8 @@ dos últimos 30 dias (causa e duração) e os dados recebidos por dia. Um ponto 
 
 - **Ctrl+Alt+M** liga/desliga o MultiLink; **Ctrl+Alt+N** abre/fecha o painel (de qualquer programa;
   podem ser desligados em Ajustes > Avisos).
-- O menu do ícone da bandeja liga/desliga, troca o modo de distribuição, inclui/retira links e mede a velocidade.
+- O menu do ícone da bandeja liga/desliga, troca o modo de distribuição, inclui/retira links, mede a velocidade e testa a soma
+  (o resultado chega num aviso do Windows).
 
 ## Quedas de link
 

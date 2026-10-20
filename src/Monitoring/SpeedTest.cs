@@ -1,7 +1,8 @@
 // Mede a velocidade de download de um link: baixa de speed.cloudflare.com por 4 conexões
-// vinculadas ao IP do link durante alguns segundos.
+// vinculadas ao IP do link durante alguns segundos. Também mede vários links juntos (teste da soma).
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -30,22 +31,29 @@ namespace MultiLink.Monitoring
         // Devolve a taxa em Mbps (0 se não conseguiu medir).
         public static async Task<double> MeasureMbps(Link link, int seconds)
         {
+            return (await MeasureTogetherMbps(new[] { link }, seconds))[0];
+        }
+
+        // Mede vários links ao mesmo tempo, com o mesmo cronômetro: a soma das taxas é o que os links
+        // rendem juntos. Devolve a taxa de cada link, em Mbps, na ordem recebida (0 se não conseguiu medir).
+        public static async Task<double[]> MeasureTogetherMbps(IList<Link> links, int seconds)
+        {
+            var received = new long[links.Count];
             IPAddress server;
             try { server = (await Dns.GetHostAddressesAsync(Host)).First(address => address.AddressFamily == AddressFamily.InterNetwork); }
-            catch { return 0; }
+            catch { return new double[links.Count]; }
 
-            long received = 0;
             var sockets = new ConcurrentBag<Socket>();
             var stopwatch = Stopwatch.StartNew();
             var duration = TimeSpan.FromSeconds(seconds);
             Func<bool> timeLeft = () => stopwatch.Elapsed < duration;
-            Action<int> count = bytes => Interlocked.Add(ref received, bytes);
 
-            var downloads = Enumerable.Range(0, Connections).Select(i => Download(link, server, sockets, timeLeft, count)).ToArray();
+            var downloads = links.SelectMany((link, index) => Enumerable.Range(0, Connections).Select(i =>
+                Download(link, server, sockets, timeLeft, bytes => Interlocked.Add(ref received[index], bytes)))).ToArray();
             await Task.WhenAny(Task.WhenAll(downloads), Task.Delay(duration + TimeSpan.FromSeconds(5)));
             double elapsed = Math.Min(stopwatch.Elapsed.TotalSeconds, duration.TotalSeconds + 1);
             foreach (var socket in sockets) socket.CloseQuietly();
-            return Interlocked.Read(ref received) * 8 / elapsed / 1e6;
+            return Enumerable.Range(0, links.Count).Select(index => Interlocked.Read(ref received[index]) * 8 / elapsed / 1e6).ToArray();
         }
 
         static async Task Download(Link link, IPAddress server, ConcurrentBag<Socket> sockets, Func<bool> timeLeft, Action<int> count)

@@ -15,6 +15,9 @@
   const capture = $derived(appState.capture);
   const update = $derived(appState.update);
   const dev = $derived(appState.dev); // null fora do modo de desenvolvimento
+  const sumTest = $derived(appState.sumTest);
+  const sumResult = $derived(sumTest.result); // null até o primeiro teste da soma
+  const busyMeasuring = $derived(appState.measuring || sumTest.running);
 
   // porta: edição local enquanto o campo tem foco
   let port = $state(1080);
@@ -136,8 +139,21 @@
       label="Manter cada site no mesmo link"
       description="Use se algum site (banco, login) desconectar ao trocar de IP. Com isso ligado, downloads de um mesmo site não somam os links." />
     <div class="field">
-      <button class="btn" onclick={() => fire('measure')} disabled={appState.measuring}>{appState.measuring ? 'Medindo…' : 'Medir velocidade e ajustar pesos'}</button>
+      <button class="btn" onclick={() => fire('measure')} disabled={busyMeasuring}>{appState.measuring ? 'Medindo…' : 'Medir velocidade e ajustar pesos'}</button>
       <span class="help">Mede cada link por cerca de 8 segundos e define o peso proporcional à velocidade.</span>
+    </div>
+    <div class="field">
+      <button class="btn" onclick={() => fire('measure.sum')} disabled={busyMeasuring}>{sumTest.running ? 'Testando a soma…' : 'Testar a soma dos links'}</button>
+      <span class="help">Baixa por todos os links ao mesmo tempo e depois só pelo melhor deles, cerca de 8 segundos cada, para ver quanto a soma rende a mais.</span>
+      {#if sumResult}
+        <div class="sum" aria-live="polite">
+          <p><strong class="num">Soma: {sumResult.totalMbps} Mbps</strong> · melhor link sozinho ({sumResult.bestName}): <span class="num">{sumResult.bestAloneMbps > 0 ? `${sumResult.bestAloneMbps} Mbps` : 'não mediu'}</span></p>
+          {#if sumResult.gainPct != null}
+            <p class="gain num" class:bad={sumResult.gainPct < 5}>{sumResult.gainPct >= 0 ? '+' : ''}{sumResult.gainPct}% com a soma</p>
+          {/if}
+          <p class="help">Juntos: {sumResult.perLink.map((link) => `${link.name} ${link.mbps} Mbps`).join(' · ')}. Testado {since(sumResult.at)}.</p>
+        </div>
+      {/if}
     </div>
   </div>
 </section>
@@ -248,6 +264,10 @@
   .mode:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
   .mode-title { font-weight: 600; font-size: 13.5px; }
   .mode-description { color: var(--ink-3); font-size: 12.5px; }
+
+  .sum { display: grid; gap: 4px; padding: 10px 12px; background: var(--band); border-radius: var(--radius-m); font-size: 13px; }
+  .gain { font-weight: 600; color: var(--good-ink); }
+  .gain.bad { color: var(--ink-2); }
 
   .update { font-size: 13px; color: var(--ink-2); }
   .update.bad { color: var(--critical-ink); }
