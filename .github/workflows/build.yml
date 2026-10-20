@@ -1,6 +1,9 @@
 # Compila o MultiLinkBalancer.exe a cada push na main (o .exe fica nos artefatos da execução).
 # Uma tag vX.Y.Z também publica a release, com o .exe e o .sha256 que a atualização automática confere:
 #   git tag v1.1.0 && git push origin v1.1.0
+# Na tag, o .exe é assinado pelo SignPath antes do SHA-256, quando ele está configurado no repositório:
+#   secret SIGNPATH_API_TOKEN e variáveis SIGNPATH_ORGANIZATION_ID, SIGNPATH_PROJECT_SLUG e SIGNPATH_SIGNING_POLICY_SLUG
+#   (a configuração do artefato a cadastrar no SignPath está em .signpath/artifact-configuration.xml).
 name: Build
 
 on:
@@ -16,6 +19,8 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      SIGN: ${{ github.ref_type == 'tag' && secrets.SIGNPATH_API_TOKEN != '' && vars.SIGNPATH_ORGANIZATION_ID != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,8 +38,41 @@ jobs:
 
       - name: Compilar
         shell: pwsh
+        run: if ($env:GITHUB_REF_TYPE -eq 'tag') { ./build.ps1 -Version $env:GITHUB_REF_NAME.TrimStart('v') } else { ./build.ps1 }
+
+      # Assinatura pelo SignPath (ver "Política de assinatura de código" no README): só nas tags e só quando o secret
+      # SIGNPATH_API_TOKEN e as variáveis SIGNPATH_* existem; cada pedido espera a aprovação manual no SignPath.
+      - name: Enviar o .exe sem assinatura
+        id: unsigned
+        if: env.SIGN == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: MultiLinkBalancer-sem-assinatura
+          path: MultiLinkBalancer.exe
+
+      - name: Assinar pelo SignPath
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600 # tempo para aprovar o pedido
+          output-artifact-directory: signed
+
+      - name: Usar o .exe assinado
+        if: env.SIGN == 'true'
+        shell: pwsh
         run: |
-          if ($env:GITHUB_REF_TYPE -eq 'tag') { ./build.ps1 -Version $env:GITHUB_REF_NAME.TrimStart('v') } else { ./build.ps1 }
+          Move-Item signed/MultiLinkBalancer.exe MultiLinkBalancer.exe -Force
+          if ((Get-AuthenticodeSignature MultiLinkBalancer.exe).Status -ne 'Valid') { throw 'O .exe devolvido pelo SignPath não tem assinatura válida' }
+
+      - name: Calcular o SHA-256
+        shell: pwsh
+        run: |
           $hash = (Get-FileHash MultiLinkBalancer.exe -Algorithm SHA256).Hash.ToLower()
           Set-Content MultiLinkBalancer.exe.sha256 "$hash  MultiLinkBalancer.exe" -Encoding ascii -NoNewline
 
@@ -50,4 +88,6 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create $env:GITHUB_REF_NAME MultiLinkBalancer.exe MultiLinkBalancer.exe.sha256 --title $env:GITHUB_REF_NAME --generate-notes
+        run: |
+          $notes = "[Política de assinatura de código](https://github.com/$env:GITHUB_REPOSITORY#política-de-assinatura-de-código) · [Privacidade](https://github.com/$env:GITHUB_REPOSITORY#privacidade)"
+          gh release create $env:GITHUB_REF_NAME MultiLinkBalancer.exe MultiLinkBalancer.exe.sha256 --title $env:GITHUB_REF_NAME --notes $notes --generate-notes
