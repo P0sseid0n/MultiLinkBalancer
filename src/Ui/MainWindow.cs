@@ -29,7 +29,8 @@ namespace MultiLink.Ui
         readonly Size scaledPanelSize;
         GlobalHotkeys hotkeys;
         bool exiting;
-        int openDialogs;          // diálogos abertos pela janela: perder o foco para eles não esconde o painel
+        bool panelRequested;      // até o painel ser pedido (ícone, atalho ou .exe), a janela não aparece
+        int openDialogs;         // diálogos abertos pela janela: perder o foco para eles não esconde o painel
         DateTime hiddenAt;        // o clique no ícone que tirou o foco do painel não deve reabri-lo
         FormWindowState lastWindowState = FormWindowState.Normal;
 
@@ -149,6 +150,7 @@ namespace MultiLink.Ui
             else placement.AnchorAtPrimaryTray();
             if (WindowState == FormWindowState.Minimized) WindowState = FormWindowState.Normal;
             ApplyPanelBounds();
+            panelRequested = true;
             Show();
             Activate();
         }
@@ -179,8 +181,9 @@ namespace MultiLink.Ui
         // ------------------------------------------------------------ eventos da janela
         protected override void SetVisibleCore(bool value)
         {
-            // sempre começa escondida: a janela só é aberta pelo ícone da bandeja
-            if (!IsHandleCreated) { CreateHandle(); value = false; }
+            // Sempre começa escondida: a janela só é aberta pelo ícone da bandeja. Não dá para usar o
+            // IsHandleCreated: o CreateGraphics do construtor já cria a janela, e o Application.Run a mostrava.
+            if (!panelRequested) { if (!IsHandleCreated) CreateHandle(); value = false; }
             base.SetVisibleCore(value);
         }
 
