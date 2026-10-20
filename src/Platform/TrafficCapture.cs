@@ -43,7 +43,14 @@ namespace MultiLink.Platform
         bool ipv6Failed; // o netsh recusou: não insiste até a captura ser religada
         DateTime restartWindowStart;
 
-        public TrafficCapture(ActivityLog log) { this.log = log; }
+        DateTime windowsEndingAt = DateTime.MinValue;
+
+        public TrafficCapture(ActivityLog log)
+        {
+            this.log = log;
+            // no desligamento o Windows encerra o tun2socks, às vezes antes de o MultiLink começar a fechar
+            Microsoft.Win32.SystemEvents.SessionEnding += (sender, e) => windowsEndingAt = DateTime.UtcNow;
+        }
 
         public bool Active { get; private set; }
         public bool Starting { get; private set; }
@@ -251,6 +258,13 @@ namespace MultiLink.Platform
             Ipv6 = false;
             process = null;
             if (!wanted) return;
+            // Windows desligando: não é queda. Se o desligamento for cancelado, religa sem contar como tentativa.
+            if (DateTime.UtcNow - windowsEndingAt < TimeSpan.FromMinutes(1))
+            {
+                await Task.Delay(2000);
+                if (wanted) await Launch(socksPort);
+                return;
+            }
             // caiu sozinho: tenta de novo algumas vezes antes de desistir
             if ((DateTime.UtcNow - restartWindowStart).TotalMinutes > 5) { restartWindowStart = DateTime.UtcNow; restarts = 0; }
             if (++restarts > MaxRestarts)

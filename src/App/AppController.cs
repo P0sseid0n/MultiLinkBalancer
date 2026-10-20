@@ -103,10 +103,12 @@ namespace MultiLink.App
         {
             Log.Add(windowsEnding ? "Windows desligando: fechando o MultiLink." : "Fechando o MultiLink.");
             Settings.WasRunning = Proxy.Running;
+            // primeiro: no desligamento o Windows encerra o tun2socks enquanto o resto fecha, e parado de propósito ele
+            // não conta como queda. Antes do proxy: o tun2socks entrega tudo a ele.
+            Capture.Stop();
             SystemProxy.Restore(Settings);
             RouteFailover.Enabled = false;
             RouteFailover.RestoreAll(Links.All()); // nunca deixar o Windows com rotas alteradas depois de fechar
-            Capture.Stop(); // antes do proxy: o tun2socks entrega tudo a ele
             Proxy.Stop();
             Ports.Stop();
             History.Save();
