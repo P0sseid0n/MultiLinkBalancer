@@ -16,6 +16,7 @@ using MultiLink.Ui;
 
 [assembly: AssemblyTitle("MultiLink Balancer")]
 [assembly: AssemblyProduct("MultiLink Balancer")]
+[assembly: AssemblyCompany("P0sseid0n")] // "Fornecedor" em Aplicativos de inicialização do Gerenciador de Tarefas
 // AssemblyVersion vem do build.ps1 (tag do git ou -Version): é a versão comparada nas atualizações
 
 namespace MultiLink
