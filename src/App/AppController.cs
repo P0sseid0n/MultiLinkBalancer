@@ -33,7 +33,9 @@ namespace MultiLink.App
         internal readonly UsageHistory History = UsageHistory.Load();
         internal readonly DownloadManager Downloads;
         internal readonly PortUsageMonitor Ports;
-        internal bool StartupEnabled { get; private set; }
+        // o "Desativar" do Gerenciador de Tarefas é lido a cada vez: pode mudar com o app aberto
+        internal bool StartupEnabled { get { return startupRegistered && !StartupRegistration.DisabledInTaskManager; } }
+        bool startupRegistered;
 
         readonly IAppHost host;
         readonly DateTime openedAt = DateTime.UtcNow;
@@ -74,9 +76,14 @@ namespace MultiLink.App
             Log.Add(string.Format("Partida concluída {0:0.0} s depois de o processo abrir.", (DateTime.Now - processStart).TotalSeconds));
 
             // O que não é urgente fica para depois (o schtasks.exe demora na partida do Windows).
-            Task.Run(() => StartupEnabled = StartupRegistration.IsEnabled);
+            Task.Run(() =>
+            {
+                startupRegistered = StartupRegistration.IsRegistered;
+                // a tarefa das versões anteriores ganha a entrada que aparece no Gerenciador de Tarefas
+                if (IsAdmin) StartupRegistration.AddLauncherIfMissing();
+            });
             // como administrador: troca o atalho "Run" (sem elevação) pela tarefa agendada elevada
-            if (IsAdmin && StartupRegistration.UsesRunKey) { var ignored = SetStartup(true); }
+            if (IsAdmin && StartupRegistration.UsesUnelevatedRunKey && !StartupRegistration.DisabledInTaskManager) { var ignored = SetStartup(true); }
             Ports.Start();
             RouteFailover.RepairLeftovers(Links.All());
         }
@@ -221,7 +228,7 @@ namespace MultiLink.App
 
         async Task SetStartup(bool enabled)
         {
-            try { await StartupRegistration.Set(enabled); StartupEnabled = enabled; }
+            try { await StartupRegistration.Set(enabled); startupRegistered = enabled; }
             catch (Exception ex) { Log.Add("Erro ao configurar a inicialização com o Windows: " + ex.Message, ActivityLog.Error); throw; }
         }
 
