@@ -20,8 +20,12 @@ namespace MultiLink.Monitoring
     {
         const string Host = "speed.cloudflare.com";
         const int Connections = 4;
-        const int RequestBytes = 50000000; // o servidor limita cada resposta (< 100 MB): pedidos de 50 MB repetidos até o tempo acabar
-        const int MaxRequestsPerConnection = 50;
+        // Pedidos de 2 MB em sequência na mesma conexão (keep-alive): depois de uma rajada, o servidor responde 429
+        // por vários minutos aos pedidos grandes (10 MB ou mais) daquele IP, mas continua atendendo os pequenos.
+        // Assim o teste da soma e a medição dos pesos podem rodar um logo depois do outro.
+        const int RequestBytes = 2000000;
+        const int MaxReconnects = 10; // se o servidor fechar a conexão, abre outra
+        const int MaxHeaderBytes = 8192;
 
         // Devolve a taxa em Mbps (0 se não conseguiu medir).
         public static async Task<double> MeasureMbps(Link link, int seconds)
@@ -47,7 +51,8 @@ namespace MultiLink.Monitoring
         static async Task Download(Link link, IPAddress server, ConcurrentBag<Socket> sockets, Func<bool> timeLeft, Action<int> count)
         {
             var buffer = new byte[65536];
-            for (int request = 0; request < MaxRequestsPerConnection && timeLeft(); request++)
+            var request = Encoding.ASCII.GetBytes("GET /__down?bytes=" + RequestBytes + " HTTP/1.1\r\nHost: " + Host + "\r\nUser-Agent: MultiLinkBalancer\r\n\r\n");
+            for (int attempt = 0; attempt < MaxReconnects && timeLeft(); attempt++)
             {
                 var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 sockets.Add(socket);
@@ -57,16 +62,54 @@ namespace MultiLink.Monitoring
                     await socket.ConnectTaskAsync(new IPEndPoint(server, 443));
                     var tls = new SslStream(new NetworkStream(socket, true));
                     await tls.AuthenticateAsClientAsync(Host, null, SslProtocols.Tls12, false);
-                    await tls.WriteAllAsync(Encoding.ASCII.GetBytes("GET /__down?bytes=" + RequestBytes + " HTTP/1.1\r\nHost: " + Host +
-                                                                    "\r\nUser-Agent: MultiLinkBalancer\r\nConnection: close\r\n\r\n"));
-                    int read = await tls.ReadAsync(buffer, 0, buffer.Length);
-                    if (read <= 0 || !Encoding.ASCII.GetString(buffer, 0, Math.Min(read, 12)).EndsWith(" 200")) return;
-                    count(read);
-                    while (timeLeft() && (read = await tls.ReadAsync(buffer, 0, buffer.Length)) > 0) count(read);
+                    while (timeLeft())
+                    {
+                        await tls.WriteAllAsync(request);
+                        // cabeçalho lido em blocos (byte a byte custa caro a 700 Mbps); o resto do bloco já é corpo
+                        int filled = 0, headerEnd;
+                        while ((headerEnd = BlankLine(buffer, filled)) < 0)
+                        {
+                            int received = filled < MaxHeaderBytes ? await tls.ReadAsync(buffer, filled, buffer.Length - filled) : 0;
+                            if (received <= 0) return;
+                            filled += received;
+                        }
+                        long remaining = BodyLength(Encoding.ASCII.GetString(buffer, 0, headerEnd));
+                        if (remaining < 0) return; // recusado (429 etc.): insistir não adianta
+                        count(filled - headerEnd - 4);
+                        remaining -= filled - headerEnd - 4;
+                        int read;
+                        while (remaining > 0 && timeLeft() && (read = await tls.ReadAsync(buffer, 0, (int)Math.Min(buffer.Length, remaining))) > 0)
+                        {
+                            count(read);
+                            remaining -= read;
+                        }
+                        if (remaining > 0) break; // o tempo acabou ou o servidor fechou a conexão
+                    }
                 }
-                catch { return; }
+                catch { }
                 finally { socket.CloseQuietly(); }
             }
+        }
+
+        // Posição do "\r\n\r\n" que fecha o cabeçalho; -1 se ainda não chegou.
+        static int BlankLine(byte[] buffer, int length)
+        {
+            for (int i = 0; i + 3 < length; i++)
+                if (buffer[i] == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' && buffer[i + 3] == '\n') return i;
+            return -1;
+        }
+
+        // Tamanho do corpo de uma resposta 200 com Content-Length; -1 para qualquer outra.
+        static long BodyLength(string header)
+        {
+            var lines = header.Split(new[] { "\r\n" }, StringSplitOptions.None);
+            if (!lines[0].Contains(" 200")) return -1;
+            foreach (var line in lines)
+            {
+                long length;
+                if (line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase) && long.TryParse(line.Substring(15).Trim(), out length)) return length;
+            }
+            return -1;
         }
     }
 }
