@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using MultiLink.Common;
 using MultiLink.Platform;
 using MultiLink.Ui;
 
@@ -31,6 +32,7 @@ namespace MultiLink
         [STAThread]
         static void Main(string[] args)
         {
+            StartupTimeline.Mark("carregar o .NET");
             WaitForPreviousInstance(args);
             // per-monitor v2: interface nítida em telas com escala
             try { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); }
@@ -41,6 +43,7 @@ namespace MultiLink
             {
                 if (!firstInstance) { ShowExistingInstance(); return; }
                 PrepareWebView2();
+                StartupTimeline.Mark("instância única e WebView2");
                 ServicePointManager.DefaultConnectionLimit = 1000;
                 // O DNS do .NET Framework ocupa uma thread do pool até responder. Numa rajada de conexões (página
                 // pesada) o pool esgota e só ganha uma thread nova a cada ~0,5 s: as conexões ficam na fila.

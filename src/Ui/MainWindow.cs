@@ -36,7 +36,9 @@ namespace MultiLink.Ui
 
         public MainWindow(bool startedFromTray)
         {
+            StartupTimeline.Mark("WinForms");
             app = new AppController(this);
+            StartupTimeline.Mark("ajustes e histórico");
             webView = new WebViewHost(this, app); // antes de definir o tamanho: OnResize já o usa
             Text = "MultiLink Balancer" + (app.IsAdmin ? " (administrador)" : "");
             AutoScaleMode = AutoScaleMode.Dpi;
@@ -47,10 +49,15 @@ namespace MultiLink.Ui
             placement.Gap = ScaleToDpi(new Size(12, 12)).Width;
             scaledPanelSize = ScaleToDpi(PanelSize);
             Size = scaledPanelSize; // sem moldura: o tamanho da janela é o da interface
+            StartupTimeline.Mark("janela");
 
+            // A rede antes do ícone: na partida do Windows, a bandeja (Explorer) pode demorar a responder.
+            app.Init(startedFromTray);
+            StartupTimeline.Mark("configuração");
             tray = new TrayIcon(app, TogglePanelFromTray, () => ShowPanel(true), Exit);
             Icon = tray.CurrentIcon;
-            app.Init(startedFromTray);
+            StartupTimeline.Mark("ícone da bandeja");
+            app.Log.Add("Etapas da partida: " + StartupTimeline.Summary() + ".");
             ListenForSecondInstance();
 
             ticker = new System.Windows.Forms.Timer { Interval = 1000 };
