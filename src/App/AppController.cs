@@ -65,17 +65,19 @@ namespace MultiLink.App
             Balancer.QualityAware = Settings.QualityAware;
             RouteFailover.Enabled = Settings.AutoRoute;
 
-            StartupEnabled = StartupRegistration.IsEnabled;
-            // como administrador: troca o atalho "Run" (sem elevação) pela tarefa agendada elevada
-            if (IsAdmin && StartupRegistration.UsesRunKey) { var ignored = SetStartup(true); }
-
             Links.Start();
-            Ports.Start();
             var names = Links.All().Where(link => link.Present).Select(link => link.Name).OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase).ToList();
             Log.Add(names.Count > 0 ? "MultiLink aberto com " + string.Join(" e ", names) + "." : "MultiLink aberto. Nenhuma conexão com internet encontrada.");
 
+            // Primeiro o proxy: com o proxy do Windows ligado, os programas ficam sem internet até a porta abrir.
             if (Settings.WasRunning || startedFromTray) TurnOn();
             Log.Add(string.Format("Partida concluída {0:0.0} s depois de o processo abrir.", (DateTime.Now - processStart).TotalSeconds));
+
+            // O que não é urgente fica para depois (o schtasks.exe demora na partida do Windows).
+            Task.Run(() => StartupEnabled = StartupRegistration.IsEnabled);
+            // como administrador: troca o atalho "Run" (sem elevação) pela tarefa agendada elevada
+            if (IsAdmin && StartupRegistration.UsesRunKey) { var ignored = SetStartup(true); }
+            Ports.Start();
         }
 
         // Um fechamento inesperado pode ter deixado o Windows apontando para o proxy ou com rotas alteradas.
