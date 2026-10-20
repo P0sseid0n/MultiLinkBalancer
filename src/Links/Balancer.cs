@@ -65,6 +65,12 @@ namespace MultiLink.Links
             }
         }
 
+        // Sobra algum link para tentar fora dos excluídos? (sem escolher: não mexe no rodízio nem na afinidade)
+        public bool HasCandidate(ICollection<Link> exclude)
+        {
+            lock (sync) return Candidates(exclude).Count > 0;
+        }
+
         List<Link> Candidates(ICollection<Link> exclude)
         {
             var usable = links.Where(link => link.Enabled && link.Present && link.Weight > 0 && !exclude.Contains(link)).ToList();

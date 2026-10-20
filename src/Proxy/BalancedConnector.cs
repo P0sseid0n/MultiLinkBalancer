@@ -86,8 +86,10 @@ namespace MultiLink.Proxy
                     if (useIpv6 && ex is TimeoutException) link.Ipv6.ConnectTimedOut(host, DateTime.UtcNow);
                 }
                 if (local != null) break; // aparelho da rede local desligado: não é falha do link
-                log.Add(string.Format("[{0}] falha ao conectar {1}:{2} ({3}){4}", link.Name, host, port, error,
-                    attempt < maxAttempts - 1 ? " - tentando outro link" : ""));
+                // "tentando outro link" só se sobra algum (no IPv6, só os links com IPv6 funcionando contam)
+                bool retrying = attempt < maxAttempts - 1 && balancer.HasCandidate(tried);
+                log.Add(string.Format("[{0}] falha ao conectar {1}:{2} ({3}){4}", link.Name, host, port, error, retrying ? " - tentando outro link" : ""));
+                if (!retrying) break;
             }
             return null;
         }
