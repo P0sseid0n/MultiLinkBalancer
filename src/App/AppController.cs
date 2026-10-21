@@ -65,6 +65,7 @@ namespace MultiLink.App
             Balancer.Mode = (BalanceMode)Math.Max(0, Math.Min(3, Settings.BalanceMode));
             Balancer.Affinity = Settings.Affinity;
             Balancer.QualityAware = Settings.QualityAware;
+            Balancer.Ipv6 = (Ipv6Mode)Math.Max(0, Math.Min(2, Settings.Ipv6Mode));
             RouteFailover.Enabled = Settings.AutoRoute;
 
             Links.Start();

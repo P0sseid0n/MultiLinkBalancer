@@ -25,6 +25,7 @@ namespace MultiLink.App
                     { "system", settings.UseSystemProxy }, { "systemApplied", settings.SystemProxyApplied } } },
                 { "settings", new Dictionary<string, object> {
                     { "mode", (int)app.Balancer.Mode }, { "affinity", app.Balancer.Affinity }, { "quality", app.Balancer.QualityAware },
+                    { "ipv6", (int)app.Balancer.Ipv6 }, { "ipv6Allowed", app.Balancer.Ipv6Allowed() },
                     { "autoRoute", app.RouteFailover.Enabled }, { "startup", app.StartupEnabled },
                     { "notify", settings.Notify }, { "notifySound", settings.NotifySound },
                     { "hotkeys", settings.Hotkeys }, { "autoUpdate", settings.AutoUpdate } } },

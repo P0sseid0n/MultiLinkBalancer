@@ -176,6 +176,7 @@ namespace MultiLink.Proxy
             if (flows.TryGetValue(key, out flow)) return flow;
 
             bool ipv6 = target.AddressFamily == AddressFamily.InterNetworkV6;
+            if (ipv6 && !balancer.Ipv6Allowed()) return null; // descartado: sem resposta, o programa passa a usar o IPv4
             var exclude = new List<Link>();
             if (ipv6) exclude.AddRange(balancer.Snapshot().Where(link => !link.Ipv6.Works));
             var chosen = ipv6 ? null : balancer.Snapshot().FirstOrDefault(link => link.Present && link.OnLocalNetwork(target.Address)); // rede local: só esse link alcança

@@ -30,6 +30,7 @@ namespace MultiLink.Proxy
         readonly Balancer balancer;
         readonly ActivityLog log;
         int warnedNoIpv6; // o aviso de "sem IPv6" sai uma vez só
+        int warnedIpv6Refused;
 
         public BalancedConnector(Balancer balancer, ActivityLog log) { this.balancer = balancer; this.log = log; }
 
@@ -54,6 +55,7 @@ namespace MultiLink.Proxy
             bool useIpv6 = targets.Length == 0;
             if (useIpv6) targets = resolved.Where(address => address.AddressFamily == AddressFamily.InterNetworkV6).Take(AddressesPerAttempt).ToArray();
             if (targets.Length == 0) { log.Add("Nenhum endereço para " + host); return null; }
+            if (useIpv6 && !Ipv6Allowed(host)) return null;
 
             // destino na rede local de um link (modem, aparelho da casa): só ele alcança, nada de balancear
             var local = useIpv6 ? null : balancer.Snapshot().FirstOrDefault(link => link.Present && link.OnLocalNetwork(targets[0]));
@@ -92,6 +94,18 @@ namespace MultiLink.Proxy
                 if (!retrying) break;
             }
             return null;
+        }
+
+        // Recusada na hora (o programa recebe "host inalcançável" e tenta o IPv4). Avisa ao começar a recusar e de novo
+        // só depois de o IPv6 voltar a ser aceito, para não repetir a cada conexão.
+        bool Ipv6Allowed(string host)
+        {
+            if (balancer.Ipv6Allowed()) { Interlocked.Exchange(ref warnedIpv6Refused, 0); return true; }
+            if (Interlocked.Exchange(ref warnedIpv6Refused, 1) == 0)
+                log.Add(balancer.Ipv6 == Ipv6Mode.Never
+                    ? "IPv6 desligado em Ajustes: conexões IPv6 (ex.: " + host + ") são recusadas e os programas usam o IPv4."
+                    : "Nem todo link tem IPv6 funcionando: conexões IPv6 (ex.: " + host + ") são recusadas para os programas usarem o IPv4, que sai por todos os links. Destinos só IPv6 ficam sem conexão (mude em Ajustes > IPv6).");
+            return false;
         }
 
         // Endereços do destino em sequência escalonada (como o Happy Eyeballs, RFC 8305): se um não responde em

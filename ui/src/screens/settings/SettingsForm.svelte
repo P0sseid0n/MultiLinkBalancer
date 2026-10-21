@@ -11,6 +11,12 @@
     [3, 'Menor latência', 'Usa o link com o menor ping no momento. Bom para jogos e chamadas; não soma a velocidade dos links.'],
   ];
 
+  const IPV6_MODES = [ // [valor, título, descrição]; o valor é o Ipv6Mode do app
+    [0, 'Automático', 'Usa IPv6 só quando todos os links têm IPv6. Se só parte deles tem, recusa o IPv6 e os programas usam o IPv4, que sai por todos os links.'],
+    [1, 'Sempre', 'Usa IPv6 pelos links que têm. Programas que preferem IPv6 mandam tudo só por esses links.'],
+    [2, 'Nunca', 'Recusa todo IPv6. Os programas usam o IPv4; sites só IPv6 ficam sem conexão.'],
+  ];
+
   const appState = $derived(app.state);
   const capture = $derived(appState.capture);
   const update = $derived(appState.update);
@@ -139,6 +145,19 @@
     <Toggle checked={appState.settings.affinity} onchange={(value) => setSetting('affinity', value)}
       label="Manter cada site no mesmo link"
       description="Use se algum site (banco, login) desconectar ao trocar de IP. Com isso ligado, downloads de um mesmo site não somam os links." />
+    <fieldset class="modes">
+      <legend class="label">IPv6</legend>
+      {#each IPV6_MODES as [value, title, description]}
+        <label class="mode" class:checked={appState.settings.ipv6 === value}>
+          <input type="radio" name="ipv6" {value} checked={appState.settings.ipv6 === value} onchange={() => setSetting('ipv6', value)} />
+          <span class="mode-title">{title}</span>
+          <span class="mode-description">{description}</span>
+        </label>
+      {/each}
+      {#if appState.settings.ipv6 === 0}
+        <span class="help" role="status">{appState.settings.ipv6Allowed ? 'Agora: todos os links têm IPv6, então o IPv6 é usado.' : 'Agora: nem todo link tem IPv6 funcionando, então o IPv6 é recusado.'}</span>
+      {/if}
+    </fieldset>
     {#if measurePausedUntil != null}
       <p class="paused" role="status">O servidor de medição (speed.cloudflare.com) bloqueou temporariamente os pedidos deste PC, depois de muitos testes seguidos. Dá para medir de novo às <span class="num">{clock(measurePausedUntil)}</span>.</p>
     {/if}
@@ -255,6 +274,7 @@
   .row { display: flex; flex-wrap: wrap; gap: 8px; }
 
   .modes { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
+  .modes .label { font-weight: 500; padding: 0; margin-bottom: 2px; }
   .mode {
     position: relative; display: grid; gap: 2px; padding: 10px 12px;
     border: 1px solid var(--surface-3); border-radius: var(--radius-m);

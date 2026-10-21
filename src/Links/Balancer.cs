@@ -9,6 +9,11 @@ namespace MultiLink.Links
 {
     public enum BalanceMode { WeightedRoundRobin = 0, LeastConnections = 1, Failover = 2, LowestLatency = 3 }
 
+    // O que fazer com conexões IPv6. O IPv6 só sai pelos links que têm IPv6 funcionando; se só parte deles tem,
+    // programas que preferem IPv6 (navegadores, apps capturados) mandariam tudo por esses links.
+    // Automático: recusa o IPv6 nesse caso, e o programa cai na hora para o IPv4, que usa todos os links.
+    public enum Ipv6Mode { Auto = 0, Always = 1, Never = 2 }
+
     public class Balancer
     {
         static readonly TimeSpan AffinityTtl = TimeSpan.FromMinutes(10);
@@ -22,6 +27,7 @@ namespace MultiLink.Links
         public BalanceMode Mode = BalanceMode.WeightedRoundRobin;
         public bool Affinity;              // mantém cada site no mesmo link
         public bool QualityAware = true;   // perda de pacotes reduz o peso; perda e jitter pesam no modo "menor latência"
+        public Ipv6Mode Ipv6 = Ipv6Mode.Auto;
 
         struct AffinityEntry { public Link Link; public DateTime Expires; }
 
@@ -69,6 +75,19 @@ namespace MultiLink.Links
         public bool HasCandidate(ICollection<Link> exclude)
         {
             lock (sync) return Candidates(exclude).Count > 0;
+        }
+
+        // Uma nova conexão IPv6 pode sair? No automático, só se todo link em uso tem IPv6 funcionando: aí o IPv6
+        // se distribui como o IPv4. Nos modos de um link só não há o que distribuir, e o IPv6 sai pelos links que o têm.
+        public bool Ipv6Allowed()
+        {
+            switch (Ipv6)
+            {
+                case Ipv6Mode.Never: return false;
+                case Ipv6Mode.Always: return true;
+            }
+            if (Mode == BalanceMode.Failover || Mode == BalanceMode.LowestLatency) return true;
+            lock (sync) return Candidates(new Link[0]).All(link => link.Ipv6.Works);
         }
 
         List<Link> Candidates(ICollection<Link> exclude)
