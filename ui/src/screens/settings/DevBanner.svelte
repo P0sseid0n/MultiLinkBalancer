@@ -16,9 +16,10 @@
   .banner {
     position: sticky; top: 0; z-index: var(--z-tooltip);
     display: flex; align-items: center; gap: 10px;
-    margin-bottom: -12px; padding: 8px 8px 8px 12px;
+    /* faixa de ponta a ponta: as margens negativas desfazem o padding do .frame (App.svelte) */
+    margin: 0 -16px -12px -24px; padding: 8px 16px 8px 24px;
     background: color-mix(in srgb, var(--warn) 9%, var(--page));
-    border: 1px solid var(--warn-ring); border-radius: var(--radius-m);
+    border-block: 1px solid var(--warn-ring);
     box-shadow: 0 6px 16px -8px rgb(4 8 14 / .6);
   }
   .dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
