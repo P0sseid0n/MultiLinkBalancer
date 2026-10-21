@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace MultiLink.Common
@@ -68,6 +69,18 @@ namespace MultiLink.Common
         public static void IgnoreUdpConnectionReset(this Socket socket)
         {
             try { socket.IOControl(SIO_UDP_CONNRESET, new byte[4], null); } catch { }
+        }
+
+        // No .NET Framework os sockets nascem herdáveis, e todo processo aberto pelo app (PowerShell, netsh) recebe uma
+        // cópia. Se um deles ainda estiver rodando quando o MultiLink fecha, segura a porta do proxy e o MultiLink aberto
+        // logo depois não consegue abri-la ("Only one usage of each socket address").
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool SetHandleInformation(IntPtr handle, int mask, int flags);
+        const int HandleFlagInherit = 1;
+
+        public static void DisableInheritance(this Socket socket)
+        {
+            SetHandleInformation(socket.Handle, HandleFlagInherit, 0);
         }
 
         public static void CloseQuietly(this Socket socket)

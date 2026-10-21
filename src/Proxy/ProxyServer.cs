@@ -44,6 +44,7 @@ namespace MultiLink.Proxy
         public void Start(int port, bool allowLan)
         {
             var started = new TcpListener(allowLan ? IPAddress.Any : IPAddress.Loopback, port);
+            started.Server.DisableInheritance();
             started.Start(Backlog);
             listener = started;
             stopping = new CancellationTokenSource();
