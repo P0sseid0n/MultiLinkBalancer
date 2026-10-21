@@ -40,10 +40,12 @@ namespace MultiLink.Platform
 
         readonly ActivityLog log;
         readonly StrongHost strongHost;
+        readonly Ipv6Block ipv6Block;
         readonly JobObject job = new JobObject();
         Process process;
         volatile bool wanted;
         Func<bool> anyLinkHasIpv6;
+        Func<bool> ipv6Allowed;
         Func<IEnumerable<int>> linkInterfaces;
         int restarts;
         bool syncingIpv6;
@@ -56,6 +58,7 @@ namespace MultiLink.Platform
         {
             this.log = log;
             strongHost = new StrongHost(settings, log);
+            ipv6Block = new Ipv6Block(log);
             // no desligamento o Windows encerra o tun2socks, às vezes antes de o MultiLink começar a fechar
             Microsoft.Win32.SystemEvents.SessionEnding += (sender, e) => windowsEndingAt = DateTime.UtcNow;
         }
@@ -73,14 +76,17 @@ namespace MultiLink.Platform
         }
 
         // Na abertura: um fechamento inesperado com a captura ligada deixa o weak host send dos links desligado.
-        public void RestoreLeftovers() { strongHost.RestoreAll(); }
+        // A regra do firewall que recusa o IPv6 (Ipv6Block) também pode ter ficado.
+        public void RestoreLeftovers() { strongHost.RestoreAll(); var ignored = ipv6Block.Set(false, AdapterName); }
 
         // anyLinkHasIpv6: sem um link com IPv6 funcionando, rotear IPv6 para o adaptador deixaria esses destinos sem saída.
         // linkInterfaces: índices IPv4 e IPv6 dos adaptadores dos links (ver StrongHost).
-        public async Task Start(int socksPort, Func<bool> anyLinkHasIpv6, Func<IEnumerable<int>> linkInterfaces)
+        // ipv6Allowed: se o balanceamento aceita conexões IPv6 agora; se não, a captura as recusa no início (ver Ipv6Block).
+        public async Task Start(int socksPort, Func<bool> anyLinkHasIpv6, Func<IEnumerable<int>> linkInterfaces, Func<bool> ipv6Allowed)
         {
             if (wanted) return;
             this.anyLinkHasIpv6 = anyLinkHasIpv6;
+            this.ipv6Allowed = ipv6Allowed;
             this.linkInterfaces = linkInterfaces;
             wanted = true;
             Error = null;
@@ -98,6 +104,7 @@ namespace MultiLink.Platform
             var running = process;
             process = null;
             strongHost.RestoreAll(); // depois de tirar a captura: sem as rotas dela, o weak host não atrapalha mais
+            var unblocked = ipv6Block.Set(false, AdapterName);
             if (running == null) return;
             try { if (!running.HasExited) { running.Kill(); running.WaitForExit(5000); } } catch { }
             log.Add("Captura de todos os programas desligada. O adaptador virtual foi removido.");
@@ -220,6 +227,7 @@ namespace MultiLink.Platform
         // com o tempo. Liga ou desliga a rota IPv6 para acompanhar.
         public async void SyncIpv6()
         {
+            if (Active && ipv6Allowed != null) await SyncIpv6Block();
             if (!Active || syncingIpv6 || ipv6Failed || anyLinkHasIpv6 == null) return;
             bool wantIpv6 = anyLinkHasIpv6();
             if (wantIpv6 == Ipv6) return;
@@ -232,6 +240,15 @@ namespace MultiLink.Platform
                     log.Add(wantIpv6 ? "A captura passou a incluir o IPv6." : "Nenhum link com IPv6 funcionando: o IPv6 deixou de ser capturado.");
             }
             finally { syncingIpv6 = false; }
+        }
+
+        async Task SyncIpv6Block()
+        {
+            bool block = !ipv6Allowed();
+            if (block == ipv6Block.Blocked) return;
+            await ipv6Block.Set(block, AdapterName);
+            if (Active && ipv6Block.Blocked == block && block)
+                log.Add("Conexões IPv6 dos programas capturados são recusadas no início (Firewall do Windows): eles usam o IPv4.");
         }
 
         // Chamado a cada segundo (a StrongHost verifica a cada 10 s): um link que aparece com a captura ligada, ou um

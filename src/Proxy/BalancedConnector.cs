@@ -96,7 +96,8 @@ namespace MultiLink.Proxy
             return null;
         }
 
-        // Recusada na hora (o programa recebe "host inalcançável" e tenta o IPv4). Avisa ao começar a recusar e de novo
+        // Recusada na hora: o programa configurado para usar o proxy recebe "host inalcançável" e tenta o IPv4. Os
+        // capturados já são recusados antes, no firewall (Platform.Ipv6Block): aqui a conexão deles já estaria aberta. Avisa ao começar a recusar e de novo
         // só depois de o IPv6 voltar a ser aceito, para não repetir a cada conexão.
         bool Ipv6Allowed(string host)
         {

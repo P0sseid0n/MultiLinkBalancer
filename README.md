@@ -60,7 +60,9 @@ roteador ou a mesma operadora) ou o PC não dá conta de mais tráfego.
   Com isso ligado, downloads de um mesmo site não somam os links.
 - **IPv6**: *Automático* (padrão) usa IPv6 só quando todos os links ativos têm IPv6 funcionando. Se só parte deles
   tem, as conexões IPv6 são recusadas na hora (no UDP, descartadas) e os programas usam o IPv4, que sai por todos os
-  links; sem isso, quem prefere IPv6 (navegadores, apps capturados) mandaria tudo só pelos links com IPv6. O custo:
+  links. Nos programas capturados a recusa é feita por uma regra do Firewall do Windows (`MultiLinkBalancer-Ipv6`, só
+  na saída pelo adaptador MultiLink), porque o tun2socks completa a conexão antes de consultar o proxy e o programa não
+  voltaria para o IPv4; a regra sai ao desligar a captura (ou, depois de uma queda, na abertura seguinte); sem isso, quem prefere IPv6 (navegadores, apps capturados) mandaria tudo só pelos links com IPv6. O custo:
   sites só IPv6 ficam sem conexão nesse caso. *Sempre* usa IPv6 pelos links que têm; *Nunca* recusa todo IPv6. Nos
   modos de um link só (*Só um link, com reserva* e *Menor latência*), o automático não recusa.
 - **Aceitar conexões de outros aparelhos da rede**: outros dispositivos podem usar `IP-deste-PC:1080` como proxy.

@@ -206,7 +206,7 @@ namespace MultiLink.App
             catch (Exception ex) { Log.Add("Não foi possível abrir a porta " + port + ": " + ex.Message, ActivityLog.Error); }
         }
 
-        void StartCapture() { var ignored = Capture.Start(Settings.Port, Links.AnyHasIpv6, Links.InterfaceIndexes); }
+        void StartCapture() { var ignored = Capture.Start(Settings.Port, Links.AnyHasIpv6, Links.InterfaceIndexes, Balancer.Ipv6Allowed); }
 
         void SetSystemProxy(bool enabled)
         {
