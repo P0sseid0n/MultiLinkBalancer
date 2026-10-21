@@ -84,6 +84,7 @@ namespace MultiLink.App
                     break;
                 case "affinity": Settings.Affinity = Balancer.Affinity = Convert.ToBoolean(value); break;
                 case "quality": Settings.QualityAware = Balancer.QualityAware = Convert.ToBoolean(value); break;
+                case "autoWeights": Settings.AutoWeights = Balancer.UseAutoWeights = Convert.ToBoolean(value); break;
                 case "ipv6":
                     Balancer.Ipv6 = (Ipv6Mode)Math.Max(0, Math.Min(2, Convert.ToInt32(value)));
                     Settings.Ipv6Mode = (int)Balancer.Ipv6;

@@ -13,7 +13,7 @@ export function createMock(deliver) {
   const state = {
     admin: false,
     proxy: { running: true, port: 1080, lan: false, system: true, systemApplied: true },
-    settings: { mode: 0, affinity: false, quality: true, ipv6: 0, ipv6Allowed: false, autoUpdate: true, autoRoute: false, startup: false, notify: true, notifySound: true, hotkeys: true },
+    settings: { mode: 0, affinity: false, quality: true, autoWeights: true, ipv6: 0, ipv6Allowed: false, autoUpdate: true, autoRoute: false, startup: false, notify: true, notifySound: true, hotkeys: true },
     capture: { on: false, active: false, starting: false, error: null, ipv6: true },
     measuring: false,
     measurePausedUntil: null,
@@ -64,6 +64,7 @@ export function createMock(deliver) {
     const totalRate = busy ? (380 + 240 * Math.sin(second / 5) + Math.random() * 60) * 1e6 / 8 : 0;
     // a cada ~45 s a Secundaria perde a internet por 12 s
     if (secondary.health !== 'disabled') setHealth(secondary, (second % 45) > 32 ? 'noinet' : 'ok');
+    applyWeights();
     const usable = links.filter((link) => link.health === 'ok' && link.enabled && link.weight > 0);
     const weightSum = usable.reduce((sum, link) => sum + link.weight, 0) || 1;
     for (const link of links) {
@@ -79,6 +80,12 @@ export function createMock(deliver) {
     }
     simulateDownload();
     deliver({ type: 'state', data: structuredClone(state) });
+  }
+
+  // pesos automáticos: proporcionais à maior vazão vista (aqui, fixa em 90% da velocidade medida)
+  function applyWeights() {
+    const best = Math.max(...links.map((link) => link.peakMbps));
+    for (const link of links) link.weight = state.settings.autoWeights ? Math.max(5, Math.round((100 * link.peakMbps) / best)) : link.manualWeight;
   }
 
   // a Principal fica instável (perda alta) por um trecho de cada ciclo
@@ -131,7 +138,7 @@ export function createMock(deliver) {
     'link.set': ({ id, enabled, weight }) => {
       const link = links.find((candidate) => candidate.id === id);
       if (enabled !== undefined) link.enabled = enabled;
-      if (weight !== undefined) link.weight = weight;
+      if (weight !== undefined) link.manualWeight = weight;
     },
     'link.toggleAdapter': async ({ id }) => {
       const link = links.find((candidate) => candidate.id === id);
@@ -151,7 +158,7 @@ export function createMock(deliver) {
       state.measuring = false;
       addLog('[Principal] 712 Mbps, peso 71');
       primary.measuredMbps = 712;
-      primary.weight = 71;
+      primary.manualWeight = 71;
     },
     'measure.sum': async () => {
       state.sumTest.running = true;
@@ -225,7 +232,7 @@ export function createMock(deliver) {
 function createLink(id, name, description, ip, gateway, weight, measuredMbps) {
   return {
     id, name, description, wired: true, present: true, health: 'ok', healthText: 'Online', diagnosis: '',
-    enabled: true, weight, ip, gateway, latency: 4, loss: 0, jitter: 1, measuredMbps, linkSpeed: 1e9,
+    enabled: true, weight, manualWeight: weight, peakMbps: Math.round(measuredMbps * 0.9), ip, gateway, latency: 4, loss: 0, jitter: 1, measuredMbps, linkSpeed: 1e9,
     rateDown: 0, rateUp: 0, active: 0, total: 0, bytesDown: 0, bytesUp: 0,
     metricRaised: false, userDisabled: false, downSince: null,
   };

@@ -54,11 +54,12 @@
   );
   const showShare = $derived(proxyOn && online && link.enabled && link.weight > 0);
 
-  // peso: edição local, enviada ao app com um pequeno atraso
+  // peso manual: edição local, enviada ao app com um pequeno atraso (com os automáticos, o peso só é mostrado)
+  const autoWeights = $derived(app.state.settings.autoWeights);
   let weight = $state(0);
   let editingWeight = false;
   let saveTimer;
-  $effect(() => { if (!editingWeight) weight = link.weight; });
+  $effect(() => { if (!editingWeight) weight = link.manualWeight; });
   function setWeight(value) {
     weight = Math.max(0, Math.min(MAX_WEIGHT, Math.round(Number(value) || 0)));
     editingWeight = true;
@@ -109,15 +110,22 @@
         <div><dt>Conexões abertas</dt><dd class="num">{disabled ? '—' : link.active}</dd></div>
         <div><dt>Enviando</dt><dd class="num">{disabled || !proxyOn ? '—' : rateText(link.rateUp)}</dd></div>
       </dl>
-      <div class="weight">
-        <span id="weight-{link.id}">Peso</span>
-        <div class="stepper" role="group" aria-labelledby="weight-{link.id}">
-          <button aria-label="Diminuir peso" onclick={() => setWeight(weight - 1)} disabled={weight <= 0}>−</button>
-          <input class="num" type="number" min="0" max={MAX_WEIGHT} aria-label="Peso de {link.name}" value={weight}
-            onchange={(event) => setWeight(event.currentTarget.value)} />
-          <button aria-label="Aumentar peso" onclick={() => setWeight(weight + 1)}>+</button>
+      {#if autoWeights}
+        <dl>
+          <div><dt>Peso automático</dt><dd class="num">{disabled ? '—' : link.weight}</dd></div>
+          <div><dt>Maior vazão vista</dt><dd class="num">{link.peakMbps > 0 ? `${link.peakMbps} Mbps` : '—'}</dd></div>
+        </dl>
+      {:else}
+        <div class="weight">
+          <span id="weight-{link.id}">Peso</span>
+          <div class="stepper" role="group" aria-labelledby="weight-{link.id}">
+            <button aria-label="Diminuir peso" onclick={() => setWeight(weight - 1)} disabled={weight <= 0}>−</button>
+            <input class="num" type="number" min="0" max={MAX_WEIGHT} aria-label="Peso de {link.name}" value={weight}
+              onchange={(event) => setWeight(event.currentTarget.value)} />
+            <button aria-label="Aumentar peso" onclick={() => setWeight(weight + 1)}>+</button>
+          </div>
         </div>
-      </div>
+      {/if}
       {#if down}<p class="hint">Desligue o interruptor para o Windows parar de usar este link até ele voltar.</p>{/if}
       {#if link.metricRaised}<p class="hint">O Windows já parou de usar este link enquanto ele está fora.</p>{/if}
     </div>

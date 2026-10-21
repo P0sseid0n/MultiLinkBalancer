@@ -139,6 +139,9 @@
         </label>
       {/each}
     </fieldset>
+    <Toggle checked={appState.settings.autoWeights} onchange={(value) => setSetting('autoWeights', value)}
+      label="Pesos automáticos"
+      description="O peso de cada link segue o quanto ele já rendeu no seu próprio tráfego, sem teste de velocidade. Desligado, valem os pesos que você define em cada link." />
     <Toggle checked={appState.settings.quality} onchange={(value) => setSetting('quality', value)}
       label="Considerar perda de pacotes e jitter"
       description="Um link que está perdendo pacotes recebe menos conexões até melhorar. No modo Menor latência, perda e jitter também contam, não só o ping." />
@@ -162,8 +165,10 @@
       <p class="paused" role="status">O servidor de medição (speed.cloudflare.com) bloqueou temporariamente os pedidos deste PC, depois de muitos testes seguidos. Dá para medir de novo às <span class="num">{clock(measurePausedUntil)}</span>.</p>
     {/if}
     <div class="field">
-      <button class="btn" onclick={() => fire('measure')} disabled={busyMeasuring}>{appState.measuring ? 'Medindo…' : 'Medir velocidade e ajustar pesos'}</button>
-      <span class="help">Mede cada link por cerca de 8 segundos e define o peso proporcional à velocidade.</span>
+      <button class="btn" onclick={() => fire('measure')} disabled={busyMeasuring}>{appState.measuring ? 'Medindo…' : appState.settings.autoWeights ? 'Medir velocidade' : 'Medir velocidade e ajustar pesos'}</button>
+      <span class="help">{appState.settings.autoWeights
+        ? 'Mede cada link por cerca de 8 segundos. Com os pesos automáticos, a medição só adianta o ponto de partida: o próprio tráfego já ajusta os pesos.'
+        : 'Mede cada link por cerca de 8 segundos e define o peso proporcional à velocidade.'}</span>
     </div>
     <div class="field">
       <button class="btn" onclick={() => fire('measure.sum')} disabled={busyMeasuring}>{sumTest.running ? 'Testando a soma…' : 'Testar a soma dos links'}</button>

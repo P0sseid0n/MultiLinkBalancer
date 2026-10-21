@@ -27,6 +27,7 @@ namespace MultiLink.Links
         public BalanceMode Mode = BalanceMode.WeightedRoundRobin;
         public bool Affinity;              // mantém cada site no mesmo link
         public bool QualityAware = true;   // perda de pacotes reduz o peso; perda e jitter pesam no modo "menor latência"
+        public bool UseAutoWeights = true; // peso pela vazão observada (AutoWeights) em vez do peso manual
         public Ipv6Mode Ipv6 = Ipv6Mode.Auto;
 
         struct AffinityEntry { public Link Link; public DateTime Expires; }
@@ -92,7 +93,7 @@ namespace MultiLink.Links
 
         List<Link> Candidates(ICollection<Link> exclude)
         {
-            var usable = links.Where(link => link.Enabled && link.Present && link.Weight > 0 && !exclude.Contains(link)).ToList();
+            var usable = links.Where(link => link.Enabled && link.Present && WeightOf(link) > 0 && !exclude.Contains(link)).ToList();
             var online = usable.Where(link => link.InternetUp).ToList();
             // a verificação de saúde pode dar falso negativo: sem nenhum link online, tenta qualquer link ativo
             return online.Count > 0 ? online : usable;
@@ -133,7 +134,7 @@ namespace MultiLink.Links
         // O link atual só perde a vez se outro for claramente melhor (evita trocar a cada oscilação).
         Link ChooseLowestLatency(List<Link> candidates)
         {
-            var best = candidates.OrderBy(LatencyScore).ThenByDescending(link => link.Weight).First();
+            var best = candidates.OrderBy(LatencyScore).ThenByDescending(WeightOf).First();
             var current = lowestLatencyChoice;
             if (current != null && candidates.Contains(current) && current.LatencyAverage >= 0 &&
                 LatencyScore(current) <= LatencyScore(best) * 1.2 + 3)
@@ -142,11 +143,15 @@ namespace MultiLink.Links
             return best;
         }
 
+        // O peso que vale agora: o automático ou o manual (com o manual, 0 = não usar).
+        public int WeightOf(Link link) { return UseAutoWeights ? link.AutoWeight : link.Weight; }
+
         // Peso efetivo em décimos, para a redução pela qualidade não sumir no arredondamento de pesos pequenos.
         int EffectiveWeight(Link link)
         {
-            if (link.Weight <= 0) return 0;
-            return QualityAware ? Math.Max(1, (int)Math.Round(link.Weight * 10 * link.Quality.WeightFactor)) : link.Weight * 10;
+            int weight = WeightOf(link);
+            if (weight <= 0) return 0;
+            return QualityAware ? Math.Max(1, (int)Math.Round(weight * 10 * link.Quality.WeightFactor)) : weight * 10;
         }
 
         // Nota para o modo "menor latência", em ms equivalentes (cada 1% de perda conta como 10 ms).

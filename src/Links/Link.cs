@@ -24,8 +24,12 @@ namespace MultiLink.Links
 
         // ---- escolhas do usuário (gravadas pelo LinkManager)
         public volatile bool Enabled = true;
-        public volatile int Weight = 1;
+        public volatile int Weight = 1;          // peso manual (vale com os pesos automáticos desligados)
         public double MeasuredMbps = -1;
+
+        // ---- pesos automáticos (AutoWeights, a cada segundo)
+        public volatile int AutoWeight = AutoWeights.Equal;
+        public double PeakBytesPerSecond;        // maior vazão observada (descida + subida), lembrada entre pausas
 
         // ---- saúde (HealthChecker e LinkMonitor)
         public volatile bool InternetUp = true;

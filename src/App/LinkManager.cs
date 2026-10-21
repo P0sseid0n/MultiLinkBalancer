@@ -20,6 +20,7 @@ namespace MultiLink.App
         const string PreferencesPrefix = "link.";  // "ativo;peso", ex.: "1;72"
         const string KnownPrefix = "known.";       // "nome|descrição|cabeado": lembra adaptadores desativados
         const string SpeedPrefix = "speed.";       // última velocidade medida, em Mbps
+        const string PeakPrefix = "peak.";         // pico de vazão dos pesos automáticos, em bytes/s
 
         const int HealthCheckIntervalMs = 3000;
         const int SpeedTestSeconds = 8;
@@ -69,7 +70,7 @@ namespace MultiLink.App
         // Links em condições de baixar agora.
         public List<Link> Usable()
         {
-            return balancer.Snapshot().Where(link => link.Enabled && link.Present && link.InternetUp && link.Weight > 0).ToList();
+            return balancer.Snapshot().Where(link => link.Enabled && link.Present && link.InternetUp && balancer.WeightOf(link) > 0).ToList();
         }
 
         // ------------------------------------------------------------ descoberta
@@ -194,6 +195,24 @@ namespace MultiLink.App
                 link.Weight = 1;
             }
             link.MeasuredMbps = settings.GetInt(SpeedPrefix + link.Id, -1);
+            // sem pico guardado, a última medição serve de ponto de partida
+            long peak;
+            if (long.TryParse(settings.Get(PeakPrefix + link.Id, null), out peak)) link.PeakBytesPerSecond = peak;
+            else if (link.MeasuredMbps > 0) link.PeakBytesPerSecond = link.MeasuredMbps * 125000;
+        }
+
+        // ------------------------------------------------------------ pesos automáticos
+        // Chamado a cada segundo, depois das taxas. O pico vai para o config.ini, gravado com o resto dos ajustes
+        // (ao sair, por exemplo): a próxima abertura já começa com os pesos que valiam.
+        public void UpdateAutoWeights()
+        {
+            var links = balancer.Snapshot();
+            AutoWeights.Update(links);
+            foreach (var link in links.Where(link => link.PeakBytesPerSecond > 0))
+            {
+                var value = Math.Round(link.PeakBytesPerSecond).ToString();
+                if (settings.Get(PeakPrefix + link.Id, null) != value) settings.Set(PeakPrefix + link.Id, value);
+            }
         }
 
         void SavePreferences(Link link)
@@ -241,10 +260,11 @@ namespace MultiLink.App
         }
 
         // ------------------------------------------------------------ medição de velocidade
-        // Primeira execução: mede os links para os pesos refletirem a velocidade real.
+        // Primeira execução com pesos manuais: mede os links para os pesos refletirem a velocidade real.
+        // Com os automáticos não precisa: eles se ajustam pelo próprio tráfego.
         public async void MeasureOnFirstRun()
         {
-            if (settings.SpeedMeasured) return;
+            if (settings.SpeedMeasured || balancer.UseAutoWeights) return;
             await Task.Delay(1500);
             try { if (!settings.SpeedMeasured) await MeasureAndSetWeights(); }
             catch (Exception ex) { log.Add("Medição automática não concluída: " + ex.Message, ActivityLog.Error); }
@@ -271,16 +291,19 @@ namespace MultiLink.App
                     if (results[i].Refused)
                     {
                         refusedStatus = results[i].RefusedStatus;
-                        log.Add(string.Format("[{0}] medição descartada: {1}; peso mantido em {2}", link.Name, SpeedTest.RefusalText(refusedStatus), link.Weight), ActivityLog.Error);
+                        log.Add(string.Format("[{0}] medição descartada: {1}; peso mantido em {2}", link.Name, SpeedTest.RefusalText(refusedStatus), balancer.WeightOf(link)), ActivityLog.Error);
                         continue;
                     }
-                    if (mbps < 1) { log.Add(string.Format("[{0}] a medição falhou; peso mantido em {1}", link.Name, link.Weight), ActivityLog.Error); continue; }
+                    if (mbps < 1) { log.Add(string.Format("[{0}] a medição falhou; peso mantido em {1}", link.Name, balancer.WeightOf(link)), ActivityLog.Error); continue; }
                     link.MeasuredMbps = mbps;
                     settings.Set(SpeedPrefix + link.Id, Math.Round(mbps));
-                    // peso proporcional à velocidade: 700 Mbps -> 70, 95 Mbps -> 10
+                    // peso manual proporcional à velocidade: 700 Mbps -> 70, 95 Mbps -> 10 (fica guardado para quando
+                    // os automáticos forem desligados); nos automáticos, a medição vira o pico de onde eles partem
                     link.Weight = Math.Max(1, Math.Min(MaxWeight, (int)Math.Round(mbps / 10)));
+                    link.PeakBytesPerSecond = mbps * 125000;
                     SavePreferences(link);
-                    log.Add(string.Format("[{0}] {1:0} Mbps, peso {2}", link.Name, mbps, link.Weight));
+                    if (!balancer.UseAutoWeights) log.Add(string.Format("[{0}] {1:0} Mbps, peso {2}", link.Name, mbps, link.Weight));
+                    else log.Add(string.Format("[{0}] {1:0} Mbps: ponto de partida dos pesos automáticos", link.Name, mbps));
                 }
                 if (results.Any(result => !result.Refused && result.Mbps >= 1)) settings.SpeedMeasured = true;
                 settings.Save();

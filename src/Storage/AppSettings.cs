@@ -65,6 +65,7 @@ namespace MultiLink.Storage
         public int BalanceMode { get { return GetInt("mode", 0); } set { Set("mode", value); } }
         public bool Affinity { get { return GetBool("affinity", false); } set { Set("affinity", value); } }
         public bool QualityAware { get { return GetBool("quality", true); } set { Set("quality", value); } }
+        public bool AutoWeights { get { return GetBool("autoWeights", true); } set { Set("autoWeights", value); } }
         public int Ipv6Mode { get { return GetInt("ipv6", 0); } set { Set("ipv6", value); } } // ver Links.Ipv6Mode
         public bool AutoRoute { get { return GetBool("autoRoute", false); } set { Set("autoRoute", value); } }
         public bool SpeedMeasured { get { return GetBool("measured", false); } set { Set("measured", value); } }

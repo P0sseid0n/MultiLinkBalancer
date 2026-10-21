@@ -65,6 +65,7 @@ namespace MultiLink.App
             Balancer.Mode = (BalanceMode)Math.Max(0, Math.Min(3, Settings.BalanceMode));
             Balancer.Affinity = Settings.Affinity;
             Balancer.QualityAware = Settings.QualityAware;
+            Balancer.UseAutoWeights = Settings.AutoWeights;
             Balancer.Ipv6 = (Ipv6Mode)Math.Max(0, Math.Min(2, Settings.Ipv6Mode));
             RouteFailover.Enabled = Settings.AutoRoute;
 
@@ -142,6 +143,7 @@ namespace MultiLink.App
                 link.Traffic.UpdateRates(seconds, out bytesDown, out bytesUp);
                 History.Sample(link, bytesDown, bytesUp);
             }
+            Links.UpdateAutoWeights();
             History.Flush();
             Monitor.Evaluate(links, Balancer.QualityAware);
             RouteFailover.Apply(links);

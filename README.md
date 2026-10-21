@@ -21,7 +21,7 @@ A janela é compacta e vertical, sem a barra de título do Windows: arraste pelo
   velocidade medida, conexões e o peso.
 - **Engrenagem**: download acelerado e ajustes (distribuição, quedas, inicialização, sair).
 
-Na primeira execução o app mede a velocidade de cada link e ajusta os **pesos**.
+Os **pesos** (quanto do tráfego vai por cada link) se ajustam sozinhos pelo que cada link rende, sem teste de velocidade.
 
 Fechar a janela mantém o app na bandeja (monitorando quedas). Para encerrar: **Sair** no menu do
 ícone da bandeja ou em Ajustes. Abrir o `.exe` de novo traz a janela de volta.
@@ -48,9 +48,15 @@ roteador ou a mesma operadora) ou o PC não dá conta de mais tráfego.
 
 ## Ajustes
 
-- **Peso**: proporção de conexões por link. Use *Medir velocidade e ajustar pesos* (ex.: 719 Mbps → 72,
-  94 Mbps → 9). Pesos iguais em links de velocidades muito diferentes deixam a soma **mais lenta**.
-  Peso 0 = não usar.
+- **Pesos automáticos** (ligado por padrão): o peso de cada link segue a maior vazão que ele já mostrou no seu
+  próprio tráfego, medida a cada segundo, como no [net-merge](https://github.com/rohit267/net-merge). O pico só cai
+  quando o link está em uso e rendendo menos; um link parado volta aos poucos a receber conexões (até metade do
+  melhor) para ser medido de novo. Enquanto algum link ainda não passou de ~0,4 Mbps, os pesos ficam iguais, para
+  todos serem medidos. O detalhe de cada link mostra o peso e a maior vazão vista. *Medir velocidade* só adianta o
+  ponto de partida.
+- **Peso manual** (com os automáticos desligados): proporção de conexões por link. Use *Medir velocidade e ajustar
+  pesos* (ex.: 719 Mbps → 72, 94 Mbps → 9). Pesos iguais em links de velocidades muito diferentes deixam a soma
+  **mais lenta**. Peso 0 = não usar.
 - **Distribuição**: *Proporcional aos pesos* (padrão), *Menos conexões*, *Só um link, com reserva* ou *Menor latência*
   (usa o link de menor ping no momento, pela média móvel; só troca quando outro fica claramente mais rápido).
 - **Considerar perda de pacotes e jitter** (ligado por padrão): um link que está perdendo pacotes recebe menos

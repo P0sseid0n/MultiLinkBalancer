@@ -25,6 +25,7 @@ namespace MultiLink.App
                     { "system", settings.UseSystemProxy }, { "systemApplied", settings.SystemProxyApplied } } },
                 { "settings", new Dictionary<string, object> {
                     { "mode", (int)app.Balancer.Mode }, { "affinity", app.Balancer.Affinity }, { "quality", app.Balancer.QualityAware },
+                    { "autoWeights", app.Balancer.UseAutoWeights },
                     { "ipv6", (int)app.Balancer.Ipv6 }, { "ipv6Allowed", app.Balancer.Ipv6Allowed() },
                     { "autoRoute", app.RouteFailover.Enabled }, { "startup", app.StartupEnabled },
                     { "notify", settings.Notify }, { "notifySound", settings.NotifySound },
@@ -39,18 +40,19 @@ namespace MultiLink.App
                 { "update", app.Updater.ToState() },
                 { "dev", DevBuild.Available ? new Dictionary<string, object> {
                     { "builtAt", UnixTime.ToMs(DevBuild.BuiltAt) }, { "building", DevBuild.Running } } : null },
-                { "links", LinksToJson(app.Links.All()) },
+                { "links", LinksToJson(app.Links.All(), app.Balancer) },
                 { "download", app.Downloads.ToState() }
             };
         }
 
         // Ordem estável por nome: a cor de cada link na interface segue a posição, então não pode mudar entre execuções.
-        static List<object> LinksToJson(List<Link> links)
+        static List<object> LinksToJson(List<Link> links, Balancer balancer)
         {
-            return links.OrderBy(link => link.Name, StringComparer.CurrentCultureIgnoreCase).Select(LinkToJson).ToList();
+            return links.OrderBy(link => link.Name, StringComparer.CurrentCultureIgnoreCase).Select(link => LinkToJson(link, balancer)).ToList();
         }
 
-        static object LinkToJson(Link link)
+        // weight: o peso que vale agora (automático ou manual); manualWeight: o que o usuário definiu
+        static object LinkToJson(Link link, Balancer balancer)
         {
             var health = LinkHealth.Of(link);
             var traffic = link.Traffic;
@@ -59,7 +61,8 @@ namespace MultiLink.App
                 { "id", link.Id }, { "name", link.Name }, { "description", link.Description ?? "" }, { "wired", link.Wired },
                 { "present", link.Present }, { "health", health }, { "healthText", LinkHealth.ShortText(health) },
                 { "diagnosis", health == LinkHealth.Ok ? "" : LinkHealth.Describe(health) },
-                { "enabled", link.Enabled }, { "weight", link.Weight },
+                { "enabled", link.Enabled }, { "weight", balancer.WeightOf(link) }, { "manualWeight", link.Weight },
+                { "peakMbps", Math.Round(link.PeakBytesPerSecond * 8 / 1e6) },
                 { "ip", link.Address == null || link.Address.Equals(IPAddress.None) ? "" : link.Address.ToString() },
                 { "gateway", link.Gateway ?? "" },
                 { "latency", link.LatencyMs }, { "measuredMbps", Math.Round(link.MeasuredMbps) },
