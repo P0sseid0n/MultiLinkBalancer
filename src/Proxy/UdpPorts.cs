@@ -89,6 +89,7 @@ namespace MultiLink.Proxy
                 socket.IgnoreUdpConnectionReset();
                 socket.Bind(new IPEndPoint(ipv6 ? link.AddressV6 : link.Address, 0));
                 if (ipv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
+                else socket.UseInterfaceV4(link.InterfaceIndex);
             }
             catch { socket.Close(); return null; }
             return new Port { Socket = socket, Link = link };

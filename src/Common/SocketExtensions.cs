@@ -35,13 +35,20 @@ namespace MultiLink.Common
             socket.Bind(new IPEndPoint(localAddress, 0));
         }
 
-        // No IPv6 o Windows costuma deixar o "weak host send" ligado: preso só ao IP do link, o socket seguiria a
-        // melhor rota do sistema (a 2000::/3 da captura) e voltaria para o próprio MultiLink. IPV6_UNICAST_IF força a saída.
-        const SocketOptionName IPv6UnicastInterface = (SocketOptionName)31;
+        // Com o "weak host send" ligado no adaptador, o bind no IP do link não escolhe a saída: o socket segue a melhor
+        // rota do sistema (as rotas da captura) e volta para o próprio MultiLink. No IPv6 o Windows já vem assim; no IPv4,
+        // o Hotspot Móvel, o Compartilhamento de Internet, o Hyper-V e algumas VPNs ligam. IP_UNICAST_IF força a saída.
+        // O IPv4 recebe o índice na ordem de bytes da rede; o IPv6, na ordem do PC.
+        const SocketOptionName UnicastInterface = (SocketOptionName)31;
+
+        public static void UseInterfaceV4(this Socket socket, int interfaceIndex)
+        {
+            if (interfaceIndex > 0) socket.SetSocketOption(SocketOptionLevel.IP, UnicastInterface, IPAddress.HostToNetworkOrder(interfaceIndex));
+        }
 
         public static void UseInterfaceV6(this Socket socket, int interfaceIndex)
         {
-            if (interfaceIndex > 0) socket.SetSocketOption(SocketOptionLevel.IPv6, IPv6UnicastInterface, interfaceIndex);
+            if (interfaceIndex > 0) socket.SetSocketOption(SocketOptionLevel.IPv6, UnicastInterface, interfaceIndex);
         }
 
         // Keepalive do TCP: sem ele, uma conexão cujo link caiu fica esperando dados para sempre. O Windows

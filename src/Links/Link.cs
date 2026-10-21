@@ -14,7 +14,8 @@ namespace MultiLink.Links
         public IPAddress Address;
         public IPAddress SubnetMask;             // máscara da rede local do Address
         public IPAddress AddressV6;              // IPv6 global, se houver
-        public int InterfaceIndexV6;             // índice IPv6 do adaptador (para prender o socket a ele)
+        public int InterfaceIndex;               // índice IPv4 do adaptador (para prender o socket a ele)
+        public int InterfaceIndexV6;             // índice IPv6 do adaptador
         public string Gateway;
         public long AdapterSpeedBps;             // velocidade nominal informada pelo Windows
         public bool Wired;

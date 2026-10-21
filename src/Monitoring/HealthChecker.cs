@@ -44,6 +44,7 @@ namespace MultiLink.Monitoring
                 {
                     var stopwatch = Stopwatch.StartNew();
                     socket.BindForConnect(link.Address);
+                    socket.UseInterfaceV4(link.InterfaceIndex);
                     await socket.ConnectWithTimeout(probe, ProbeTimeoutMs);
                     MarkOnline(link, (int)stopwatch.ElapsedMilliseconds);
                     await SampleQuality(link, lostEarlierProbe || link.LatencyMs >= SlowAsLostMs ? -1 : link.LatencyMs);

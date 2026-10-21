@@ -120,6 +120,7 @@ namespace MultiLink.Monitoring
                 try
                 {
                     socket.BindForConnect(link.Address);
+                    socket.UseInterfaceV4(link.InterfaceIndex);
                     await socket.ConnectTaskAsync(new IPEndPoint(server, 443));
                     var tls = new SslStream(new NetworkStream(socket, true));
                     await tls.AuthenticateAsClientAsync(Host, null, SslProtocols.Tls12, false);

@@ -207,6 +207,7 @@ namespace MultiLink.Downloads
             try
             {
                 socket.BindForConnect(link.Address);
+                socket.UseInterfaceV4(link.InterfaceIndex);
                 socket.ReceiveBufferSize = 1 << 20;
                 await socket.ConnectWithTimeout(new IPEndPoint(job.Server, job.Uri.Port), ConnectTimeoutMs);
             }

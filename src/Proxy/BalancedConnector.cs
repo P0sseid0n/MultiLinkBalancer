@@ -126,6 +126,7 @@ namespace MultiLink.Proxy
             {
                 socket.BindForConnect(useIpv6 ? link.AddressV6 : link.Address);
                 if (useIpv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
+                else socket.UseInterfaceV4(link.InterfaceIndex);
                 socket.NoDelay = true;
                 socket.EnableKeepAlive(KeepAliveIdleMs, KeepAliveIntervalMs);
                 await socket.ConnectWithTimeout(new IPEndPoint(target, port), timeoutMs);
