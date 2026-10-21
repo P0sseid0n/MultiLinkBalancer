@@ -117,7 +117,7 @@
     <Toggle checked={appState.proxy.lan} onchange={(value) => setSetting('lan', value)}
       label="Aceitar outros aparelhos da rede"
       description="Celulares e outros computadores podem usar este PC como proxy, na porta {appState.proxy.port}." />
-    <div class="field">
+    <div class="field group">
       <label for="port">Porta do proxy</label>
       <input id="port" class="num" type="number" min="1" max="65535" bind:value={port} disabled={appState.proxy.running}
         onfocus={() => (editingPort = true)} onblur={savePort} />
@@ -130,7 +130,7 @@
   <h2>Distribuição</h2>
   <div class="body">
     <fieldset class="modes">
-      <legend class="sr-only">Modo de distribuição</legend>
+      <legend class="label">Modo</legend>
       {#each MODES as [value, title, description]}
         <label class="mode" class:checked={appState.settings.mode === value}>
           <input type="radio" name="mode" {value} checked={appState.settings.mode === value} onchange={() => setSetting('mode', value)} />
@@ -139,16 +139,18 @@
         </label>
       {/each}
     </fieldset>
-    <Toggle checked={appState.settings.autoWeights} onchange={(value) => setSetting('autoWeights', value)}
-      label="Pesos automáticos"
-      description="O peso de cada link segue o quanto ele já rendeu no seu próprio tráfego, sem teste de velocidade. Desligado, valem os pesos que você define em cada link." />
-    <Toggle checked={appState.settings.quality} onchange={(value) => setSetting('quality', value)}
-      label="Considerar perda de pacotes e jitter"
-      description="Um link que está perdendo pacotes recebe menos conexões até melhorar. No modo Menor latência, perda e jitter também contam, não só o ping." />
-    <Toggle checked={appState.settings.affinity} onchange={(value) => setSetting('affinity', value)}
-      label="Manter cada site no mesmo link"
-      description="Use se algum site (banco, login) desconectar ao trocar de IP. Com isso ligado, downloads de um mesmo site não somam os links." />
-    <fieldset class="modes">
+    <div class="group">
+      <Toggle checked={appState.settings.autoWeights} onchange={(value) => setSetting('autoWeights', value)}
+        label="Pesos automáticos"
+        description="O peso de cada link segue o quanto ele já rendeu no seu próprio tráfego, sem teste de velocidade. Desligado, valem os pesos que você define em cada link." />
+      <Toggle checked={appState.settings.quality} onchange={(value) => setSetting('quality', value)}
+        label="Considerar perda de pacotes e jitter"
+        description="Um link que está perdendo pacotes recebe menos conexões até melhorar. No modo Menor latência, perda e jitter também contam, não só o ping." />
+      <Toggle checked={appState.settings.affinity} onchange={(value) => setSetting('affinity', value)}
+        label="Manter cada site no mesmo link"
+        description="Use se algum site (banco, login) desconectar ao trocar de IP. Com isso ligado, downloads de um mesmo site não somam os links." />
+    </div>
+    <fieldset class="modes group">
       <legend class="label">IPv6</legend>
       {#each IPV6_MODES as [value, title, description]}
         <label class="mode" class:checked={appState.settings.ipv6 === value}>
@@ -161,27 +163,29 @@
         <span class="help" role="status">{appState.settings.ipv6Allowed ? 'Agora: todos os links têm IPv6, então o IPv6 é usado.' : 'Agora: nem todo link tem IPv6 funcionando, então o IPv6 é recusado.'}</span>
       {/if}
     </fieldset>
-    {#if measurePausedUntil != null}
-      <p class="paused" role="status">O servidor de medição (speed.cloudflare.com) bloqueou temporariamente os pedidos deste PC, depois de muitos testes seguidos. Dá para medir de novo às <span class="num">{clock(measurePausedUntil)}</span>.</p>
-    {/if}
-    <div class="field">
-      <button class="btn" onclick={() => fire('measure')} disabled={busyMeasuring}>{appState.measuring ? 'Medindo…' : appState.settings.autoWeights ? 'Medir velocidade' : 'Medir velocidade e ajustar pesos'}</button>
-      <span class="help">{appState.settings.autoWeights
-        ? 'Mede cada link por cerca de 8 segundos. Com os pesos automáticos, a medição só adianta o ponto de partida: o próprio tráfego já ajusta os pesos.'
-        : 'Mede cada link por cerca de 8 segundos e define o peso proporcional à velocidade.'}</span>
-    </div>
-    <div class="field">
-      <button class="btn" onclick={() => fire('measure.sum')} disabled={busyMeasuring}>{sumTest.running ? 'Testando a soma…' : 'Testar a soma dos links'}</button>
-      <span class="help">Baixa por todos os links ao mesmo tempo e depois só pelo melhor deles, cerca de 8 segundos cada, para ver quanto a soma rende a mais.</span>
-      {#if sumResult}
-        <div class="sum" aria-live="polite">
-          <p><strong class="num">Soma: {sumResult.totalMbps} Mbps</strong> · melhor link sozinho ({sumResult.bestName}): <span class="num">{sumResult.bestAloneMbps > 0 ? `${sumResult.bestAloneMbps} Mbps` : 'não mediu'}</span></p>
-          {#if sumResult.gainPct != null}
-            <p class="gain num" class:bad={sumResult.gainPct < 5}>{sumResult.gainPct >= 0 ? '+' : ''}{sumResult.gainPct}% com a soma</p>
-          {/if}
-          <p class="help">Juntos: {sumResult.perLink.map((link) => `${link.name} ${link.mbps} Mbps`).join(' · ')}. Testado {since(sumResult.at)}.</p>
-        </div>
+    <div class="group">
+      {#if measurePausedUntil != null}
+        <p class="paused" role="status">O servidor de medição (speed.cloudflare.com) bloqueou temporariamente os pedidos deste PC, depois de muitos testes seguidos. Dá para medir de novo às <span class="num">{clock(measurePausedUntil)}</span>.</p>
       {/if}
+      <div class="field">
+        <button class="btn" onclick={() => fire('measure')} disabled={busyMeasuring}>{appState.measuring ? 'Medindo…' : appState.settings.autoWeights ? 'Medir velocidade' : 'Medir velocidade e ajustar pesos'}</button>
+        <span class="help">{appState.settings.autoWeights
+          ? 'Mede cada link por cerca de 8 segundos. Com os pesos automáticos, a medição só adianta o ponto de partida: o próprio tráfego já ajusta os pesos.'
+          : 'Mede cada link por cerca de 8 segundos e define o peso proporcional à velocidade.'}</span>
+      </div>
+      <div class="field">
+        <button class="btn" onclick={() => fire('measure.sum')} disabled={busyMeasuring}>{sumTest.running ? 'Testando a soma…' : 'Testar a soma dos links'}</button>
+        <span class="help">Baixa por todos os links ao mesmo tempo e depois só pelo melhor deles, cerca de 8 segundos cada, para ver quanto a soma rende a mais.</span>
+        {#if sumResult}
+          <div class="sum" aria-live="polite">
+            <p><strong class="num">Soma: {sumResult.totalMbps} Mbps</strong> · melhor link sozinho ({sumResult.bestName}): <span class="num">{sumResult.bestAloneMbps > 0 ? `${sumResult.bestAloneMbps} Mbps` : 'não mediu'}</span></p>
+            {#if sumResult.gainPct != null}
+              <p class="gain num" class:bad={sumResult.gainPct < 5}>{sumResult.gainPct >= 0 ? '+' : ''}{sumResult.gainPct}% com a soma</p>
+            {/if}
+            <p class="help">Juntos: {sumResult.perLink.map((link) => `${link.name} ${link.mbps} Mbps`).join(' · ')}. Testado {since(sumResult.at)}.</p>
+          </div>
+        {/if}
+      </div>
     </div>
   </div>
 </section>
@@ -195,7 +199,7 @@
     {#if appState.settings.autoRoute && !appState.admin}
       {@render needsAdmin()}
     {/if}
-    <div class="row">
+    <div class="row group">
       <button class="btn" onclick={() => fire('adapters.refresh')}>Atualizar adaptadores</button>
       <button class="btn quiet" onclick={() => fire('app.openNetworkConnections')}>Conexões de Rede</button>
     </div>
@@ -261,7 +265,7 @@
     <Toggle checked={appState.settings.startup} onchange={(value) => setSetting('startup', value)}
       label="Iniciar com o Windows"
       description={appState.admin ? 'Abre na bandeja ao entrar no Windows, já como administrador.' : 'Abre na bandeja ao entrar no Windows.'} />
-    <div class="field">
+    <div class="field group">
       <button class="btn danger" onclick={exitApp}>Sair do MultiLink</button>
       <span class="help">Fechar a janela só esconde o app na bandeja.</span>
     </div>
@@ -269,19 +273,22 @@
 </section>
 
 <style>
-  section { display: grid; gap: 12px; }
-  h2 { font-size: 13px; font-weight: 600; color: var(--ink-2); }
-  .body { display: grid; gap: 18px; padding-top: 12px; border-top: 1px solid var(--line); }
-  .field { display: grid; gap: 6px; justify-items: start; }
+  /* respiro: dentro de cada seção, grupos separados por uma linha fina com espaço dos dois lados */
+  section { display: grid; gap: 14px; }
+  h2 { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+  .body { display: grid; gap: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .group { display: grid; gap: 22px; padding-top: 22px; border-top: 1px solid var(--line-soft); }
+  .field { display: grid; gap: 8px; justify-items: start; }
   .field > label { font-weight: 500; }
   .field input { width: 120px; }
   .help { color: var(--ink-3); font-size: 12.5px; }
   .row { display: flex; flex-wrap: wrap; gap: 8px; }
 
-  .modes { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
-  .modes .label { font-weight: 500; padding: 0; margin-bottom: 2px; }
+  .modes { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; }
+  .modes.group { padding-top: 22px; border-top: 1px solid var(--line-soft); }
+  .modes .label { font-weight: 500; padding: 0; margin-bottom: 4px; }
   .mode {
-    position: relative; display: grid; gap: 2px; padding: 10px 12px;
+    position: relative; display: grid; gap: 4px; padding: 12px 14px;
     border: 1px solid var(--surface-3); border-radius: var(--radius-m);
     cursor: pointer;
     transition: background-color .18s, border-color .18s, box-shadow .18s, transform .12s var(--ease-out);
@@ -294,14 +301,14 @@
   .mode-title { font-weight: 600; font-size: 13.5px; }
   .mode-description { color: var(--ink-3); font-size: 12.5px; }
 
-  .paused { margin: 0; padding: 10px 12px; background: var(--band); border-radius: var(--radius-m); font-size: 13px; color: var(--critical-ink); }
-  .sum { display: grid; gap: 4px; padding: 10px 12px; background: var(--band); border-radius: var(--radius-m); font-size: 13px; }
+  .paused { margin: 0; padding: 12px 14px; background: var(--band); border-radius: var(--radius-m); font-size: 13px; color: var(--critical-ink); }
+  .sum { display: grid; gap: 6px; margin-top: 4px; padding: 12px 14px; background: var(--band); border-radius: var(--radius-m); font-size: 13px; }
   .gain { font-weight: 600; color: var(--good-ink); }
   .gain.bad { color: var(--ink-2); }
 
   .update { font-size: 13px; color: var(--ink-2); }
   .update.bad { color: var(--critical-ink); }
-  .status { margin-top: -10px; padding-left: 52px; color: var(--ink-3); font-size: 12.5px; }
+  .status { margin-top: -12px; padding-left: 52px; color: var(--ink-3); font-size: 12.5px; }
   .status.bad { color: var(--critical-ink); }
-  .needs-admin { display: grid; gap: 10px; justify-items: start; margin-top: -6px; padding: 12px; background: var(--band); border-radius: var(--radius-m); font-size: 13px; }
+  .needs-admin { display: grid; gap: 12px; justify-items: start; margin-top: -8px; padding: 14px; background: var(--band); border-radius: var(--radius-m); font-size: 13px; }
 </style>

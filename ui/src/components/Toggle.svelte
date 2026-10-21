@@ -38,7 +38,7 @@
   button:active:not(:disabled) .knob { width: 19px; }
   button[aria-checked="true"]:active:not(:disabled) .knob { transform: translateX(13px); }
   button[aria-checked="true"] .knob { transform: translateX(16px); background: var(--page); }
-  label { cursor: pointer; display: grid; gap: 2px; }
+  label { cursor: pointer; display: grid; gap: 4px; }
   .label { font-weight: 500; }
   .desc { color: var(--ink-3); font-size: 12.5px; max-width: 70ch; }
 </style>

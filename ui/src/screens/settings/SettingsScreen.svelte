@@ -18,5 +18,5 @@
 </div>
 
 <style>
-  .sections { display: grid; gap: 28px; }
+  .sections { display: grid; gap: 48px; }
 </style>
