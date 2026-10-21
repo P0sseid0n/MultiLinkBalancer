@@ -24,6 +24,7 @@ namespace MultiLink.Proxy
         readonly UdpPorts udpPorts;
         readonly UdpBurstLog udpBursts;
         readonly UdpOversizeLog udpOversize;
+        readonly LocalCaptureLog localCapture;
         readonly ConcurrentDictionary<Socket, byte> openSockets = new ConcurrentDictionary<Socket, byte>();
         TcpListener listener;
         CancellationTokenSource stopping;
@@ -35,6 +36,7 @@ namespace MultiLink.Proxy
             udpBursts = new UdpBurstLog(log);
             udpOversize = new UdpOversizeLog(log);
             udpPorts = new UdpPorts(udpOversize);
+            localCapture = new LocalCaptureLog(balancer, log);
         }
 
         public bool Running { get { return listener != null; } }
@@ -79,8 +81,9 @@ namespace MultiLink.Proxy
                 var client = new NetworkStream(clientSocket, false);
                 var request = await ReadRequest(client);
                 if (request == null) return;
-                if (request.IsUdpAssociate) { await new UdpAssociation(balancer, udpPorts, udpBursts, udpOversize, client, clientSocket).Run(); return; }
+                if (request.IsUdpAssociate) { await new UdpAssociation(balancer, udpPorts, udpBursts, udpOversize, request.FromCapture ? localCapture : null, client, clientSocket).Run(); return; }
 
+                if (request.FromCapture && localCapture.RefuseTcp(request.Host, request.Port)) { await request.ReplyFailure(); return; }
                 var outbound = await connector.Connect(request.Host, request.Port);
                 if (outbound == null) { await request.ReplyFailure(); return; }
                 remoteSocket = outbound.Socket;

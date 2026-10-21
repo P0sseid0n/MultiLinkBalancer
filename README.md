@@ -71,6 +71,10 @@ Como funciona: o [tun2socks](https://github.com/xjasonlyu/tun2socks) cria um ada
 SOCKS5 local. Duas rotas `0.0.0.0/1` e `128.0.0.0/1` (mais específicas que a rota padrão) mandam a internet
 para esse adaptador; as conexões do próprio MultiLink saem presas ao IP de cada link e por isso continuam indo
 direto pelos adaptadores reais. A rede local (impressoras, roteador, outros PCs) continua direta.
+Se um endereço da rede local de um link chegar à captura mesmo assim (o Windows não encontrou o aparelho), a
+conexão TCP é recusada na hora com "host inalcançável", em vez de parecer aberta e não levar a lugar nenhum, e o
+registro de eventos mostra o endereço e o motivo (uma vez a cada 10 min por destino). O tun2socks se identifica ao
+proxy com o usuário SOCKS5 `captura`; programas configurados para usar o proxy não são afetados.
 
 **IPv6**: quando algum link tem IPv6, a rota `2000::/3` (toda a internet IPv6) também vai para o adaptador, que
 recebe um endereço privado (ULA). Com isso o Windows prefere IPv4 nos sites que têm os dois, e os destinos só IPv6

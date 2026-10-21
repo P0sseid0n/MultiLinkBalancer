@@ -27,6 +27,7 @@ namespace MultiLink.Proxy
         readonly UdpPorts ports;
         readonly UdpBurstLog bursts;
         readonly UdpOversizeLog oversize;
+        readonly LocalCaptureLog localCapture; // só nas associações da captura
         readonly NetworkStream control;
         readonly IPAddress clientAddress;
         readonly IPAddress localAddress;
@@ -35,12 +36,13 @@ namespace MultiLink.Proxy
         EndPoint clientEndPoint; // de onde o cliente mandou o último datagrama: as respostas vão para lá
 
         public UdpAssociation(Balancer balancer, UdpPorts ports, UdpBurstLog bursts, UdpOversizeLog oversize,
-                              NetworkStream control, Socket controlSocket)
+                              LocalCaptureLog localCapture, NetworkStream control, Socket controlSocket)
         {
             this.balancer = balancer;
             this.ports = ports;
             this.bursts = bursts;
             this.oversize = oversize;
+            this.localCapture = localCapture;
             this.control = control;
             clientAddress = ((IPEndPoint)controlSocket.RemoteEndPoint).Address;
             localAddress = ((IPEndPoint)controlSocket.LocalEndPoint).Address;
@@ -177,6 +179,7 @@ namespace MultiLink.Proxy
             var exclude = new List<Link>();
             if (ipv6) exclude.AddRange(balancer.Snapshot().Where(link => !link.Ipv6.Works));
             var chosen = ipv6 ? null : balancer.Snapshot().FirstOrDefault(link => link.Present && link.OnLocalNetwork(target.Address)); // rede local: só esse link alcança
+            if (chosen != null && localCapture != null) localCapture.ArrivedUdp(target, chosen);
             if (chosen == null) chosen = balancer.Pick(target.Address.ToString(), exclude);
             if (chosen == null) return null;
 
