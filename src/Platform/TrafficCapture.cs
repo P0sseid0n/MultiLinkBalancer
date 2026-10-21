@@ -31,6 +31,11 @@ namespace MultiLink.Platform
         const string TunAddress = "198.18.0.1";      // faixa reservada para testes (RFC 2544): não colide com redes reais
         const string TunAddressV6 = "fd4d:4c42::1";  // ULA (rede privada IPv6, RFC 4193)
         const string ExeName = "multilink-tun2socks.exe";
+        // O adaptador virtual não manda nada para a rede (cada conexão sai de novo por um socket do link), então o
+        // limite de 1500 dos links não vale para ele. Pacotes maiores são bem menos pacotes para o tun2socks
+        // processar: o net-merge mediu cerca de 3x menos CPU por Mbps com 9000. Não 65535: o tun2socks reserva um
+        // buffer do tamanho do MTU para cada pacote que chega, até para um ACK de 40 bytes.
+        const int Mtu = 9000;
         const int MaxRestarts = 3;
 
         readonly ActivityLog log;
@@ -122,7 +127,7 @@ namespace MultiLink.Platform
             var folder = EmbeddedFiles.ExtractTun2Socks(ExeName);
             KillStale();
             var startInfo = new ProcessStartInfo(Path.Combine(folder, ExeName),
-                "--device tun://" + AdapterName + "?guid=" + AdapterGuid + " --proxy socks5://" + Proxy.Socks5Handshake.CaptureUser + ":x@127.0.0.1:" + socksPort + " --loglevel warn --udp-timeout 60s")
+                "--device tun://" + AdapterName + "?guid=" + AdapterGuid + " --proxy socks5://" + Proxy.Socks5Handshake.CaptureUser + ":x@127.0.0.1:" + socksPort + " --mtu " + Mtu + " --loglevel warn --udp-timeout 60s")
             {
                 WorkingDirectory = folder, // o wintun.dll é carregado da mesma pasta
                 UseShellExecute = false, CreateNoWindow = true,
@@ -174,6 +179,7 @@ namespace MultiLink.Platform
             await Netsh("interface ipv4 set dnsservers name=" + adapter + " source=static address=1.1.1.1 register=none validate=no");
             await Netsh("interface ipv4 add dnsservers name=" + adapter + " address=8.8.8.8 index=2 validate=no");
             await Netsh("interface ipv4 set interface interface=" + adapter + " metric=1");
+            await Netsh("interface ipv4 set subinterface " + adapter + " mtu=" + Mtu + " store=active");
             await Netsh("interface ipv4 add route prefix=0.0.0.0/1 interface=" + adapter + " nexthop=" + TunAddress + " metric=1 store=active");
             await Netsh("interface ipv4 add route prefix=128.0.0.0/1 interface=" + adapter + " nexthop=" + TunAddress + " metric=1 store=active");
         }
@@ -186,6 +192,7 @@ namespace MultiLink.Platform
             {
                 await Netsh("interface ipv6 add address interface=" + adapter + " address=" + TunAddressV6 + " store=active");
                 await Netsh("interface ipv6 set interface interface=" + adapter + " metric=1");
+                await Netsh("interface ipv6 set subinterface " + adapter + " mtu=" + Mtu + " store=active");
                 await Netsh("interface ipv6 add route prefix=2000::/3 interface=" + adapter + " metric=1 store=active");
                 return true;
             }
