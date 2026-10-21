@@ -40,6 +40,8 @@ namespace MultiLink.App
         public bool Measuring { get; private set; }
         public bool TestingSum { get; private set; }
         public SumTestResult LastSumTest { get; private set; }
+        // o servidor de medição bloqueou há pouco: as medições esperam até esta hora; null se não há pausa
+        public DateTime? MeasurePausedUntil { get { return SpeedTest.PausedUntil; } }
 
         public List<Link> All() { return balancer.Snapshot(); }
 
@@ -247,15 +249,24 @@ namespace MultiLink.App
             var links = balancer.Snapshot().Where(link => link.Present && link.InternetUp).ToList();
             if (links.Count == 0) throw new Exception("Nenhum link online para medir.");
             if (Measuring || TestingSum) return;
+            SpeedTest.EnsureNotPaused();
             Measuring = true;
             log.Add("Medindo a velocidade de " + links.Count + " link(s) em paralelo (cerca de 8 s)...");
             try
             {
-                var results = await Task.WhenAll(links.Select(link => SpeedTest.MeasureMbps(link, SpeedTestSeconds)));
+                var results = await Task.WhenAll(links.Select(link => SpeedTest.Measure(link, SpeedTestSeconds)));
+                int refusedStatus = 0;
                 for (int i = 0; i < links.Count; i++)
                 {
                     var link = links[i];
-                    double mbps = results[i];
+                    double mbps = results[i].Mbps;
+                    // recusa no meio do teste: as conexões que sobraram mediram menos que o link rende
+                    if (results[i].Refused)
+                    {
+                        refusedStatus = results[i].RefusedStatus;
+                        log.Add(string.Format("[{0}] medição descartada: {1}; peso mantido em {2}", link.Name, SpeedTest.RefusalText(refusedStatus), link.Weight), ActivityLog.Error);
+                        continue;
+                    }
                     if (mbps < 1) { log.Add(string.Format("[{0}] a medição falhou; peso mantido em {1}", link.Name, link.Weight), ActivityLog.Error); continue; }
                     link.MeasuredMbps = mbps;
                     settings.Set(SpeedPrefix + link.Id, Math.Round(mbps));
@@ -264,8 +275,10 @@ namespace MultiLink.App
                     SavePreferences(link);
                     log.Add(string.Format("[{0}] {1:0} Mbps, peso {2}", link.Name, mbps, link.Weight));
                 }
-                if (results.Any(mbps => mbps >= 1)) settings.SpeedMeasured = true;
+                if (results.Any(result => !result.Refused && result.Mbps >= 1)) settings.SpeedMeasured = true;
                 settings.Save();
+                // o aviso chega no painel ou na bandeja; os links medidos sem recusa já foram salvos
+                if (refusedStatus != 0) throw new Exception("Medição incompleta: " + SpeedTest.RefusalText(refusedStatus) + ".");
             }
             finally { Measuring = false; }
         }
@@ -277,15 +290,21 @@ namespace MultiLink.App
             var links = balancer.Snapshot().Where(link => link.Enabled && link.Present && link.InternetUp).ToList();
             if (links.Count < 2) throw new Exception("O teste da soma precisa de pelo menos dois links online no balanceamento.");
             if (Measuring || TestingSum) return null;
+            SpeedTest.EnsureNotPaused();
             TestingSum = true;
             log.Add(string.Format("Teste da soma: {0} links baixando juntos, depois o melhor sozinho (cerca de {1} s)...", links.Count, 2 * SpeedTestSeconds));
             try
             {
-                var together = await SpeedTest.MeasureTogetherMbps(links, SpeedTestSeconds);
+                // com qualquer recusa o resultado inteiro é descartado: uma parte medida pela metade distorce a comparação
+                var measured = await SpeedTest.MeasureTogether(links, SpeedTestSeconds);
+                ThrowIfRefused(measured);
+                var together = measured.Select(link => link.Mbps).ToArray();
                 double total = together.Sum();
                 if (total < 1) throw new Exception("O teste da soma falhou: nenhum link conseguiu baixar do servidor de teste.");
                 int best = Array.IndexOf(together, together.Max());
-                double alone = await SpeedTest.MeasureMbps(links[best], SpeedTestSeconds);
+                var aloneResult = await SpeedTest.Measure(links[best], SpeedTestSeconds);
+                ThrowIfRefused(new[] { aloneResult });
+                double alone = aloneResult.Mbps;
                 var result = new SumTestResult
                 {
                     At = DateTime.Now, TotalMbps = total, BestName = links[best].Name, BestAloneMbps = alone,
@@ -297,6 +316,15 @@ namespace MultiLink.App
                 return result;
             }
             finally { TestingSum = false; }
+        }
+
+        void ThrowIfRefused(SpeedResult[] results)
+        {
+            var refused = results.FirstOrDefault(result => result.Refused);
+            if (refused == null) return;
+            var error = "Teste da soma descartado: " + SpeedTest.RefusalText(refused.RefusedStatus) + ".";
+            log.Add(error, ActivityLog.Error);
+            throw new Exception(error);
         }
     }
 }

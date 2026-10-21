@@ -80,10 +80,12 @@ namespace MultiLink.Ui
             menu.Items.Add(LinksMenu());
             bool measuring = app.Links.Measuring;
             bool testingSum = app.Links.TestingSum;
-            menu.Items.Add(new ToolStripMenuItem(measuring ? "Medindo velocidade…" : "Medir velocidade e ajustar pesos", null, (sender, e) => Run("measure", null))
-                { Enabled = !measuring && !testingSum });
-            menu.Items.Add(new ToolStripMenuItem(testingSum ? "Testando a soma…" : "Testar a soma dos links", null, (sender, e) => TestSum())
-                { Enabled = !measuring && !testingSum });
+            var paused = app.Links.MeasurePausedUntil; // o servidor de medição bloqueou há pouco
+            string pausedText = paused.HasValue ? " (servidor bloqueou, até " + paused.Value.ToString("HH:mm") + ")" : "";
+            menu.Items.Add(new ToolStripMenuItem(measuring ? "Medindo velocidade…" : "Medir velocidade e ajustar pesos" + pausedText, null, (sender, e) => Run("measure", null))
+                { Enabled = !measuring && !testingSum && !paused.HasValue });
+            menu.Items.Add(new ToolStripMenuItem(testingSum ? "Testando a soma…" : "Testar a soma dos links" + pausedText, null, (sender, e) => TestSum())
+                { Enabled = !measuring && !testingSum && !paused.HasValue });
             menu.Items.Add(new ToolStripSeparator());
             if (DevBuild.Available)
             {

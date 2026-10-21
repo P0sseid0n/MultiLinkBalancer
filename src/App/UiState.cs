@@ -32,6 +32,7 @@ namespace MultiLink.App
                     { "on", settings.CaptureAllPrograms }, { "active", capture.Active }, { "starting", capture.Starting },
                     { "error", capture.Error }, { "ipv6", capture.Ipv6 } } },
                 { "measuring", app.Links.Measuring },
+                { "measurePausedUntil", app.Links.MeasurePausedUntil.HasValue ? (object)UnixTime.ToMs(app.Links.MeasurePausedUntil.Value) : null },
                 { "sumTest", new Dictionary<string, object> {
                     { "running", app.Links.TestingSum }, { "result", app.Links.LastSumTest == null ? null : app.Links.LastSumTest.ToState() } } },
                 { "update", app.Updater.ToState() },

@@ -16,6 +16,7 @@ export function createMock(deliver) {
     settings: { mode: 0, affinity: false, quality: true, autoUpdate: true, autoRoute: false, startup: false, notify: true, notifySound: true, hotkeys: true },
     capture: { on: false, active: false, starting: false, error: null, ipv6: true },
     measuring: false,
+    measurePausedUntil: null,
     sumTest: { running: false, result: null },
     update: { current: '1.0.0', latest: null, state: 'idle', progress: 0, error: null, notes: null },
     dev: { builtAt: now() - 5 * 60e3, building: false }, // null imita o .exe da release

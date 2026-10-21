@@ -2,7 +2,7 @@
   // Ajustes, em seções: ao ligar, distribuição, quedas, avisos, atualizações (ou desenvolvimento) e sistema.
   import { app, run, fire, ask } from '../../state/app.svelte.js';
   import Toggle from '../../components/Toggle.svelte';
-  import { since } from '../../lib/format.js';
+  import { since, clock } from '../../lib/format.js';
 
   const MODES = [ // [valor, título, descrição]; o valor é o BalanceMode do app
     [0, 'Proporcional aos pesos', 'Cada nova conexão vai para um link, na proporção dos pesos.'],
@@ -17,7 +17,8 @@
   const dev = $derived(appState.dev); // null fora do modo de desenvolvimento
   const sumTest = $derived(appState.sumTest);
   const sumResult = $derived(sumTest.result); // null até o primeiro teste da soma
-  const busyMeasuring = $derived(appState.measuring || sumTest.running);
+  const measurePausedUntil = $derived(appState.measurePausedUntil); // ms; null se o servidor de medição não bloqueou há pouco
+  const busyMeasuring = $derived(appState.measuring || sumTest.running || measurePausedUntil != null);
 
   // porta: edição local enquanto o campo tem foco
   let port = $state(1080);
@@ -138,6 +139,9 @@
     <Toggle checked={appState.settings.affinity} onchange={(value) => setSetting('affinity', value)}
       label="Manter cada site no mesmo link"
       description="Use se algum site (banco, login) desconectar ao trocar de IP. Com isso ligado, downloads de um mesmo site não somam os links." />
+    {#if measurePausedUntil != null}
+      <p class="paused" role="status">O servidor de medição (speed.cloudflare.com) bloqueou temporariamente os pedidos deste PC, depois de muitos testes seguidos. Dá para medir de novo às <span class="num">{clock(measurePausedUntil)}</span>.</p>
+    {/if}
     <div class="field">
       <button class="btn" onclick={() => fire('measure')} disabled={busyMeasuring}>{appState.measuring ? 'Medindo…' : 'Medir velocidade e ajustar pesos'}</button>
       <span class="help">Mede cada link por cerca de 8 segundos e define o peso proporcional à velocidade.</span>
@@ -265,6 +269,7 @@
   .mode-title { font-weight: 600; font-size: 13.5px; }
   .mode-description { color: var(--ink-3); font-size: 12.5px; }
 
+  .paused { margin: 0; padding: 10px 12px; background: var(--band); border-radius: var(--radius-m); font-size: 13px; color: var(--critical-ink); }
   .sum { display: grid; gap: 4px; padding: 10px 12px; background: var(--band); border-radius: var(--radius-m); font-size: 13px; }
   .gain { font-weight: 600; color: var(--good-ink); }
   .gain.bad { color: var(--ink-2); }
