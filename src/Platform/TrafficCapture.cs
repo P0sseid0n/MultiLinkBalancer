@@ -122,7 +122,7 @@ namespace MultiLink.Platform
             var folder = EmbeddedFiles.ExtractTun2Socks(ExeName);
             KillStale();
             var startInfo = new ProcessStartInfo(Path.Combine(folder, ExeName),
-                "--device tun://" + AdapterName + "?guid=" + AdapterGuid + " --proxy socks5://127.0.0.1:" + socksPort + " --loglevel warn --udp-timeout 60s")
+                "--device tun://" + AdapterName + "?guid=" + AdapterGuid + " --proxy socks5://" + Proxy.Socks5Handshake.CaptureUser + ":x@127.0.0.1:" + socksPort + " --loglevel warn --udp-timeout 60s")
             {
                 WorkingDirectory = folder, // o wintun.dll é carregado da mesma pasta
                 UseShellExecute = false, CreateNoWindow = true,

@@ -12,6 +12,7 @@ namespace MultiLink.Proxy
         public Func<Task> ReplySuccess;       // responde ao cliente que a conexão foi aberta
         public Func<Task> ReplyFailure;
         public bool IsUdpAssociate;           // SOCKS5 UDP ASSOCIATE: a conexão TCP só mantém a associação viva
+        public bool FromCapture;              // veio do tun2socks (Socks5Handshake.CaptureUser), não de um programa configurado
 
         public static readonly Func<Task> NoReply = () => Task.FromResult(0);
     }
