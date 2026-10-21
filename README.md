@@ -74,7 +74,7 @@ linha de comando e tráfego UDP.
 Como funciona: o [tun2socks](https://github.com/xjasonlyu/tun2socks) cria um adaptador de rede virtual
 [Wintun](https://www.wintun.net) chamado **MultiLink** e entrega cada conexão TCP/UDP que chega nele ao proxy
 SOCKS5 local. Duas rotas `0.0.0.0/1` e `128.0.0.0/1` (mais específicas que a rota padrão) mandam a internet
-para esse adaptador; as conexões do próprio MultiLink saem presas ao IP de cada link e por isso continuam indo
+para esse adaptador; as conexões do próprio MultiLink saem presas ao IP e à placa de cada link e por isso continuam indo
 direto pelos adaptadores reais. A rede local (impressoras, roteador, outros PCs) continua direta.
 Se um endereço da rede local de um link chegar à captura mesmo assim (o Windows não encontrou o aparelho), a
 conexão TCP é recusada na hora com "host inalcançável", em vez de parecer aberta e não levar a lugar nenhum, e o
@@ -90,6 +90,12 @@ de novo depois de 5 min, com a espera dobrando a cada nova queda (até 1 h).
 - **Segurança**: o tun2socks roda vinculado ao MultiLink (Job Object do Windows). Se o app fechar ou travar, o
   Windows encerra o tun2socks, o adaptador some e as rotas somem junto: a internet volta ao normal sozinha.
   As rotas são criadas como temporárias (`store=active`) e não sobrevivem a um reinício.
+- **Weak host send e forwarding**: com qualquer um dos dois ligado num link, o Windows ignora a placa a que as conexões
+  do MultiLink estão presas e elas voltariam para a captura (o link pareceria sem internet). O próprio Windows liga o
+  weak host no IPv6, e o Hotspot Móvel, o Compartilhamento de Internet, o Hyper-V e algumas VPNs ligam os dois. Por
+  isso, enquanto a captura está ligada, o MultiLink desliga os dois nos links (temporário, verificado a cada 10 s) e
+  devolve os valores originais ao desligá-la, ou na abertura seguinte se o app tiver fechado de repente. O registro de
+  eventos mostra o que mudou. Compartilhar a internet de um link pelo Hotspot Móvel fica pausado enquanto isso.
 - **DNS**: com a captura ativa, o Windows resolve nomes por 1.1.1.1 e 8.8.8.8 através do MultiLink.
 - **Limitações**: um jogo ou chamada (um fluxo UDP) usa um link só;
   VPNs e alguns anti-cheats podem não conviver com o adaptador virtual.

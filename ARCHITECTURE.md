@@ -58,7 +58,7 @@ ao `AppController` e publica o estado que ele devolve.
 | `Monitoring/` | Saúde dos links, quedas, failover pelo roteamento, histórico e medição | `HealthChecker`, `IcmpPing`, `LinkMonitor`, `RouteFailover`, `PortUsageMonitor`, `UsageHistory`, `SpeedTest` |
 | `Downloads/` | Download acelerado (HTTP Range por todos os links) | `SegmentedDownload`, `DownloadManager` |
 | `Updates/` | Atualização pelo GitHub Releases | `Updater` |
-| `Platform/` | Tudo que mexe no Windows | `ProcessRunner`, `PowerShell`, `Elevation`, `NetworkAdapters`, `RouteMetrics`, `SystemProxy`, `StartupRegistration`, `TrafficCapture`, `NetworkProfiles`, `JobObject`, `EmbeddedFiles` |
+| `Platform/` | Tudo que mexe no Windows | `ProcessRunner`, `PowerShell`, `Elevation`, `NetworkAdapters`, `RouteMetrics`, `SystemProxy`, `StartupRegistration`, `TrafficCapture`, `StrongHost`, `NetworkProfiles`, `JobObject`, `EmbeddedFiles` |
 | `App/` | Orquestração: ciclo de vida, comandos da interface, estado publicado | `AppController`, `LinkManager`, `SumTestResult`, `UiState`, `IAppHost` |
 | `Ui/` | Janela nativa, bandeja, atalhos e WebView2 | `MainWindow`, `TrayIcon`, `PanelPlacement`, `GlobalHotkeys`, `WebViewHost`, `AppIcon` |
 
@@ -97,7 +97,7 @@ O app também envia, sem pedido, `{ type: "state", data }` a cada segundo e `{ t
 Ficam em `%APPDATA%\MultiLinkBalancer` e precisam continuar legíveis por versões antigas e novas:
 
 - `config.ini`: as chaves (`port`, `mode`, `link.<id>`...) estão todas em `AppSettings`,
-  `LinkManager`, `RouteFailover` e `SystemProxy`. Não renomeie uma chave sem migrar o valor antigo.
+  `LinkManager`, `RouteFailover`, `StrongHost` e `SystemProxy`. Não renomeie uma chave sem migrar o valor antigo.
 - `history.json`: os nomes curtos dos campos (`T`, `V`, `D`...) são o formato do arquivo; ver `UsageHistory`.
 
 ## Convenções

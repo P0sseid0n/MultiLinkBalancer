@@ -2,7 +2,7 @@
 // O tun2socks cria um adaptador virtual Wintun ("MultiLink") e entrega cada conexão TCP/UDP
 // que chega nele ao proxy SOCKS5 local do MultiLink. Duas rotas /1 (mais específicas que a rota
 // padrão) mandam a internet para esse adaptador; as conexões do próprio MultiLink saem presas ao
-// IP de cada link, então continuam indo direto pelos adaptadores reais (modelo "strong host").
+// IP e à placa de cada link, então continuam indo direto pelos adaptadores reais (modelo "strong host"; ver StrongHost).
 // A rede local continua direta porque as rotas das sub-redes locais são mais específicas que /1.
 // IPv6 (só enquanto algum link tem IPv6 que funciona; ver SyncIpv6): a rota 2000::/3 cobre toda a internet IPv6 e é mais
 // específica que a padrão (::/0). O adaptador recebe um endereço ULA; com ele o Windows prefere
@@ -39,10 +39,12 @@ namespace MultiLink.Platform
         const int MaxRestarts = 3;
 
         readonly ActivityLog log;
+        readonly StrongHost strongHost;
         readonly JobObject job = new JobObject();
         Process process;
         volatile bool wanted;
         Func<bool> anyLinkHasIpv6;
+        Func<IEnumerable<int>> linkInterfaces;
         int restarts;
         bool syncingIpv6;
         bool ipv6Failed; // o netsh recusou: não insiste até a captura ser religada
@@ -50,9 +52,10 @@ namespace MultiLink.Platform
 
         DateTime windowsEndingAt = DateTime.MinValue;
 
-        public TrafficCapture(ActivityLog log)
+        public TrafficCapture(ActivityLog log, Storage.AppSettings settings)
         {
             this.log = log;
+            strongHost = new StrongHost(settings, log);
             // no desligamento o Windows encerra o tun2socks, às vezes antes de o MultiLink começar a fechar
             Microsoft.Win32.SystemEvents.SessionEnding += (sender, e) => windowsEndingAt = DateTime.UtcNow;
         }
@@ -69,11 +72,16 @@ namespace MultiLink.Platform
                 try { stale.Kill(); stale.WaitForExit(3000); } catch { }
         }
 
+        // Na abertura: um fechamento inesperado com a captura ligada deixa o weak host send dos links desligado.
+        public void RestoreLeftovers() { strongHost.RestoreAll(); }
+
         // anyLinkHasIpv6: sem um link com IPv6 funcionando, rotear IPv6 para o adaptador deixaria esses destinos sem saída.
-        public async Task Start(int socksPort, Func<bool> anyLinkHasIpv6)
+        // linkInterfaces: índices IPv4 e IPv6 dos adaptadores dos links (ver StrongHost).
+        public async Task Start(int socksPort, Func<bool> anyLinkHasIpv6, Func<IEnumerable<int>> linkInterfaces)
         {
             if (wanted) return;
             this.anyLinkHasIpv6 = anyLinkHasIpv6;
+            this.linkInterfaces = linkInterfaces;
             wanted = true;
             Error = null;
             restarts = 0;
@@ -89,6 +97,7 @@ namespace MultiLink.Platform
             Ipv6 = false;
             var running = process;
             process = null;
+            strongHost.RestoreAll(); // depois de tirar a captura: sem as rotas dela, o weak host não atrapalha mais
             if (running == null) return;
             try { if (!running.HasExited) { running.Kill(); running.WaitForExit(5000); } } catch { }
             log.Add("Captura de todos os programas desligada. O adaptador virtual foi removido.");
@@ -102,6 +111,8 @@ namespace MultiLink.Platform
                 if (!Elevation.IsAdmin) throw new Exception("requer o MultiLink aberto como administrador");
                 var started = StartTun2Socks(socksPort);
                 await WaitForAdapter(started);
+                await strongHost.Apply(linkInterfaces(), true); // antes das rotas: as conexões do MultiLink precisam sair certo desde o início
+                if (!wanted) { strongHost.RestoreAll(); return; } // desligada enquanto isso
                 await ConfigureIpv4();
                 Ipv6 = anyLinkHasIpv6 != null && anyLinkHasIpv6() && await TryConfigureIpv6();
 
@@ -118,6 +129,7 @@ namespace MultiLink.Platform
                 var failed = process;
                 process = null;
                 try { if (failed != null && !failed.HasExited) failed.Kill(); } catch { }
+                strongHost.RestoreAll();
             }
             finally { Starting = false; }
         }
@@ -222,6 +234,15 @@ namespace MultiLink.Platform
             finally { syncingIpv6 = false; }
         }
 
+        // Chamado a cada segundo (a StrongHost verifica a cada 10 s): um link que aparece com a captura ligada, ou um
+        // weak host que o Windows religou, também precisa ser desligado.
+        public async void SyncLinks()
+        {
+            if (!Active) return;
+            await strongHost.Apply(linkInterfaces(), false);
+            if (!wanted) strongHost.RestoreAll(); // desligada enquanto isso
+        }
+
         async Task<bool> TryRemoveIpv6Route()
         {
             try { await Netsh("interface ipv6 delete route prefix=2000::/3 interface=\"" + AdapterName + "\" store=active"); return true; }
@@ -277,6 +298,7 @@ namespace MultiLink.Platform
             if (++restarts > MaxRestarts)
             {
                 wanted = false;
+                strongHost.RestoreAll();
                 Error = "o tun2socks parou várias vezes";
                 log.Add("A captura parou várias vezes seguidas e foi desligada. Os programas voltaram à conexão normal.", ActivityLog.Error);
                 return;

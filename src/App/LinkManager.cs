@@ -54,6 +54,12 @@ namespace MultiLink.App
 
         public bool AnyHasIpv6() { return balancer.Snapshot().Any(link => link.Present && link.Enabled && link.Ipv6.Works); }
 
+        // Índices IPv4 e IPv6 dos adaptadores no ar (inclusive os desativados no app: as sondas de saúde usam todos).
+        public IEnumerable<int> InterfaceIndexes()
+        {
+            return balancer.Snapshot().Where(link => link.Present).SelectMany(link => new[] { link.InterfaceIndex, link.InterfaceIndexV6 });
+        }
+
         // Links que o usuário usa e estão fora do ar (sem contar os desativados por ele).
         public List<string> DownLinkNames()
         {

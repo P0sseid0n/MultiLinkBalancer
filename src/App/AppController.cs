@@ -46,7 +46,7 @@ namespace MultiLink.App
             this.host = host;
             Proxy = new ProxyServer(Balancer, Log);
             Links = new LinkManager(Balancer, Settings, Log);
-            Capture = new TrafficCapture(Log);
+            Capture = new TrafficCapture(Log, Settings);
             Monitor = new LinkMonitor(Log);
             RouteFailover = new RouteFailover(Settings, Log);
             Downloads = new DownloadManager(Log);
@@ -92,7 +92,7 @@ namespace MultiLink.App
         // Um fechamento inesperado pode ter deixado o Windows apontando para o proxy ou com rotas alteradas.
         void RecoverFromPreviousSession()
         {
-            if (IsAdmin) TrafficCapture.KillStale();
+            if (IsAdmin) { TrafficCapture.KillStale(); Capture.RestoreLeftovers(); }
             Updater.Cleanup();
             if (Settings.SystemProxyApplied)
             {
@@ -130,6 +130,7 @@ namespace MultiLink.App
         {
             Links.RefreshIfNetworkChanged();
             Capture.SyncIpv6();
+            Capture.SyncLinks();
             var now = DateTime.UtcNow;
             double seconds = Math.Max(0.2, (now - lastTick).TotalSeconds);
             lastTick = now;
@@ -205,7 +206,7 @@ namespace MultiLink.App
             catch (Exception ex) { Log.Add("Não foi possível abrir a porta " + port + ": " + ex.Message, ActivityLog.Error); }
         }
 
-        void StartCapture() { var ignored = Capture.Start(Settings.Port, Links.AnyHasIpv6); }
+        void StartCapture() { var ignored = Capture.Start(Settings.Port, Links.AnyHasIpv6, Links.InterfaceIndexes); }
 
         void SetSystemProxy(bool enabled)
         {
