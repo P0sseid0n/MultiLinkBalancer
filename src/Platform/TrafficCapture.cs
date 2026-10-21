@@ -104,7 +104,7 @@ namespace MultiLink.Platform
             var running = process;
             process = null;
             strongHost.RestoreAll(); // depois de tirar a captura: sem as rotas dela, o weak host não atrapalha mais
-            var unblocked = ipv6Block.Set(false, AdapterName);
+            ipv6Block.RemoveNow();
             if (running == null) return;
             try { if (!running.HasExited) { running.Kill(); running.WaitForExit(5000); } } catch { }
             log.Add("Captura de todos os programas desligada. O adaptador virtual foi removido.");
