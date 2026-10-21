@@ -12,8 +12,9 @@
 </script>
 
 {#if last}
-  <div class="bar">
-    <button aria-expanded={open} onclick={() => (open = !open)}
+  <div class="bar" class:open>
+    <!-- fechado, o texto cortado aparece inteiro ao passar o mouse; aberto, ele quebra linha -->
+    <button aria-expanded={open} onclick={() => (open = !open)} title={open ? undefined : last.text}
       aria-label={open ? 'Recolher eventos' : `Último evento: ${last.text}. Ver eventos anteriores`}>
       <span class="dot {last.kind}" aria-hidden="true"></span>
       <!-- evento novo: o anterior sobe e sai, o novo sobe e entra -->
@@ -64,6 +65,12 @@
   time { font-size: 12px; color: var(--ink-3); }
   .chev { flex: none; color: var(--ink-3); transition: transform .25s var(--ease-out); }
   .chev.open { transform: rotate(180deg); }
+  /* aberto: o último evento quebra linha como os anteriores; ponto, hora e seta ficam na primeira linha */
+  .bar.open button { align-items: flex-start; padding-top: 13px; padding-bottom: 13px; }
+  .bar.open .text { white-space: normal; line-height: 1.45; }
+  .bar.open button .dot { margin-top: 6px; }
+  .bar.open button time { line-height: 1.45; }
+  .bar.open .chev { margin-top: 2px; }
 
   .dot { width: 6px; height: 6px; border-radius: 3px; flex: none; background: var(--dot-neutral); }
   .dot.down, .dot.error { background: var(--critical); }
