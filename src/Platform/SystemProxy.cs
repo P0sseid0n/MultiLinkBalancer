@@ -2,6 +2,7 @@
 // configuração anterior no config.ini ("prev.*") para devolvê-la ao desligar, ao sair ou na
 // próxima abertura, se o app tiver fechado sem restaurar.
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using MultiLink.Storage;
@@ -12,7 +13,10 @@ namespace MultiLink.Platform
     {
         const string InternetSettingsKey = @"Software\Microsoft\Windows\CurrentVersion\Internet Settings";
         const string Missing = "\u0000"; // marca de "valor não existia" no config.ini
-        const string Bypass = "<local>;localhost;127.*;10.*;172.16.*;192.168.*;*.multilink";
+        // o próprio PC (inclusive 0.0.0.0, que os servidores de desenvolvimento mostram), as redes privadas inteiras (a
+        // 172.16.0.0/12 vai até 172.31: o WSL e o Docker usam 172.17 a 172.31) e o link-local (169.254)
+        static readonly string Bypass = "<local>;localhost;*.localhost;127.*;0.0.0.0;[::1];10.*;" +
+            string.Concat(Enumerable.Range(16, 16).Select(second => "172." + second + ".*;")) + "192.168.*;169.254.*;*.multilink";
         const int INTERNET_OPTION_SETTINGS_CHANGED = 39, INTERNET_OPTION_REFRESH = 37;
 
         [DllImport("wininet.dll", SetLastError = true)]
