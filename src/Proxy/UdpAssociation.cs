@@ -136,14 +136,14 @@ namespace MultiLink.Proxy
             switch (datagram[3])
             {
                 case AddressIPv4:
-                    destination = new IPAddress(new[] { datagram[4], datagram[5], datagram[6], datagram[7] });
+                    destination = DirectDestination.Literal(new IPAddress(new[] { datagram[4], datagram[5], datagram[6], datagram[7] }));
                     offset = 8;
                     break;
                 case AddressIPv6:
                     if (length < 22) return;
                     var address = new byte[16];
                     Buffer.BlockCopy(datagram, 4, address, 0, 16);
-                    destination = new IPAddress(address);
+                    destination = DirectDestination.Literal(new IPAddress(address));
                     offset = 20;
                     break;
                 case AddressDomain:
@@ -151,8 +151,9 @@ namespace MultiLink.Proxy
                     if (length < 7 + nameLength) return;
                     var name = Encoding.ASCII.GetString(datagram, 5, nameLength);
                     offset = 5 + nameLength;
-                    try { destination = (await Dns.GetHostAddressesAsync(name)).OrderBy(resolved => resolved.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).First(); }
+                    try { destination = (DirectDestination.ForName(name) ?? await Dns.GetHostAddressesAsync(name)).OrderBy(resolved => resolved.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).First(); }
                     catch { return; }
+                    if (DirectDestination.IsUnspecified(destination)) return;
                     break;
                 default:
                     return;
@@ -164,31 +165,38 @@ namespace MultiLink.Proxy
             var flow = FlowFor(target);
             if (flow == null) return;
             Interlocked.Exchange(ref flow.LastActivity, Stopwatch.GetTimestamp());
-            try { Interlocked.Add(ref flow.Port.Link.Traffic.BytesUp, flow.Port.Socket.SendTo(datagram, offset, length - offset, SocketFlags.None, target)); }
+            try { Interlocked.Add(ref flow.Port.Traffic.BytesUp, flow.Port.Socket.SendTo(datagram, offset, length - offset, SocketFlags.None, target)); }
             catch { }
         }
 
-        // Fluxo existente para o destino ou um novo, pelo link que o Balancer escolher. null se não houver link.
+        // Fluxo existente para o destino ou um novo, pelo link que o Balancer escolher (ou direto, para o próprio PC e
+        // as redes de outro adaptador: DirectDestination). null se não houver link.
         UdpPorts.Flow FlowFor(IPEndPoint target)
         {
             var key = target.ToString();
             UdpPorts.Flow flow;
             if (flows.TryGetValue(key, out flow)) return flow;
 
-            bool ipv6 = target.AddressFamily == AddressFamily.InterNetworkV6;
-            if (ipv6 && !balancer.Ipv6Allowed()) return null; // descartado: sem resposta, o programa passa a usar o IPv4
-            var exclude = new List<Link>();
-            if (ipv6) exclude.AddRange(balancer.Snapshot().Where(link => !link.Ipv6.Works));
-            var chosen = ipv6 ? null : balancer.Snapshot().FirstOrDefault(link => link.Present && link.OnLocalNetwork(target.Address)); // rede local: só esse link alcança
-            if (chosen != null && localCapture != null) localCapture.ArrivedUdp(target, chosen);
-            if (chosen == null) chosen = balancer.Pick(target.Address.ToString(), exclude);
-            if (chosen == null) return null;
+            var links = balancer.Snapshot();
+            Link chosen = null; // continua null na saída direta
+            if (DirectDestination.Find(new[] { target.Address }, links) == null)
+            {
+                bool ipv6 = target.AddressFamily == AddressFamily.InterNetworkV6;
+                if (ipv6 && !balancer.Ipv6Allowed()) return null; // descartado: sem resposta, o programa passa a usar o IPv4
+                var exclude = new List<Link>();
+                if (ipv6) exclude.AddRange(links.Where(link => !link.Ipv6.Works));
+                chosen = ipv6 ? null : links.FirstOrDefault(link => link.Present && link.OnLocalNetwork(target.Address)); // rede local: só esse link alcança
+                if (chosen != null && localCapture != null) localCapture.ArrivedUdp(target, chosen);
+                if (chosen == null && !ipv6) chosen = DirectDestination.RouteLink(target.Address, links);
+                if (chosen == null) chosen = balancer.Pick(target.Address.ToString(), exclude);
+                if (chosen == null) return null;
+            }
 
             flow = ports.Open(chosen, target, this);
             if (flow == null) return null;
             if (!flows.TryAdd(key, flow)) { ports.Close(flow); return flows[key]; } // outro datagrama criou o fluxo antes
-            Interlocked.Increment(ref chosen.Traffic.ActiveConnections);
-            Interlocked.Increment(ref chosen.Traffic.TotalConnections);
+            Interlocked.Increment(ref flow.Port.Traffic.ActiveConnections);
+            Interlocked.Increment(ref flow.Port.Traffic.TotalConnections);
             bursts.NewFlow(target);
             return flow;
         }
@@ -221,7 +229,7 @@ namespace MultiLink.Proxy
 
         void CloseFlow(UdpPorts.Flow flow)
         {
-            if (ports.Close(flow)) Interlocked.Decrement(ref flow.Port.Link.Traffic.ActiveConnections);
+            if (ports.Close(flow)) Interlocked.Decrement(ref flow.Port.Traffic.ActiveConnections);
         }
     }
 }

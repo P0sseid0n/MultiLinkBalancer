@@ -21,7 +21,8 @@ namespace MultiLink.Proxy
         public class Port
         {
             public Socket Socket;
-            public Link Link;
+            public Link Link;            // null: socket direto, sem link (DirectDestination)
+            public LinkTraffic Traffic;  // do link; o direto não conta para nenhum
             public readonly ConcurrentDictionary<string, Flow> Flows = new ConcurrentDictionary<string, Flow>(); // por destino
         }
 
@@ -40,7 +41,7 @@ namespace MultiLink.Proxy
 
         public UdpPorts(UdpOversizeLog oversize) { this.oversize = oversize; }
 
-        // null se não deu para abrir um socket no link.
+        // link null: direto, pela rota do Windows. null se não deu para abrir o socket.
         public Flow Open(Link link, IPEndPoint target, UdpAssociation owner)
         {
             var key = target.ToString();
@@ -87,12 +88,16 @@ namespace MultiLink.Proxy
             try
             {
                 socket.IgnoreUdpConnectionReset();
-                socket.Bind(new IPEndPoint(ipv6 ? link.AddressV6 : link.Address, 0));
-                if (ipv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
-                else socket.UseInterfaceV4(link.InterfaceIndex);
+                if (link == null) socket.Bind(new IPEndPoint(ipv6 ? IPAddress.IPv6Any : IPAddress.Any, 0));
+                else
+                {
+                    socket.Bind(new IPEndPoint(ipv6 ? link.AddressV6 : link.Address, 0));
+                    if (ipv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
+                    else socket.UseInterfaceV4(link.InterfaceIndex);
+                }
             }
             catch { socket.Close(); return null; }
-            return new Port { Socket = socket, Link = link };
+            return new Port { Socket = socket, Link = link, Traffic = link != null ? link.Traffic : new LinkTraffic() };
         }
 
         // Respostas dos destinos: cada uma vai para a associação que mandou para aquele remetente.
@@ -119,7 +124,7 @@ namespace MultiLink.Proxy
                     }
                     Flow flow;
                     if (!port.Flows.TryGetValue(sender.ToString(), out flow)) continue; // remetente que nenhuma associação procurou
-                    Interlocked.Add(ref port.Link.Traffic.BytesDown, length);
+                    Interlocked.Add(ref port.Traffic.BytesDown, length);
                     Interlocked.Exchange(ref flow.LastActivity, Stopwatch.GetTimestamp());
                     flow.Owner.DeliverReply((IPEndPoint)sender, buffer, length);
                 }
