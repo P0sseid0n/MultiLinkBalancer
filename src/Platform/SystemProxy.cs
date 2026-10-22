@@ -13,9 +13,10 @@ namespace MultiLink.Platform
     {
         const string InternetSettingsKey = @"Software\Microsoft\Windows\CurrentVersion\Internet Settings";
         const string Missing = "\u0000"; // marca de "valor não existia" no config.ini
-        // o próprio PC (inclusive 0.0.0.0, que os servidores de desenvolvimento mostram), as redes privadas inteiras (a
-        // 172.16.0.0/12 vai até 172.31: o WSL e o Docker usam 172.17 a 172.31) e o link-local (169.254)
-        static readonly string Bypass = "<local>;localhost;*.localhost;127.*;0.0.0.0;[::1];10.*;" +
+        // o próprio PC, as redes privadas inteiras (a 172.16.0.0/12 vai até 172.31: o WSL e o Docker usam 172.17 a
+        // 172.31) e o link-local (169.254). O 0.0.0.0 fica de fora: o Windows recusa conectar nele, e só o proxy o
+        // troca pelo próprio PC (Proxy.DirectDestination)
+        static readonly string Bypass = "<local>;localhost;*.localhost;127.*;[::1];10.*;" +
             string.Concat(Enumerable.Range(16, 16).Select(second => "172." + second + ".*;")) + "192.168.*;169.254.*;*.multilink";
         const int INTERNET_OPTION_SETTINGS_CHANGED = 39, INTERNET_OPTION_REFRESH = 37;
 
