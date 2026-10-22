@@ -54,11 +54,11 @@ ao `AppController` e publica o estado que ele devolve.
 | `Common/` | Utilidades sem regra de negócio | `ActivityLog`, `SocketExtensions`, `StreamExtensions`, `UnixTime` |
 | `Storage/` | Persistência local | `AppPaths`, `AppSettings` (config.ini com propriedades tipadas) |
 | `Links/` | O domínio: links e a escolha do link de cada conexão | `Link`, `LinkQuality`, `LinkTraffic`, `LinkIpv6`, `LinkHealth`, `Balancer`, `AutoWeights`, `AdapterDiscovery` |
-| `Proxy/` | Servidor SOCKS4/SOCKS5/HTTP na porta local e relé UDP | `ProxyServer`, `Socks4Handshake`, `Socks5Handshake`, `HttpProxyHandshake`, `BalancedConnector`, `UdpAssociation` |
+| `Proxy/` | Servidor SOCKS4/SOCKS5/HTTP na porta local e relé UDP | `ProxyServer`, `Socks4Handshake`, `Socks5Handshake`, `HttpProxyHandshake`, `BalancedConnector`, `DirectDestination`, `UdpAssociation` |
 | `Monitoring/` | Saúde dos links, quedas, failover pelo roteamento, histórico e medição | `HealthChecker`, `IcmpPing`, `LinkMonitor`, `RouteFailover`, `PortUsageMonitor`, `UsageHistory`, `SpeedTest` |
 | `Downloads/` | Download acelerado (HTTP Range por todos os links) | `SegmentedDownload`, `DownloadManager` |
 | `Updates/` | Atualização pelo GitHub Releases | `Updater` |
-| `Platform/` | Tudo que mexe no Windows | `ProcessRunner`, `PowerShell`, `Elevation`, `NetworkAdapters`, `RouteMetrics`, `SystemProxy`, `StartupRegistration`, `TrafficCapture`, `StrongHost`, `NetworkProfiles`, `JobObject`, `EmbeddedFiles` |
+| `Platform/` | Tudo que mexe no Windows | `ProcessRunner`, `PowerShell`, `Elevation`, `NetworkAdapters`, `RouteMetrics`, `LocalRoutes`, `SystemProxy`, `StartupRegistration`, `TrafficCapture`, `StrongHost`, `NetworkProfiles`, `JobObject`, `EmbeddedFiles` |
 | `App/` | Orquestração: ciclo de vida, comandos da interface, estado publicado | `AppController`, `LinkManager`, `SumTestResult`, `UiState`, `IAppHost` |
 | `Ui/` | Janela nativa, bandeja, atalhos e WebView2 | `MainWindow`, `TrayIcon`, `PanelPlacement`, `GlobalHotkeys`, `WebViewHost`, `AppIcon` |
 

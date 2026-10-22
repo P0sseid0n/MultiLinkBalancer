@@ -1,4 +1,5 @@
-// Abre a conexão com o destino pelo link que o Balancer escolher. Se o link falhar, tenta outro.
+// Abre a conexão com o destino pelo link que o Balancer escolher. Se o link falhar, tenta outro. Destinos do próprio PC
+// ou de outro adaptador vão direto (DirectDestination).
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace MultiLink.Proxy
     class OutboundConnection
     {
         public Socket Socket;
-        public Link Link;
+        public Link Link; // null na conexão direta (DirectDestination)
     }
 
     class BalancedConnector
@@ -37,11 +38,11 @@ namespace MultiLink.Proxy
         // Devolve null se nenhum link conseguiu conectar (o motivo vai para o registro de eventos).
         public async Task<OutboundConnection> Connect(string host, int port)
         {
-            IPAddress[] resolved;
+            IPAddress[] resolved = DirectDestination.ForName(host);
             try
             {
                 IPAddress literal;
-                resolved = IPAddress.TryParse(host, out literal) ? new[] { literal } : await Resolve(host);
+                if (resolved == null) resolved = IPAddress.TryParse(host, out literal) ? new[] { literal } : await Resolve(host);
             }
             catch (Exception ex)
             {
@@ -49,6 +50,9 @@ namespace MultiLink.Proxy
                 if (!IsMissingName(ex)) log.Add("DNS falhou para " + host + ": " + ex.Message);
                 return null;
             }
+
+            var direct = DirectDestination.Find(resolved, balancer.Snapshot());
+            if (direct != null) return await ConnectDirect(host, port, direct);
 
             // IPv4 é o padrão; IPv6 só para destinos sem IPv4, e apenas em links cujo IPv6 passou no teste
             var targets = resolved.Where(address => address.AddressFamily == AddressFamily.InterNetwork).Take(AddressesPerAttempt).ToArray();
@@ -96,6 +100,17 @@ namespace MultiLink.Proxy
             return null;
         }
 
+        // Destino do próprio PC ou de outro adaptador (DirectDestination): sem link, pela rota do Windows.
+        async Task<OutboundConnection> ConnectDirect(string host, int port, IPAddress[] targets)
+        {
+            try { return new OutboundConnection { Socket = await ConnectStaggered(null, targets, port, false, LocalConnectTimeoutMs) }; }
+            catch (Exception ex)
+            {
+                log.Add(string.Format("Falha ao conectar {0}:{1} direto, sem passar por um link ({2})", host, port, ex.Message));
+                return null;
+            }
+        }
+
         // Recusada na hora: o programa configurado para usar o proxy recebe "host inalcançável" e tenta o IPv4. Os
         // capturados já são recusados antes, no firewall (Platform.Ipv6Block): aqui a conexão deles já estaria aberta. Avisa ao começar a recusar e de novo
         // só depois de o IPv6 voltar a ser aceito, para não repetir a cada conexão.
@@ -139,9 +154,12 @@ namespace MultiLink.Proxy
             var socket = new Socket(target.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             try
             {
-                socket.BindForConnect(useIpv6 ? link.AddressV6 : link.Address);
-                if (useIpv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
-                else socket.UseInterfaceV4(link.InterfaceIndex);
+                if (link != null) // sem link: conexão direta, o Windows escolhe a saída
+                {
+                    socket.BindForConnect(useIpv6 ? link.AddressV6 : link.Address);
+                    if (useIpv6) socket.UseInterfaceV6(link.InterfaceIndexV6);
+                    else socket.UseInterfaceV4(link.InterfaceIndex);
+                }
                 socket.NoDelay = true;
                 socket.EnableKeepAlive(KeepAliveIdleMs, KeepAliveIntervalMs);
                 await socket.ConnectWithTimeout(new IPEndPoint(target, port), timeoutMs);

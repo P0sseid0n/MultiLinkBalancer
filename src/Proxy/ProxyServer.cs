@@ -110,24 +110,24 @@ namespace MultiLink.Proxy
 
         static async Task Relay(NetworkStream client, Socket clientSocket, ProxyRequest request, OutboundConnection outbound)
         {
-            var link = outbound.Link;
+            var traffic = outbound.Link != null ? outbound.Link.Traffic : new LinkTraffic(); // a conexão direta não conta para nenhum link
             var remote = new NetworkStream(outbound.Socket, false);
             await request.ReplySuccess();
             if (request.InitialData != null && request.InitialData.Length > 0)
             {
                 await remote.WriteAllAsync(request.InitialData);
-                Interlocked.Add(ref link.Traffic.BytesUp, request.InitialData.Length);
+                Interlocked.Add(ref traffic.BytesUp, request.InitialData.Length);
             }
 
-            Interlocked.Increment(ref link.Traffic.ActiveConnections);
+            Interlocked.Increment(ref traffic.ActiveConnections);
             try
             {
-                var upload = Copy(client, remote, outbound.Socket, bytes => Interlocked.Add(ref link.Traffic.BytesUp, bytes));
-                var download = Copy(remote, client, clientSocket, bytes => Interlocked.Add(ref link.Traffic.BytesDown, bytes));
+                var upload = Copy(client, remote, outbound.Socket, bytes => Interlocked.Add(ref traffic.BytesUp, bytes));
+                var download = Copy(remote, client, clientSocket, bytes => Interlocked.Add(ref traffic.BytesDown, bytes));
                 await Task.WhenAny(upload, download);
                 await Task.WhenAny(Task.WhenAll(upload, download), Task.Delay(HalfCloseGraceMs));
             }
-            finally { Interlocked.Decrement(ref link.Traffic.ActiveConnections); }
+            finally { Interlocked.Decrement(ref traffic.ActiveConnections); }
         }
 
         // Copia até a origem fechar e então fecha o envio do destino (meio-fechamento do TCP).
