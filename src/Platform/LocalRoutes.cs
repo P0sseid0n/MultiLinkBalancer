@@ -19,25 +19,40 @@ namespace MultiLink.Platform
 
         [DllImport("iphlpapi.dll")] static extern int GetBestRoute(uint destAddr, uint sourceAddr, out MIB_IPFORWARDROW bestRoute);
 
-        static volatile HashSet<IPAddress> ownAddresses; // null: refazer na próxima consulta
+        class Snapshot
+        {
+            public HashSet<IPAddress> OwnAddresses = new HashSet<IPAddress>();
+            public int CaptureIndex = -1; // índice IPv4 do adaptador da captura
+        }
 
-        static LocalRoutes() { NetworkChange.NetworkAddressChanged += (sender, e) => ownAddresses = null; }
+        static volatile Snapshot current; // null: refazer na próxima consulta
+
+        static LocalRoutes() { NetworkChange.NetworkAddressChanged += (sender, e) => current = null; }
 
         // IP de um adaptador deste PC (inclusive dos que não são links e o da captura).
-        public static bool IsOwnAddress(IPAddress address)
+        public static bool IsOwnAddress(IPAddress address) { return Current().OwnAddresses.Contains(address); }
+
+        // Interface do adaptador da captura: o que o Windows manda para ela volta para o proxy.
+        public static bool IsCaptureInterface(int interfaceIndex) { return interfaceIndex == Current().CaptureIndex; }
+
+        static Snapshot Current()
         {
-            var own = ownAddresses;
-            if (own == null)
+            var snapshot = current;
+            if (snapshot != null) return snapshot;
+            snapshot = new Snapshot();
+            try
             {
-                try
+                foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
                 {
-                    own = new HashSet<IPAddress>(NetworkInterface.GetAllNetworkInterfaces()
-                        .SelectMany(adapter => adapter.GetIPProperties().UnicastAddresses).Select(unicast => unicast.Address));
+                    var properties = adapter.GetIPProperties();
+                    snapshot.OwnAddresses.UnionWith(properties.UnicastAddresses.Select(unicast => unicast.Address));
+                    if (adapter.Name == TrafficCapture.AdapterName && adapter.Supports(NetworkInterfaceComponent.IPv4))
+                        snapshot.CaptureIndex = properties.GetIPv4Properties().Index;
                 }
-                catch { own = new HashSet<IPAddress>(); }
-                ownAddresses = own;
             }
-            return own.Contains(address);
+            catch { }
+            current = snapshot;
+            return snapshot;
         }
 
         // Interface e tamanho do prefixo (ex.: 24 para /24, 0 na rota padrão) da rota IPv4 que o Windows usaria. false se não houver rota.

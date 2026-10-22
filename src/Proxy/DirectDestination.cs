@@ -22,21 +22,50 @@ namespace MultiLink.Proxy
             return local ? new[] { IPAddress.Loopback, IPAddress.IPv6Loopback } : null;
         }
 
+        // 0.0.0.0 e :: escritos no endereço não são destinos de verdade: quem os acessa (ex.: http://0.0.0.0:3000 de um
+        // servidor de desenvolvimento) quer o próprio PC. O Windows recusa conectar neles: só o proxy faz essa troca.
+        public static IPAddress Literal(IPAddress address)
+        {
+            return address.Equals(IPAddress.Any) ? IPAddress.Loopback : address.Equals(IPAddress.IPv6Any) ? IPAddress.IPv6Loopback : address;
+        }
+
+        // Nome que resolve para 0.0.0.0 ou :: (bloqueio de anúncios no arquivo hosts): o programa recebe a recusa na
+        // hora, como sem o proxy, sem tentar os links nem encher o registro de eventos.
+        public static bool IsUnspecified(IPAddress address)
+        {
+            return address.Equals(IPAddress.Any) || address.Equals(IPAddress.IPv6Any);
+        }
+
         // Endereços para conectar direto (IPv4 primeiro), ou null se o destino sai pelos links.
         public static IPAddress[] Find(IPAddress[] resolved, IEnumerable<Link> links)
         {
-            // 0.0.0.0 e :: não são destinos de verdade: quem os acessa (ex.: http://0.0.0.0:3000 de um servidor de
-            // desenvolvimento) quer o próprio PC, e é para lá que o Windows os manda sem o proxy
-            var targets = resolved.Select(address => address.Equals(IPAddress.Any) ? IPAddress.Loopback : address.Equals(IPAddress.IPv6Any) ? IPAddress.IPv6Loopback : address)
-                                  .OrderBy(address => address.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).ToArray();
+            var targets = resolved.OrderBy(address => address.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).ToArray();
             if (targets.Any(address => IPAddress.IsLoopback(address) || LocalRoutes.IsOwnAddress(address))) return targets;
 
             // rota mais específica que a padrão por um adaptador que não é link. As rotas da captura (/1) e a rota
-            // padrão de uma VPN que leva tudo ficam de fora: esse tráfego continua balanceado, como antes
+            // padrão de uma VPN que leva tudo ficam de fora: esse tráfego continua balanceado, como antes. A rede do
+            // adaptador da captura também (ex.: o broadcast NetBIOS para 198.18.0.255): direto, voltaria para a
+            // captura, num ciclo sem fim
             var ipv4 = targets.Where(address => address.AddressFamily == AddressFamily.InterNetwork).ToArray();
-            int interfaceIndex, prefixLength;
-            if (ipv4.Length == 0 || !LocalRoutes.BestRouteV4(ipv4[0], out interfaceIndex, out prefixLength) || prefixLength <= 1) return null;
+            int interfaceIndex;
+            if (ipv4.Length == 0 || !SpecificRoute(ipv4[0], out interfaceIndex) || LocalRoutes.IsCaptureInterface(interfaceIndex)) return null;
             return links.Any(link => link.InterfaceIndex == interfaceIndex) ? null : ipv4;
+        }
+
+        // Link com uma rota própria para o destino, mais específica que a padrão: outra sub-rede do mesmo adaptador,
+        // a rede da empresa pelo gateway dele, o servidor de uma VPN (rota /32 pelo link). Só ele leva até lá: balanceado,
+        // o destino sairia pelos outros links e não chegaria. null se nenhum link tem rota assim.
+        public static Link RouteLink(IPAddress target, IEnumerable<Link> links)
+        {
+            int interfaceIndex;
+            if (target.AddressFamily != AddressFamily.InterNetwork || !SpecificRoute(target, out interfaceIndex)) return null;
+            return links.FirstOrDefault(link => link.Present && link.InterfaceIndex == interfaceIndex);
+        }
+
+        static bool SpecificRoute(IPAddress target, out int interfaceIndex)
+        {
+            int prefixLength;
+            return LocalRoutes.BestRouteV4(target, out interfaceIndex, out prefixLength) && prefixLength > 1;
         }
     }
 }

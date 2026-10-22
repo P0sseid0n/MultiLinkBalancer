@@ -42,7 +42,7 @@ namespace MultiLink.Proxy
             try
             {
                 IPAddress literal;
-                if (resolved == null) resolved = IPAddress.TryParse(host, out literal) ? new[] { literal } : await Resolve(host);
+                if (resolved == null) resolved = IPAddress.TryParse(host, out literal) ? new[] { DirectDestination.Literal(literal) } : await Resolve(host);
             }
             catch (Exception ex)
             {
@@ -51,7 +51,9 @@ namespace MultiLink.Proxy
                 return null;
             }
 
-            var direct = DirectDestination.Find(resolved, balancer.Snapshot());
+            if (resolved.All(DirectDestination.IsUnspecified)) return null;
+            var links = balancer.Snapshot();
+            var direct = DirectDestination.Find(resolved, links);
             if (direct != null) return await ConnectDirect(host, port, direct);
 
             // IPv4 é o padrão; IPv6 só para destinos sem IPv4, e apenas em links cujo IPv6 passou no teste
@@ -62,14 +64,15 @@ namespace MultiLink.Proxy
             if (useIpv6 && !Ipv6Allowed(host)) return null;
 
             // destino na rede local de um link (modem, aparelho da casa): só ele alcança, nada de balancear
-            var local = useIpv6 ? null : balancer.Snapshot().FirstOrDefault(link => link.Present && link.OnLocalNetwork(targets[0]));
-            int maxAttempts = local != null ? 1 : MaxAttempts;
+            var local = useIpv6 ? null : links.FirstOrDefault(link => link.Present && link.OnLocalNetwork(targets[0]));
+            var pinned = local ?? (useIpv6 ? null : DirectDestination.RouteLink(targets[0], links));
+            int maxAttempts = pinned != null ? 1 : MaxAttempts;
 
             var tried = new List<Link>();
             if (useIpv6) tried.AddRange(balancer.Snapshot().Where(link => !link.Ipv6.Works));
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                var link = local ?? balancer.Pick(host, tried);
+                var link = pinned ?? balancer.Pick(host, tried);
                 if (link == null)
                 {
                     if (useIpv6 && attempt == 0 && Interlocked.Exchange(ref warnedNoIpv6, 1) == 0)
