@@ -1,5 +1,6 @@
 // Acompanha o estado de cada link a cada segundo: avisa as quedas e voltas (HealthChanged) e
 // registra quando um link fica instável por perda de pacotes e quando melhora, e quando o IPv6 dele sai e volta.
+// Nas transições da suspensão do Windows (Suspend e Resume) nada é avisado.
 using System;
 using System.Collections.Generic;
 using MultiLink.Common;
@@ -11,17 +12,39 @@ namespace MultiLink.Monitoring
     {
         // histerese: 10% de perda para avisar, 3% para considerar estável (evita um aviso a cada oscilação)
         const int UnstableLossPct = 10, StableLossPct = 3;
+        // Ao acordar, a placa de rede volta antes da internet: até este prazo, falha não é queda.
+        static readonly TimeSpan WakeHold = TimeSpan.FromSeconds(20);
 
         readonly ActivityLog log;
+        bool asleep;
+        readonly Dictionary<Link, DateTime> waking = new Dictionary<Link, DateTime>(); // link -> fim da espera (UTC)
 
         public event Action<Link, string, string> HealthChanged; // link, estado anterior, estado atual
 
         public LinkMonitor(ActivityLog log) { this.log = log; }
 
+        // Suspensão do Windows: ao entrar, a placa de rede desliga antes do PC, e nada disso é avisado até o Resume.
+        public void Suspend() { asleep = true; }
+
+        // O estado de antes de dormir é esquecido: o link que voltar a funcionar dentro da espera não gera aviso,
+        // e o que continuar fora depois dela é avisado como queda nova.
+        public void Resume(List<Link> links)
+        {
+            asleep = false;
+            var until = DateTime.UtcNow + WakeHold;
+            foreach (var link in links)
+            {
+                waking[link] = until;
+                link.DownSince = DateTime.Now;
+                link.Quality.Reset(); // as sondas perdidas enquanto a placa acordava não são perda de pacotes
+            }
+        }
+
         public void Evaluate(List<Link> links, bool qualityAware)
         {
             foreach (var link in links)
             {
+                if (Held(link)) continue;
                 EvaluateHealth(link);
                 EvaluateStability(link, qualityAware);
                 EvaluateIpv6(link);
@@ -47,6 +70,20 @@ namespace MultiLink.Monitoring
                 log.Add(string.Format("[{0}] IPv6 instável: deixou de ser usado por este link (novo teste em {1} min).", link.Name, Math.Max(1, minutes)),
                     ActivityLog.Error);
             }
+        }
+
+        // Dormindo ou acordando: o estado aparece na tela, mas não é avisado. A espera ao acordar acaba no prazo
+        // ou antes, quando o link volta a funcionar.
+        bool Held(Link link)
+        {
+            if (asleep) { link.Health = LinkHealth.Of(link); return true; }
+            DateTime until;
+            if (!waking.TryGetValue(link, out until)) return false;
+            var current = LinkHealth.Of(link);
+            if (current != LinkHealth.Ok && DateTime.UtcNow < until) { link.Health = current; return true; }
+            waking.Remove(link);
+            link.Health = LinkHealth.Ok; // ainda fora: o EvaluateHealth avisa a queda a partir de agora
+            return false;
         }
 
         void EvaluateHealth(Link link)

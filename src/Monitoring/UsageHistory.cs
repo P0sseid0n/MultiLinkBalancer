@@ -132,6 +132,22 @@ namespace MultiLink.Monitoring
                     outage.End = UnixTime.NowMs();
         }
 
+        // O Windows entrou em suspensão em sleepMs. A queda aberta até transitionMs antes é da placa de rede, que desliga
+        // antes do PC: é descartada. A que já vinha de antes termina ali, sem contar o tempo dormindo.
+        // Devolve os nomes dos links com queda descartada.
+        public List<string> EndOutagesAtSleep(long sleepMs, long transitionMs)
+        {
+            lock (sync)
+            {
+                var open = outages.Where(outage => outage.End == 0).ToList();
+                var discarded = open.Where(outage => outage.Start >= sleepMs - transitionMs).ToList();
+                foreach (var outage in open)
+                    if (discarded.Contains(outage)) outages.Remove(outage);
+                    else outage.End = Math.Max(outage.Start, sleepMs);
+                return discarded.Select(outage => outage.Name).ToList();
+            }
+        }
+
         // Dados para a tela de histórico. minutes: janela dos gráficos (60, 360 ou 1440).
         public Dictionary<string, object> Get(int minutes, List<Link> links)
         {

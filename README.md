@@ -134,6 +134,10 @@ O app testa cada link a cada 3 s, mesmo com o proxy desligado, e diz **onde** es
 
 - **Aviso**: notificação do Windows + som quando um link cai ou volta. O ícone da bandeja fica vermelho
   enquanto houver link fora, e o link mostra o diagnóstico ao ser expandido.
+- **Suspensão do PC**: ao entrar em suspensão ou hibernação, a placa de rede desliga antes do PC; ao acordar, ela volta
+  antes da internet. Nada disso conta como queda: a queda aberta até 30 s antes de o PC dormir é descartada, a que já vinha
+  de antes termina ali (o tempo dormindo não conta) e, ao acordar, o link tem até 20 s para voltar sem aviso. Se ainda
+  estiver fora depois disso, a queda é registrada e avisada normalmente.
 - **Ativar/Desativar**: interruptor à esquerda de cada link, faz o mesmo que o Painel de Controle (pede confirmação do Windows/UAC).
 - **Tirar link caído do roteamento do Windows** (opcional, requer administrador): quando um link cai, ele sai
   do roteamento do sistema inteiro (métrica 9000) e volta sozinho quando a internet dele retorna. Ao fechar o

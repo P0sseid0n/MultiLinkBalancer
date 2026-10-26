@@ -37,9 +37,19 @@ namespace MultiLink.App
         internal bool StartupEnabled { get { return startupRegistered && !StartupRegistration.DisabledInTaskManager; } }
         bool startupRegistered;
 
+        // suspensão do Windows (ver TrackSleep)
+        static readonly TimeSpan SleepTransition = TimeSpan.FromSeconds(30); // a placa de rede desliga até isso antes do PC
+        static readonly TimeSpan SuspendWithoutSleep = TimeSpan.FromSeconds(60);
+        const long MinSleepMs = 3000;
+
         readonly IAppHost host;
         readonly DateTime openedAt = DateTime.UtcNow;
         DateTime lastTick = DateTime.UtcNow;
+        readonly object powerSync = new object();
+        DateTime? suspendSignaledAt; // avisos do Windows, anotados na thread dos eventos e tratados no Tick
+        bool resumeSignaled;
+        DateTime? asleepSince;
+        long sleptMs = SleepClock.SleptMs();
 
         public AppController(IAppHost host)
         {
@@ -52,6 +62,7 @@ namespace MultiLink.App
             Downloads = new DownloadManager(Log);
             Ports = new PortUsageMonitor(Log);
             Monitor.HealthChanged += OnHealthChanged;
+            Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
         }
 
         // ------------------------------------------------------------ ciclo de vida
@@ -129,6 +140,7 @@ namespace MultiLink.App
         // Chamado pela janela a cada 1 s.
         public void Tick()
         {
+            TrackSleep();
             Links.RefreshIfNetworkChanged();
             Capture.SyncIpv6();
             Capture.SyncLinks();
@@ -156,6 +168,64 @@ namespace MultiLink.App
 
             var newEntries = Log.TakeNew();
             if (newEntries.Count > 0) host.Push(new Dictionary<string, object> { { "type", "log" }, { "entries", newEntries } });
+        }
+
+        // ------------------------------------------------------------ suspensão
+        void OnPowerModeChanged(object sender, Microsoft.Win32.PowerModeChangedEventArgs e)
+        {
+            lock (powerSync)
+            {
+                if (e.Mode == Microsoft.Win32.PowerModes.Suspend) suspendSignaledAt = DateTime.UtcNow;
+                else if (e.Mode == Microsoft.Win32.PowerModes.Resume) resumeSignaled = true;
+            }
+        }
+
+        // Ao entrar em suspensão a placa de rede desliga antes do PC, e ao acordar ela volta antes da internet: essas
+        // transições não são quedas. Enquanto o PC dorme a internet não importa; se ela tiver caído, o primeiro teste
+        // depois de acordar mostra. O aviso do Windows pode chegar tarde ou não chegar (o PC dorme antes do próximo
+        // Tick), então o SleepClock também detecta a volta: ele só avança com o PC dormindo.
+        void TrackSleep()
+        {
+            DateTime? suspendAt;
+            bool resumed;
+            lock (powerSync)
+            {
+                suspendAt = suspendSignaledAt; suspendSignaledAt = null;
+                resumed = resumeSignaled; resumeSignaled = false;
+            }
+            long slept = SleepClock.SleptMs();
+            bool sleptSinceLastTick = slept - sleptMs >= MinSleepMs;
+            sleptMs = slept;
+
+            if (asleepSince == null && (suspendAt != null || sleptSinceLastTick))
+                GoingToSleep(suspendAt ?? lastTick);
+            if (asleepSince != null && (sleptSinceLastTick || resumed || DateTime.UtcNow - asleepSince.Value > SuspendWithoutSleep))
+                WokeUp(sleptSinceLastTick || resumed);
+        }
+
+        void GoingToSleep(DateTime at)
+        {
+            asleepSince = at;
+            Monitor.Suspend();
+            var discarded = History.EndOutagesAtSleep(UnixTime.ToMs(at), (long)SleepTransition.TotalMilliseconds);
+            Log.Add("Windows entrando em suspensão." + (discarded.Count == 0 ? "" :
+                " Queda descartada (a placa de rede desliga antes do PC): " + string.Join(", ", discarded) + "."));
+        }
+
+        void WokeUp(bool slept)
+        {
+            var duration = DateTime.UtcNow - asleepSince.Value;
+            asleepSince = null;
+            Monitor.Resume(Links.All());
+            Links.CheckAllNow();
+            Log.Add(slept ? "Windows voltou da suspensão depois de " + FormatDuration(duration) + "."
+                          : "O Windows avisou a suspensão, mas o PC não dormiu.");
+        }
+
+        static string FormatDuration(TimeSpan duration)
+        {
+            return duration.TotalMinutes >= 1 ? string.Format("{0} min {1} s", (int)duration.TotalMinutes, duration.Seconds)
+                                              : string.Format("{0} s", (int)duration.TotalSeconds);
         }
 
         public Dictionary<string, object> GetState() { return UiState.Build(this); }
@@ -265,9 +335,7 @@ namespace MultiLink.App
         {
             History.OutageEnd(link);
             var downtime = DateTime.Now - link.DownSince;
-            var message = string.Format("{0} voltou a funcionar depois de {1}.", link.Name,
-                downtime.TotalMinutes >= 1 ? string.Format("{0} min {1} s", (int)downtime.TotalMinutes, downtime.Seconds)
-                                           : string.Format("{0} s", (int)downtime.TotalSeconds));
+            var message = string.Format("{0} voltou a funcionar depois de {1}.", link.Name, FormatDuration(downtime));
             Log.Add(message, ActivityLog.LinkUp);
             if (link.Enabled && previous != LinkHealth.Disabled) NotifyIfEnabled("Link de volta: " + link.Name, message, false);
         }
