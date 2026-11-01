@@ -38,6 +38,8 @@ namespace MultiLink.Ui
         {
             StartupTimeline.Mark("WinForms");
             app = new AppController(this);
+            // sem isso o WinForms mostra a caixa de erro e a janela para (inclusive o registro de eventos, gravado no ciclo de 1 s)
+            Application.ThreadException += (sender, e) => app.OnUnexpectedError(e.Exception, false);
             StartupTimeline.Mark("ajustes e histórico");
             webView = new WebViewHost(this, app); // antes de definir o tamanho: OnResize já o usa
             Text = "MultiLink Balancer" + (app.IsAdmin ? " (administrador)" : "");

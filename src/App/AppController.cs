@@ -68,6 +68,7 @@ namespace MultiLink.App
             Monitor.HealthChanged += OnHealthChanged;
             Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
             Microsoft.Win32.SystemEvents.SessionEnding += OnSessionEnding;
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) => OnUnexpectedError(e.ExceptionObject as Exception, true);
         }
 
         // O Windows vai desligar ou fazer logoff: devolve o proxy já, na thread dos eventos. O fechamento pela janela
@@ -91,6 +92,21 @@ namespace MultiLink.App
             if (!Proxy.Running || Settings.SystemProxyApplied) return;
             try { SystemProxy.Apply(Settings, Settings.Port); Log.Add("O Windows não desligou: proxy do Windows apontado de novo para 127.0.0.1:" + Settings.Port); }
             catch (Exception ex) { Log.Add("Erro ao alterar o proxy do Windows: " + ex.Message, ActivityLog.Error); }
+        }
+
+        // Erro não tratado. fatal: o processo vai fechar (erro fora da thread da janela), então devolve o proxy do
+        // Windows, senão os programas ficam sem internet até o MultiLink abrir de novo. O resto (rotas, weak host
+        // send) a próxima abertura conserta (RecoverFromPreviousSession). Na thread da janela o app continua.
+        public void OnUnexpectedError(Exception error, bool fatal)
+        {
+            try
+            {
+                Log.Add((fatal ? "Erro inesperado, o MultiLink vai fechar: " : "Erro inesperado (o MultiLink continua aberto): ") +
+                    (error == null ? "desconhecido" : error.ToString()), ActivityLog.Error);
+                Log.Flush();
+                if (fatal) SystemProxy.Restore(Settings);
+            }
+            catch { }
         }
 
         // ------------------------------------------------------------ ciclo de vida
