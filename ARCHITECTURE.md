@@ -59,7 +59,7 @@ ao `AppController` e publica o estado que ele devolve.
 | `Downloads/` | Download acelerado (HTTP Range por todos os links) | `SegmentedDownload`, `DownloadManager` |
 | `Updates/` | Atualização pelo GitHub Releases | `Updater` |
 | `Platform/` | Tudo que mexe no Windows | `ProcessRunner`, `PowerShell`, `Elevation`, `NetworkAdapters`, `RouteMetrics`, `LocalRoutes`, `SystemProxy`, `StartupRegistration`, `TrafficCapture`, `StrongHost`, `NetworkProfiles`, `JobObject`, `EmbeddedFiles`, `SingleInstance`, `ProxyWatchdog` |
-| `../watchdog/` | `multilink-vigia.exe`, compilado à parte e embutido: devolve o proxy do Windows se o MultiLink fechar sem devolver | `Vigia` |
+| `../watchdog/` | `multilink-watchdog.exe` (vigia do proxy), compilado à parte e embutido: devolve o proxy do Windows se o MultiLink fechar sem devolver | `Program` |
 | `App/` | Orquestração: ciclo de vida, comandos da interface, estado publicado | `AppController`, `LinkManager`, `SumTestResult`, `UiState`, `IAppHost` |
 | `Ui/` | Janela nativa, bandeja, atalhos e WebView2 | `MainWindow`, `TrayIcon`, `PanelPlacement`, `GlobalHotkeys`, `WebViewHost`, `AppIcon` |
 

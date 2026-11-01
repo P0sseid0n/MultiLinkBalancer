@@ -1,6 +1,7 @@
 // Arquivos embutidos no .exe pelo build.ps1 (/resource) e extraídos para %LOCALAPPDATA% quando precisos.
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using MultiLink.Storage;
@@ -37,19 +38,20 @@ namespace MultiLink.Platform
         public static string ExtractWatchdog(string exeName)
         {
             string hash;
-            using (var source = Open("vigia.exe"))
+            using (var source = Open("watchdog.exe"))
             using (var sha = SHA256.Create())
             {
-                if (source == null) throw new FileNotFoundException("Recurso embutido ausente: vigia.exe");
+                if (source == null) throw new FileNotFoundException("Recurso embutido ausente: watchdog.exe");
                 hash = BitConverter.ToString(sha.ComputeHash(source)).Replace("-", "").Substring(0, 12).ToLowerInvariant();
             }
             var bin = Path.Combine(AppPaths.Local, "bin");
-            var folder = Path.Combine(bin, "vigia-" + hash);
+            var folder = Path.Combine(bin, "watchdog-" + hash);
             Directory.CreateDirectory(folder);
             var target = Path.Combine(folder, exeName);
-            Extract("vigia.exe", target);
-            // as das versões anteriores; a de um vigia ainda aberto falha agora e sai na próxima abertura
-            foreach (var old in Directory.GetDirectories(bin, "vigia-*"))
+            Extract("watchdog.exe", target);
+            // as das versões anteriores (vigia-*: quando se chamava multilink-vigia.exe); a de um vigia ainda aberto
+            // falha agora e sai na próxima abertura
+            foreach (var old in Directory.GetDirectories(bin, "watchdog-*").Concat(Directory.GetDirectories(bin, "vigia-*")))
                 if (!string.Equals(old, folder, StringComparison.OrdinalIgnoreCase))
                     try { Directory.Delete(old, true); } catch { }
             return target;

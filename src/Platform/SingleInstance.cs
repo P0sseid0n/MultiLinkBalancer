@@ -1,5 +1,5 @@
 // Instância única do MultiLink: o mutex que o Program segura enquanto o app está aberto. Também usado pelo
-// multilink-vigia.exe (watchdog/), que é compilado com este arquivo.
+// multilink-watchdog.exe (watchdog/), que é compilado com este arquivo.
 using System;
 using System.Security.AccessControl;
 using System.Threading;

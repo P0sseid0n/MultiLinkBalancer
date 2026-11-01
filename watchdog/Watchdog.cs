@@ -1,4 +1,4 @@
-// multilink-vigia.exe: aberto pelo MultiLink (Platform/ProxyWatchdog) com o PID dele, só espera ele fechar. Se fechou
+// multilink-watchdog.exe (o vigia do proxy): aberto pelo MultiLink (Platform/ProxyWatchdog) com o PID dele, só espera ele fechar. Se fechou
 // sem devolver o proxy do Windows (encerrado à força, erro nativo, travamento que o Windows encerrou), devolve no
 // lugar dele: sem isso os programas ficam sem internet até o MultiLink abrir de novo.
 // Compilado à parte pelo build.ps1, só com os arquivos de src que usa, e embutido no MultiLinkBalancer.exe.
@@ -9,13 +9,13 @@ using MultiLink.Common;
 using MultiLink.Platform;
 using MultiLink.Storage;
 
-[assembly: System.Reflection.AssemblyTitle("MultiLink Balancer - vigia do proxy")] // nome no Gerenciador de Tarefas
+[assembly: System.Reflection.AssemblyTitle("MultiLink Balancer - proxy watchdog")] // nome no Gerenciador de Tarefas
 [assembly: System.Reflection.AssemblyProduct("MultiLink Balancer")]
 [assembly: System.Reflection.AssemblyCompany("P0sseid0n")]
 
 namespace MultiLink.Watchdog
 {
-    static class Vigia
+    static class Program
     {
         static void Main(string[] args)
         {
