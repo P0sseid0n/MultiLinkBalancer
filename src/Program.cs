@@ -34,6 +34,7 @@ namespace MultiLink
         [STAThread]
         static void Main(string[] args)
         {
+            if (ProxyWatchdog.Run(args, InstanceRunning)) return;
             StartupTimeline.Mark("carregar o .NET");
             bool launcher = HasArgument(args, StartupRegistration.LauncherArgument);
             bool background = launcher || HasArgument(args, StartupRegistration.TrayArgument);

@@ -116,6 +116,7 @@ namespace MultiLink.App
             Log.Add(string.Format("Iniciando ({0}; processo aberto às {1:HH:mm:ss}, há {2:0.0} s).",
                 startedFromTray ? "junto com o Windows" : "aberto por você", processStart, (DateTime.Now - processStart).TotalSeconds));
             RecoverFromPreviousSession();
+            ProxyWatchdog.Start(Log); // antes de apontar o proxy
 
             Balancer.Mode = (BalanceMode)Math.Max(0, Math.Min(3, Settings.BalanceMode));
             Balancer.Affinity = Settings.Affinity;
