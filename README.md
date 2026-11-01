@@ -6,7 +6,7 @@ próprio PC: cada link tem seu gateway e o app distribui o tráfego entre eles. 
 
 ![MultiLink Balancer](screenshot.png)
 
-Licença [GPL-3.0](LICENSE) · [Política de assinatura de código](#política-de-assinatura-de-código) · [Privacidade](#privacidade)
+Licença [GPL-3.0](LICENSE) · [Privacidade](#privacidade)
 
 ## Como usar
 
@@ -165,25 +165,6 @@ Medido nesta máquina (memória privada):
 |---|---|
 | Na bandeja (WebView2 é destruído) | ~29 MB |
 | Janela aberta (app + WebView2, renderização por software) | ~131 MB |
-
-## Política de assinatura de código
-
-Assinatura de código gratuita fornecida por [SignPath.io](https://about.signpath.io), certificado emitido pela
-[SignPath Foundation](https://signpath.org).
-
-Só é assinado o `MultiLinkBalancer.exe` publicado nas [releases](https://github.com/P0sseid0n/MultiLinkBalancer/releases),
-compilado pelo GitHub Actions a partir deste repositório (`.github/workflows/build.yml`). Cada assinatura é aprovada
-manualmente. Builds locais e os artefatos de cada push não são assinados.
-
-| Papel | Quem |
-|---|---|
-| Autores (alteram o código sem revisão adicional) | [P0sseid0n](https://github.com/P0sseid0n) |
-| Revisores (revisam toda contribuição de fora) | [P0sseid0n](https://github.com/P0sseid0n) |
-| Aprovadores (aprovam cada pedido de assinatura) | [P0sseid0n](https://github.com/P0sseid0n) |
-
-O `.exe` leva embutidos, sem modificações, componentes de terceiros que não são assinados por este projeto:
-[tun2socks](https://github.com/xjasonlyu/tun2socks) (MIT), `wintun.dll` (assinada pela WireGuard LLC) e as DLLs do
-carregador do WebView2 (Microsoft).
 
 ## Privacidade
 
