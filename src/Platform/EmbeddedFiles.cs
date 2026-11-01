@@ -43,10 +43,15 @@ namespace MultiLink.Platform
                 if (source == null) throw new FileNotFoundException("Recurso embutido ausente: vigia.exe");
                 hash = BitConverter.ToString(sha.ComputeHash(source)).Replace("-", "").Substring(0, 12).ToLowerInvariant();
             }
-            var folder = Path.Combine(AppPaths.Local, "bin", "vigia-" + hash);
+            var bin = Path.Combine(AppPaths.Local, "bin");
+            var folder = Path.Combine(bin, "vigia-" + hash);
             Directory.CreateDirectory(folder);
             var target = Path.Combine(folder, exeName);
             Extract("vigia.exe", target);
+            // as das versões anteriores; a de um vigia ainda aberto falha agora e sai na próxima abertura
+            foreach (var old in Directory.GetDirectories(bin, "vigia-*"))
+                if (!string.Equals(old, folder, StringComparison.OrdinalIgnoreCase))
+                    try { Directory.Delete(old, true); } catch { }
             return target;
         }
 
