@@ -47,6 +47,13 @@ if ($LASTEXITCODE) { throw 'compilação do gerador de ícone falhou' }
 & "$tmp\IcoTool.exe" $ico
 if ($LASTEXITCODE) { throw 'geração do ícone falhou' }
 
+# vigia do proxy do Windows (watchdog\Vigia.cs): exe pequeno embutido, só com os arquivos de src que ele usa
+$vigia = Join-Path $tmp 'multilink-vigia.exe'
+& $csc /nologo /target:winexe /optimize+ /platform:x64 "/out:$vigia" "/win32icon:$ico" $verCs `
+    (Join-Path $root 'watchdog\Vigia.cs') `
+    (@('Platform\SingleInstance.cs', 'Platform\SystemProxy.cs', 'Storage\AppSettings.cs', 'Storage\AppPaths.cs', 'Common\ActivityLog.cs') | ForEach-Object { Join-Path $root "src\$_" })
+if ($LASTEXITCODE) { throw 'compilação do vigia falhou' }
+
 & $csc /nologo /target:winexe /optimize+ /platform:x64 /nowarn:4014 "/out:$out" "/win32icon:$ico" `
     /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Management.dll `
     "/r:$wv\Microsoft.Web.WebView2.Core.dll" `
@@ -55,6 +62,7 @@ if ($LASTEXITCODE) { throw 'geração do ícone falhou' }
     "/resource:$wv\WebView2Loader.dll,wv2.loader.dll" `
     "/resource:$t2s\tun2socks.exe,t2s.exe" `
     "/resource:$t2s\wintun.dll,t2s.wintun.dll" `
+    "/resource:$vigia,vigia.exe" `
     $sources $verCs
 if ($LASTEXITCODE) { throw 'compilação do C# falhou' }
 "OK: $out v$Version ({0:N0} KB)" -f ((Get-Item $out).Length / 1KB)

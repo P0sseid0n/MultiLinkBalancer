@@ -7,7 +7,6 @@ using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.AccessControl;
 using System.Threading;
 using System.Windows.Forms;
 using MultiLink.Common;
@@ -23,7 +22,6 @@ namespace MultiLink
 {
     static class Program
     {
-        const string SingleInstanceMutex = "Local\\MultiLinkBalancer.SingleInstance";
         static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
 
         static string webView2Folder;
@@ -34,21 +32,20 @@ namespace MultiLink
         [STAThread]
         static void Main(string[] args)
         {
-            if (ProxyWatchdog.Run(args, InstanceRunning)) return;
             StartupTimeline.Mark("carregar o .NET");
             bool launcher = HasArgument(args, StartupRegistration.LauncherArgument);
             bool background = launcher || HasArgument(args, StartupRegistration.TrayArgument);
             // desativado em "Aplicativos de inicialização": a tarefa agendada continua rodando no logon, mas o app não abre
             if (background && StartupRegistration.DisabledInTaskManager) return;
             // entrada "Run": a tarefa já abriu o app (o normal) ou ela abre agora; sem tarefa, segue sem elevação
-            if (launcher && (InstanceRunning() || StartupRegistration.RunTask())) return;
+            if (launcher && (SingleInstance.Running() || StartupRegistration.RunTask())) return;
             WaitForPreviousInstance(args);
             // per-monitor v2: interface nítida em telas com escala
             try { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); }
             catch { try { SetProcessDPIAware(); } catch { } }
 
             bool firstInstance;
-            using (new Mutex(true, SingleInstanceMutex, out firstInstance))
+            using (new Mutex(true, SingleInstance.MutexName, out firstInstance))
             {
                 if (!firstInstance) { if (!background) ShowExistingInstance(); return; }
                 PrepareWebView2();
@@ -68,19 +65,6 @@ namespace MultiLink
         static bool HasArgument(string[] args, string argument)
         {
             return args.Any(arg => arg.Equals(argument, StringComparison.OrdinalIgnoreCase));
-        }
-
-        // A instância aberta pela tarefa é elevada: sem administrador, abrir o mutex dela pode ser negado, o que também diz que existe.
-        static bool InstanceRunning()
-        {
-            try
-            {
-                Mutex existing;
-                if (!Mutex.TryOpenExisting(SingleInstanceMutex, MutexRights.Synchronize, out existing)) return false;
-                existing.Dispose();
-                return true;
-            }
-            catch (UnauthorizedAccessException) { return true; }
         }
 
         // Reinício (como administrador ou após atualizar): espera a instância anterior fechar e liberar o mutex.
