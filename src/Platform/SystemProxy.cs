@@ -19,43 +19,51 @@ namespace MultiLink.Platform
         static readonly string Bypass = "<local>;localhost;*.localhost;127.*;[::1];10.*;" +
             string.Concat(Enumerable.Range(16, 16).Select(second => "172." + second + ".*;")) + "192.168.*;169.254.*;*.multilink";
         const int INTERNET_OPTION_SETTINGS_CHANGED = 39, INTERNET_OPTION_REFRESH = 37;
+        // o desligamento do Windows e o erro fatal devolvem o proxy fora da thread da janela
+        static readonly object sync = new object();
 
         [DllImport("wininet.dll", SetLastError = true)]
         static extern bool InternetSetOption(IntPtr internet, int option, IntPtr buffer, int length);
 
         public static void Apply(AppSettings settings, int port)
         {
-            using (var key = Registry.CurrentUser.CreateSubKey(InternetSettingsKey))
+            lock (sync)
             {
-                if (!settings.SystemProxyApplied)
+                using (var key = Registry.CurrentUser.CreateSubKey(InternetSettingsKey))
                 {
-                    var enabled = key.GetValue("ProxyEnable");
-                    settings.Set("prev.ProxyEnable", enabled == null ? "" : enabled.ToString());
-                    settings.Set("prev.ProxyServer", (key.GetValue("ProxyServer") ?? Missing).ToString());
-                    settings.Set("prev.ProxyOverride", (key.GetValue("ProxyOverride") ?? Missing).ToString());
+                    if (!settings.SystemProxyApplied)
+                    {
+                        var enabled = key.GetValue("ProxyEnable");
+                        settings.Set("prev.ProxyEnable", enabled == null ? "" : enabled.ToString());
+                        settings.Set("prev.ProxyServer", (key.GetValue("ProxyServer") ?? Missing).ToString());
+                        settings.Set("prev.ProxyOverride", (key.GetValue("ProxyOverride") ?? Missing).ToString());
+                    }
+                    key.SetValue("ProxyEnable", 1, RegistryValueKind.DWord);
+                    key.SetValue("ProxyServer", "127.0.0.1:" + port);
+                    key.SetValue("ProxyOverride", Bypass);
                 }
-                key.SetValue("ProxyEnable", 1, RegistryValueKind.DWord);
-                key.SetValue("ProxyServer", "127.0.0.1:" + port);
-                key.SetValue("ProxyOverride", Bypass);
+                settings.SystemProxyApplied = true;
+                settings.Save();
             }
-            settings.SystemProxyApplied = true;
-            settings.Save();
             NotifyWindows();
         }
 
         public static void Restore(AppSettings settings)
         {
-            if (!settings.SystemProxyApplied) return;
-            using (var key = Registry.CurrentUser.CreateSubKey(InternetSettingsKey))
+            lock (sync)
             {
-                int enabled;
-                if (!int.TryParse(settings.Get("prev.ProxyEnable", ""), out enabled)) enabled = 0;
-                key.SetValue("ProxyEnable", enabled, RegistryValueKind.DWord);
-                RestoreString(key, "ProxyServer", settings.Get("prev.ProxyServer", Missing));
-                RestoreString(key, "ProxyOverride", settings.Get("prev.ProxyOverride", Missing));
+                if (!settings.SystemProxyApplied) return;
+                using (var key = Registry.CurrentUser.CreateSubKey(InternetSettingsKey))
+                {
+                    int enabled;
+                    if (!int.TryParse(settings.Get("prev.ProxyEnable", ""), out enabled)) enabled = 0;
+                    key.SetValue("ProxyEnable", enabled, RegistryValueKind.DWord);
+                    RestoreString(key, "ProxyServer", settings.Get("prev.ProxyServer", Missing));
+                    RestoreString(key, "ProxyOverride", settings.Get("prev.ProxyOverride", Missing));
+                }
+                settings.SystemProxyApplied = false;
+                settings.Save();
             }
-            settings.SystemProxyApplied = false;
-            settings.Save();
             NotifyWindows();
         }
 

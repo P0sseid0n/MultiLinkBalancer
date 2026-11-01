@@ -51,6 +51,10 @@ namespace MultiLink.App
         DateTime? asleepSince;
         long sleptMs = SleepClock.SleptMs();
 
+        // desligamento do Windows (ver OnSessionEnding)
+        static readonly TimeSpan SessionEndGiveUp = TimeSpan.FromSeconds(60);
+        DateTime? proxyReturnedAt; // anotado na thread dos eventos e tratado no Tick
+
         public AppController(IAppHost host)
         {
             this.host = host;
@@ -63,6 +67,30 @@ namespace MultiLink.App
             Ports = new PortUsageMonitor(Log);
             Monitor.HealthChanged += OnHealthChanged;
             Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
+            Microsoft.Win32.SystemEvents.SessionEnding += OnSessionEnding;
+        }
+
+        // O Windows vai desligar ou fazer logoff: devolve o proxy já, na thread dos eventos. O fechamento pela janela
+        // (Shutdown) vem depois e às vezes não termina (o Windows encerra o app que demora, e com a Inicialização
+        // Rápida isso aconteceu sem nada no registro de eventos).
+        void OnSessionEnding(object sender, Microsoft.Win32.SessionEndingEventArgs e)
+        {
+            if (!Settings.SystemProxyApplied) return;
+            SystemProxy.Restore(Settings);
+            proxyReturnedAt = DateTime.UtcNow;
+            Log.Add("Windows " + (e.Reason == Microsoft.Win32.SessionEndReasons.Logoff ? "fazendo logoff" : "desligando") + ": proxy do Windows devolvido.");
+            Log.Flush();
+        }
+
+        // Um programa pode cancelar o desligamento: com o MultiLink ainda aberto depois disso, o proxy volta.
+        void ReapplyProxyIfWindowsStayed()
+        {
+            var returnedAt = proxyReturnedAt;
+            if (returnedAt == null || DateTime.UtcNow - returnedAt.Value < SessionEndGiveUp) return;
+            proxyReturnedAt = null;
+            if (!Proxy.Running || Settings.SystemProxyApplied) return;
+            try { SystemProxy.Apply(Settings, Settings.Port); Log.Add("O Windows não desligou: proxy do Windows apontado de novo para 127.0.0.1:" + Settings.Port); }
+            catch (Exception ex) { Log.Add("Erro ao alterar o proxy do Windows: " + ex.Message, ActivityLog.Error); }
         }
 
         // ------------------------------------------------------------ ciclo de vida
@@ -122,11 +150,14 @@ namespace MultiLink.App
         public void Shutdown(bool windowsEnding)
         {
             Log.Add(windowsEnding ? "Windows desligando: fechando o MultiLink." : "Fechando o MultiLink.");
+            Log.Flush(); // no desligamento o Windows pode encerrar o app antes do fim
             Settings.WasRunning = Proxy.Running;
-            // primeiro: no desligamento o Windows encerra o tun2socks enquanto o resto fecha, e parado de propósito ele
-            // não conta como queda. Antes do proxy: o tun2socks entrega tudo a ele.
-            Capture.Stop();
+            // antes de tudo: é só o registro, e se o fechamento não terminar os programas ficariam sem internet até o
+            // MultiLink abrir de novo
             SystemProxy.Restore(Settings);
+            // no desligamento o Windows encerra o tun2socks enquanto o resto fecha, e parado de propósito ele não conta
+            // como queda. Antes do proxy: o tun2socks entrega tudo a ele.
+            Capture.Stop();
             RouteFailover.Enabled = false;
             RouteFailover.RestoreAll(Links.All()); // nunca deixar o Windows com rotas alteradas depois de fechar
             Proxy.Stop();
@@ -141,6 +172,7 @@ namespace MultiLink.App
         public void Tick()
         {
             TrackSleep();
+            ReapplyProxyIfWindowsStayed();
             Links.RefreshIfNetworkChanged();
             Capture.SyncIpv6();
             Capture.SyncLinks();
@@ -282,6 +314,7 @@ namespace MultiLink.App
 
         void SetSystemProxy(bool enabled)
         {
+            proxyReturnedAt = null; // a escolha de agora vale mais que a volta depois de um desligamento cancelado
             try
             {
                 if (enabled)
