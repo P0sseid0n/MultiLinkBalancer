@@ -6,7 +6,7 @@ próprio PC: cada link tem seu gateway e o app distribui o tráfego entre eles. 
 
 ![MultiLink Balancer](screenshot.png)
 
-Licença [GPL-3.0](LICENSE) · [Privacidade](#privacidade)
+[Site](https://p0sseid0n.github.io/MultiLinkBalancer/) · Licença [GPL-3.0](LICENSE) · [Privacidade](#privacidade)
 
 ## Como usar
 
@@ -169,20 +169,12 @@ Medido nesta máquina (memória privada):
 ## Privacidade
 
 O MultiLink Balancer não coleta, não guarda fora do PC e não envia dados sobre quem usa nem sobre o que é acessado.
-Ele só se comunica com outros sistemas para funcionar ou quando o usuário pede:
+Para funcionar, ele só fala com o GitHub (atualizações), a Cloudflare (medição de velocidade) e 1.1.1.1, 8.8.8.8 e
+9.9.9.9 (teste de internet de cada link).
 
-| Destino | Quando | Para quê |
-|---|---|---|
-| `api.github.com` e `github.com` | uma vez por dia, ou ao clicar em *Atualizar* | procurar e baixar versões novas; desligue em *Ajustes > Procurar atualizações automaticamente* |
-| `speed.cloudflare.com` | na primeira execução e quando o usuário mede a velocidade | medir a velocidade de cada link |
-| 1.1.1.1 (Cloudflare), 8.8.8.8 (Google), 9.9.9.9 (Quad9) | a cada 3 s, por link | testar se o link tem internet (conexão TCP sem dados e ping); com a captura ligada, 1.1.1.1 e 8.8.8.8 também resolvem os nomes (DNS) |
-
-Políticas de privacidade desses serviços: [GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement),
-[Cloudflare](https://www.cloudflare.com/privacypolicy/), [Google](https://policies.google.com/privacy) e
-[Quad9](https://quad9.net/privacy/policy/).
-
-O resto do tráfego vai para os sites e programas que o próprio usuário acessa. Ajustes, histórico e logs ficam só no PC
-(`%APPDATA%\MultiLinkBalancer` e `%LOCALAPPDATA%\MultiLinkBalancer`).
+A política completa, com o que cada serviço vê, o DNS com a captura ligada, o que fica no PC e como apagar tudo, está em
+[p0sseid0n.github.io/MultiLinkBalancer/privacidade.html](https://p0sseid0n.github.io/MultiLinkBalancer/privacidade.html)
+(fonte em [`site/privacidade.html`](site/privacidade.html); mudou algo que afeta a privacidade, atualize a página no mesmo commit).
 
 ## Desinstalar
 
@@ -211,6 +203,7 @@ ui/src/              interface (Svelte 5 + Vite)
   screens/           uma pasta por tela (home, history, settings)
 lib/webview2/        DLLs oficiais do pacote NuGet Microsoft.Web.WebView2 1.0.4258.31
 lib/tun2socks/       tun2socks 2.7.0 (MIT) e wintun.dll 0.14.1 (assinado pela WireGuard LLC), sem modificações
+site/                landing page e política de privacidade (HTML estático, publicado pelo pages.yml no GitHub Pages)
 ```
 
 Camadas, regras de dependência e contratos (comandos, estado, arquivos gravados): ver [ARCHITECTURE.md](ARCHITECTURE.md).
