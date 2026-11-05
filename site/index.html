@@ -185,6 +185,12 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 .pv-card{display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:12px;background:#13171c;border:1px solid #242a32;transition:border-color .3s,transform .35s cubic-bezier(.22,1,.36,1)}
 .pv-card:hover{border-color:#4cc38a59;transform:translateY(-4px)}
 .pv-dom{display:flex;align-items:center;gap:8px;font-family:'Cascadia Mono',ui-monospace,monospace;font-size:12.5px;letter-spacing:-.01em;color:#e8ecef}
+.pv-list{display:none}
+@media (max-width: 640px){
+.pv-list{flex:1 1 100%;display:flex;flex-direction:column;gap:10px;padding:0 4px}
+.pv-list li{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-top:1px solid #242a32;font-size:13.5px;color:#9aa4ae}
+.pv-lbl{display:none}
+}
 @supports (animation-timeline: view()){.chk path{--len:24;stroke-dasharray:24;animation:ml-draw linear both;animation-timeline:view();animation-range:entry 20% cover 45%}}
 
 /* ---------- demonstração: baixar, abrir, ligar (12 s em loop) ---------- */
@@ -517,16 +523,17 @@ Baixar para Windows</a>
 
 <!-- destinos -->
 <g><circle cx="436" cy="126" r="22" fill="#1a1f26" stroke="#2c333c"></circle><path d="M428 126 h16 M436 118 v16" stroke="#9aa4ae" stroke-width="1.6" stroke-linecap="round" transform="rotate(45 436 126)"></path></g>
-<text x="436" y="168" text-anchor="middle" font-family="Cascadia Mono, ui-monospace, monospace" font-size="11.5" fill="#e8ecef">github.com</text>
-<text x="436" y="184" text-anchor="middle" font-family="Segoe UI Variable Text, Segoe UI, system-ui, sans-serif" font-size="11.5" fill="#7d8792">versão nova?</text>
+<text class="pv-lbl" x="436" y="168" text-anchor="middle" font-family="Cascadia Mono, ui-monospace, monospace" font-size="11.5" fill="#e8ecef">github.com</text>
+<text class="pv-lbl" x="436" y="184" text-anchor="middle" font-family="Segoe UI Variable Text, Segoe UI, system-ui, sans-serif" font-size="11.5" fill="#7d8792">versão nova?</text>
 
 <g><circle cx="240" cy="452" r="22" fill="#1a1f26" stroke="#2c333c"></circle><path d="M231 456 l5 -8 l4 5 l4 -9 l5 12" fill="none" stroke="#9aa4ae" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></g>
-<text x="272" y="448" font-family="Cascadia Mono, ui-monospace, monospace" font-size="11.5" fill="#e8ecef">speed.cloudflare.com</text>
-<text x="272" y="464" font-family="Segoe UI Variable Text, Segoe UI, system-ui, sans-serif" font-size="11.5" fill="#7d8792">quanto cada link rende?</text>
+<text class="pv-lbl" x="272" y="448" font-family="Cascadia Mono, ui-monospace, monospace" font-size="11.5" fill="#e8ecef">speed.cloudflare.com</text>
+<text class="pv-lbl" x="272" y="464" font-family="Segoe UI Variable Text, Segoe UI, system-ui, sans-serif" font-size="11.5" fill="#7d8792">quanto cada link rende?</text>
 
 <g><circle cx="44" cy="126" r="22" fill="#1a1f26" stroke="#2c333c"></circle><circle cx="44" cy="126" r="5" fill="none" stroke="#9aa4ae" stroke-width="1.6"></circle><circle cx="44" cy="126" r="10" fill="none" stroke="#9aa4ae" stroke-width="1.2" stroke-dasharray="2 3"></circle></g>
-<text x="4" y="168" font-family="Cascadia Mono, ui-monospace, monospace" font-size="11.5" fill="#e8ecef">1.1.1.1 e outros</text>
-<text x="4" y="184" font-family="Segoe UI Variable Text, Segoe UI, system-ui, sans-serif" font-size="11.5" fill="#7d8792">tem internet?</text>
+<text class="pv-lbl" x="44" y="168" text-anchor="middle" font-family="Cascadia Mono, ui-monospace, monospace" font-size="11.5" fill="#e8ecef">1.1.1.1</text>
+<text class="pv-lbl" x="44" y="184" text-anchor="middle" font-family="Segoe UI Variable Text, Segoe UI, system-ui, sans-serif" font-size="11.5" fill="#7d8792">e outros</text>
+<text class="pv-lbl" x="44" y="200" text-anchor="middle" font-family="Segoe UI Variable Text, Segoe UI, system-ui, sans-serif" font-size="11.5" fill="#7d8792">tem internet?</text>
 
 <!-- o cofre -->
 <circle cx="240" cy="240" r="150" fill="#13171c"></circle>
@@ -545,8 +552,17 @@ Baixar para Windows</a>
 <rect x="229" y="236" width="22" height="17" rx="3" fill="none" stroke="#4cc38a" stroke-width="2"></rect>
 <path d="M233 236 v-5 a7 7 0 0 1 14 0 v5" fill="none" stroke="#4cc38a" stroke-width="2" stroke-linecap="round"></path>
 </g>
-<text x="240" y="306" text-anchor="middle" font-family="Cascadia Mono, ui-monospace, monospace" font-size="12" fill="#9aa4ae">seu PC</text>
+<text class="pv-lbl" x="240" y="306" text-anchor="middle" font-family="Cascadia Mono, ui-monospace, monospace" font-size="12" fill="#9aa4ae">seu PC</text>
 </svg>
+</div>
+<!-- no celular o diagrama fica pequeno demais para ler: a mesma informação em texto -->
+<div class="pv-list">
+<p style="margin: 0; font-size: 13px; color: #7d8792">Fica no PC: sites visitados, histórico, ajustes e logs. Sai do PC só isto:</p>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<li><span class="pv-dom">github.com</span><span>versão nova?</span></li>
+<li><span class="pv-dom">speed.cloudflare.com</span><span>quanto cada link rende?</span></li>
+<li><span class="pv-dom">1.1.1.1 e outros</span><span>tem internet?</span></li>
+</ul>
 </div>
 </div>
 
