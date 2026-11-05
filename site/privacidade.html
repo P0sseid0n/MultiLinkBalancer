@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Política de privacidade — MultiLink Balancer</title>
+<meta name="description" content="O que o MultiLink Balancer faz com os seus dados: o que fica no PC, com quem ele fala e como apagar tudo.">
+<meta name="theme-color" content="#13171c">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/CascadiaMono.ttf" as="font" type="font/ttf" crossorigin>
+<style>
+@font-face{font-family:"Cascadia Mono";src:local("Cascadia Mono"),url("fonts/CascadiaMono.ttf") format("truetype");font-weight:200 700;font-display:swap}
+body{margin:0;background:#13171c}
+a{color:#4cc38a}a:hover{color:#7fd9ad}
+a:focus-visible{outline:2px solid #5598e7;outline-offset:2px}
+.pp{--ease:cubic-bezier(.22,1,.36,1)}
+@keyframes pp-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes pp-led{0%,100%{box-shadow:0 0 0 3px #4cc38a24}50%{box-shadow:0 0 0 6px #4cc38a12}}
+@keyframes pp-shield{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.in{opacity:0;animation:pp-rise .8s var(--ease) both}.d1{animation-delay:.05s}.d2{animation-delay:.15s}.d3{animation-delay:.28s}
+.led{animation:pp-led 1.8s ease-in-out infinite}
+.shield{transform-origin:50% 50%;animation:pp-shield 3s ease-in-out infinite}
+.toc a{color:#9aa4ae;text-decoration:none;transition:color .2s,padding-left .3s var(--ease)}
+.toc a:hover{color:#e8ecef;padding-left:6px}
+.btn{transition:transform .25s var(--ease)}.btn:hover{transform:translateY(-2px)}
+.sec{scroll-margin-top:88px}
+@supports (animation-timeline: view()){.rv{animation:pp-rise linear both;animation-timeline:view();animation-range:entry 0% cover 25%}}
+@media (prefers-reduced-motion: reduce){.pp *{animation:none !important;transition:none !important}.in{opacity:1}}
+
+[data-if]{display:contents}
+[data-if][hidden]{display:none !important}
+</style>
+</head>
+<body>
+
+<div class="pp" style="min-height: 100vh; background: #13171c; color: #e8ecef; font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; font-size: 16px; line-height: 1.6">
+
+<header style="position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #242a32; background: rgba(19,23,28,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px)">
+<nav aria-label="Principal" style="max-width: 1200px; margin: 0 auto; padding: 14px 32px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px">
+<a href="./" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: #e8ecef">
+<svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect x="0" y="0" width="64" height="64" rx="14" fill="#1a1f26" stroke="#2c333c" stroke-width="1.5"></rect><path d="M14 20 C26 20 28 32 36 32 M14 32 H36 M14 44 C26 44 28 32 36 32 M36 32 H50" fill="none" stroke="#4cc38a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="50" cy="32" r="4" fill="#4cc38a"></circle></svg>
+<span style="font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 17px; letter-spacing: -0.01em">MultiLink Balancer</span>
+</a>
+<a href="./" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: 14px; color: #9aa4ae; text-decoration: none">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"></path><path d="m11 6-6 6 6 6"></path></svg>
+Voltar ao site</a>
+</nav>
+</header>
+
+<main style="max-width: 1040px; margin: 0 auto; padding: 72px 32px 96px; display: flex; flex-wrap: wrap; gap: 48px 64px; align-items: flex-start">
+
+<!-- topo -->
+<div style="flex: 1 1 100%; display: flex; flex-direction: column; gap: 14px">
+<p class="in d1" style="margin: 0; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13px; color: #4cc38a">Política de privacidade</p>
+<h1 class="in d2" style="margin: 0; font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 48px; line-height: 1.08; letter-spacing: -0.035em; text-wrap: balance">O que o MultiLink Balancer faz com os seus dados</h1>
+<p class="in d3" style="margin: 0; font-size: 14px; color: #7d8792">Atualizada em <span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace">5 nov. 2026</span> · vale para o app a partir da <span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace">v1.0.0</span> e para este site</p>
+</div>
+
+<!-- resumo -->
+<section aria-labelledby="resumo" class="in d3" style="flex: 1 1 100%; background: #171b21; border: 1px solid #4cc38a66; box-shadow: 0 0 0 4px #4cc38a0a; border-radius: 14px; padding: 28px 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px 36px">
+<svg class="shield" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true" style="flex: none"><path d="M32 6 L54 14 V32 C54 46 44 55 32 60 C20 55 10 46 10 32 V14 Z" fill="#1a1f26" stroke="#4cc38a" stroke-width="2.5" stroke-linejoin="round"></path><rect x="23" y="30" width="18" height="14" rx="3" fill="none" stroke="#4cc38a" stroke-width="2.5"></rect><path d="M26 30 v-4 a6 6 0 0 1 12 0 v4" fill="none" stroke="#4cc38a" stroke-width="2.5" stroke-linecap="round"></path></svg>
+<div style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+<h2 id="resumo" style="margin: 0; font-size: 18px; font-weight: 600">Em resumo</h2>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; color: #c9d1d8; font-size: 15.5px">
+<li style="display: flex; gap: 12px"><span class="led" style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a; flex: none; margin-top: 9px"></span>O app não coleta, não envia e não guarda fora do seu PC nada sobre você ou sobre o que você acessa.</li>
+<li style="display: flex; gap: 12px"><span class="led" style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a; flex: none; margin-top: 9px; animation-delay: .4s"></span>Para funcionar, ele fala com GitHub, Cloudflare, Google e Quad9: procura versões, mede a velocidade e testa se cada link tem internet.</li>
+<li style="display: flex; gap: 12px"><span class="led" style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a; flex: none; margin-top: 9px; animation-delay: .8s"></span>Este site não usa cookies nem rastreamento.</li>
+</ul>
+</div>
+</section>
+
+<!-- índice -->
+<nav class="toc" aria-label="Nesta página" style="flex: 0 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 14px">
+<span style="font-size: 12px; color: #7d8792; margin-bottom: 6px">Nesta página</span>
+<a href="#nao-faz" style="padding: 6px 0">O que o app não faz</a>
+<a href="#comunicacao" style="padding: 6px 0">Com quem ele fala</a>
+<a href="#dns" style="padding: 6px 0">DNS com a captura</a>
+<a href="#no-pc" style="padding: 6px 0">O que fica no PC</a>
+<a href="#controle" style="padding: 6px 0">Como você controla</a>
+<a href="#apagar" style="padding: 6px 0">Como apagar tudo</a>
+<a href="#site" style="padding: 6px 0">Este site</a>
+<a href="#contato" style="padding: 6px 0">Código e contato</a>
+</nav>
+
+<!-- conteúdo -->
+<div style="flex: 1 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 52px; color: #c9d1d8">
+
+<section id="nao-faz" class="sec rv" style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: #e8ecef">O que o app não faz</h2>
+<p style="margin: 0; text-wrap: pretty">O MultiLink Balancer divide as conexões do seu PC entre os seus links de internet. Para isso, ele mede cada link: velocidade, latência, perda de pacotes e quedas. Ele não olha o conteúdo do que você acessa e não manda nada sobre você para o desenvolvedor nem para terceiros.</p>
+<p style="margin: 0; text-wrap: pretty">Não existe conta, cadastro, telemetria nem relatório de uso. O tráfego dos seus programas vai direto para os sites e serviços que você mesmo abriu.</p>
+</section>
+
+<section id="comunicacao" class="sec rv" style="display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: #e8ecef">Com quem o app fala</h2>
+<p style="margin: 0; text-wrap: pretty">São só estes destinos. Como em qualquer acesso à internet, eles veem o IP público do link usado e o horário da requisição.</p>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 560px; border-collapse: collapse; font-size: 14.5px">
+<thead><tr style="text-align: left; font-size: 12px; color: #7d8792">
+<th scope="col" style="padding: 0 16px 10px 0; font-weight: 500; border-bottom: 1px solid #2a3139">Destino</th>
+<th scope="col" style="padding: 0 16px 10px 0; font-weight: 500; border-bottom: 1px solid #2a3139">Quando</th>
+<th scope="col" style="padding: 0 0 10px; font-weight: 500; border-bottom: 1px solid #2a3139">Para quê</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding: 14px 16px 14px 0; border-bottom: 1px solid #242a32; vertical-align: top; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13px; color: #e8ecef">api.github.com<br>github.com</td><td style="padding: 14px 16px 14px 0; border-bottom: 1px solid #242a32; vertical-align: top">Uma vez por dia, ou ao clicar em Atualizar</td><td style="padding: 14px 0; border-bottom: 1px solid #242a32; vertical-align: top">Procurar e baixar versões novas</td></tr>
+<tr><td style="padding: 14px 16px 14px 0; border-bottom: 1px solid #242a32; vertical-align: top; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13px; color: #e8ecef">speed.cloudflare.com</td><td style="padding: 14px 16px 14px 0; border-bottom: 1px solid #242a32; vertical-align: top">Na primeira execução e quando você mede a velocidade</td><td style="padding: 14px 0; border-bottom: 1px solid #242a32; vertical-align: top">Medir a velocidade de cada link</td></tr>
+<tr><td style="padding: 14px 16px 14px 0; border-bottom: 1px solid #242a32; vertical-align: top; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13px; color: #e8ecef">1.1.1.1 (Cloudflare)<br>8.8.8.8 (Google)<br>9.9.9.9 (Quad9)</td><td style="padding: 14px 16px 14px 0; border-bottom: 1px solid #242a32; vertical-align: top">A cada 3 s, por link</td><td style="padding: 14px 0; border-bottom: 1px solid #242a32; vertical-align: top">Testar se o link tem internet, com uma conexão sem dados e um ping</td></tr>
+</tbody>
+</table>
+</div>
+<p style="margin: 0; font-size: 14px; color: #9aa4ae">Políticas desses serviços: <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub</a>, <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare</a>, <a href="https://policies.google.com/privacy">Google</a> e <a href="https://quad9.net/privacy/policy/">Quad9</a>.</p>
+</section>
+
+<section id="dns" class="sec rv" style="display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; border-radius: 12px; border: 1px solid #d9a33a59; background: #171b21">
+<h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em; color: #e8ecef; display: flex; align-items: center; gap: 10px"><span class="led" style="width: 8px; height: 8px; border-radius: 50%; background: #d9a33a; animation-name: none; box-shadow: 0 0 0 3px #d9a33a33"></span>DNS com “Capturar todos os programas”</h2>
+<p style="margin: 0; text-wrap: pretty">Com a captura ligada, o Windows passa a resolver os nomes dos sites por <span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px">1.1.1.1</span> e <span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px">8.8.8.8</span>, através do MultiLink. Isso quer dizer que a Cloudflare e o Google recebem os nomes dos sites que você acessa (por exemplo, <span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px">exemplo.com</span>), mas não o conteúdo.</p>
+<p style="margin: 0; color: #9aa4ae; font-size: 15px">A captura vem desligada. Sem ela, os nomes são resolvidos como o Windows já faz.</p>
+</section>
+
+<section id="no-pc" class="sec rv" style="display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: #e8ecef">O que fica no seu PC</h2>
+<p style="margin: 0">Nada disso é enviado. Fica só nestas pastas:</p>
+<dl style="margin: 0; display: flex; flex-direction: column">
+<div style="padding: 14px 0; border-top: 1px solid #242a32; display: flex; flex-direction: column; gap: 4px">
+<dt style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13.5px; color: #e8ecef">%APPDATA%\MultiLinkBalancer</dt>
+<dd style="margin: 0">Os ajustes (<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13.5px">config.ini</span>) e o histórico (<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13.5px">history.json</span>): velocidade, latência e quedas de cada link, e o total recebido por dia. Não guarda quais sites você visitou.</dd>
+</div>
+<div style="padding: 14px 0; border-top: 1px solid #242a32; border-bottom: 1px solid #242a32; display: flex; flex-direction: column; gap: 4px">
+<dt style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13.5px; color: #e8ecef">%LOCALAPPDATA%\MultiLinkBalancer</dt>
+<dd style="margin: 0">O registro de eventos e os logs de diagnóstico, os arquivos internos do app e os dados do WebView2. Os logs de diagnóstico podem conter endereços de destino e nomes de programas, porque servem para descobrir o que está causando um problema de conexão.</dd>
+</div>
+</dl>
+</section>
+
+<section id="controle" class="sec rv" style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: #e8ecef">Como você controla</h2>
+<ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px">
+<li><strong style="color: #e8ecef; font-weight: 600">Atualizações:</strong> desligue em Ajustes › Procurar atualizações automaticamente. O app para de consultar o GitHub sozinho.</li>
+<li><strong style="color: #e8ecef; font-weight: 600">Medição de velocidade:</strong> depois da primeira execução, só acontece quando você pede.</li>
+<li><strong style="color: #e8ecef; font-weight: 600">Captura:</strong> deixe desligada se não quiser que o DNS passe por 1.1.1.1 e 8.8.8.8.</li>
+<li><strong style="color: #e8ecef; font-weight: 600">Aceitar conexões de outros aparelhos:</strong> vem desligado. Ligado, qualquer aparelho da sua rede local pode usar o seu PC como proxy. Não ligue em redes que você não controla.</li>
+</ul>
+</section>
+
+<section id="apagar" class="sec rv" style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: #e8ecef">Como apagar tudo</h2>
+<p style="margin: 0">O app não tem instalador. Para remover sem deixar nada:</p>
+<ol style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px">
+<li>Em Ajustes, desligue Iniciar com o Windows. Se ele foi ligado com o app aberto como administrador, desligue também como administrador.</li>
+<li>Clique em Sair. O proxy do Windows, as rotas e o adaptador de captura voltam ao que eram.</li>
+<li>Apague o <span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px">MultiLinkBalancer.exe</span> e as pastas <span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px">%APPDATA%\MultiLinkBalancer</span> e <span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px">%LOCALAPPDATA%\MultiLinkBalancer</span>.</li>
+</ol>
+</section>
+
+<section id="site" class="sec rv" style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: #e8ecef">Este site</h2>
+<p style="margin: 0; text-wrap: pretty">Este site não usa cookies, analytics nem rastreamento, e as fontes são servidas por ele mesmo. O serviço que hospeda o site registra o IP e o horário de cada acesso nos logs dele, como qualquer servidor.</p>
+<p style="margin: 0; text-wrap: pretty">Os botões de download levam ao GitHub, que tem a <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">política de privacidade</a> e os cookies dele.</p>
+</section>
+
+<section id="contato" class="sec rv" style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: #e8ecef">Código aberto e contato</h2>
+<p style="margin: 0; text-wrap: pretty">O MultiLink Balancer é código aberto, sob a licença GPL-3.0. Tudo o que está nesta página pode ser conferido no <a href="https://github.com/P0sseid0n/MultiLinkBalancer">repositório</a>.</p>
+<p style="margin: 0; text-wrap: pretty">Dúvidas sobre privacidade: abra uma <a href="https://github.com/P0sseid0n/MultiLinkBalancer/issues">issue no GitHub</a>. Se esta política mudar, a data no topo muda junto.</p>
+</section>
+
+</div>
+</main>
+
+<footer style="border-top: 1px solid #242a32">
+<div style="max-width: 1200px; margin: 0 auto; padding: 28px 32px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-size: 13px; color: #7d8792">
+<span>MultiLink Balancer · Licença GPL-3.0</span>
+<span style="display: flex; flex-wrap: wrap; gap: 8px 22px">
+<a href="./" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">Início</a>
+<a href="https://github.com/P0sseid0n/MultiLinkBalancer" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">GitHub</a>
+<a href="https://github.com/P0sseid0n/MultiLinkBalancer/releases" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">Versões</a>
+<a href="https://github.com/P0sseid0n/MultiLinkBalancer/blob/main/LICENSE" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">Licença</a>
+</span>
+</div>
+</footer>
+
+</div>
+
+</body>
+</html>
