@@ -175,6 +175,8 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 .pv-shield{transform-origin:240px 240px;animation:pv-shield 3s ease-in-out infinite}
 @keyframes pv-shield{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 .pv-dom{display:flex;align-items:center;gap:8px;font-family:'Cascadia Mono',ui-monospace,monospace;font-size:12.5px;letter-spacing:-.01em;color:var(--fg)}
+/* teclas do card de atalhos: menores em telas estreitas, para o M não ser cortado */
+@media (max-width: 400px){.keys{gap:6px !important}.keys>.lp{min-width:38px !important;height:40px !important;padding:0 8px !important}}
 .pv-list{display:none}
 @media (max-width: 640px){
 .pv-list{flex:1 1 100%;display:flex;flex-direction:column;gap:10px;padding:0 4px}
@@ -697,7 +699,7 @@ Baixar para Windows</a>
 <!-- Atalhos -->
 <div class="bcard b3 rv">
 <div class="dbox" aria-hidden="true" style="display: flex; align-items: center; justify-content: center; gap: 36px; flex-wrap: wrap; padding: 16px">
-<div class="mono" style="display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--subtle)">
+<div class="mono keys" style="display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--subtle)">
 <span class="lp" style="animation-name: k-ctrl; min-width: 58px; height: 46px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--fg); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 var(--line-strong)">Ctrl</span>+
 <span class="lp" style="animation-name: k-alt; min-width: 52px; height: 46px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--fg); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 var(--line-strong)">Alt</span>+
 <span class="lp" style="animation-name: k-m; min-width: 46px; height: 46px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--fg); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 var(--line-strong)">M</span>
