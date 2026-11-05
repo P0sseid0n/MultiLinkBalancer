@@ -50,10 +50,22 @@
 
   // ---------- abas de "Como funciona" ----------
   var tabs = all('[role="tab"][data-tab]');
+  var panel = document.getElementById('sim-painel');
+  // a troca automática pausa enquanto o mouse ou o foco estão nas abas ou no painel (WCAG 2.2.2)
+  var hold = { mouse: false, focus: false };
+  var TAB_MS = 6000, elapsed = 0;
+  function held() { return hold.mouse || hold.focus || document.hidden; }
+  document.addEventListener('visibilitychange', function () { syncBar(); });
+  function syncBar() {
+    var bar = document.querySelector('[role="tab"] .tabbar');
+    if (bar) bar.style.animationPlayState = held() ? 'paused' : 'running';
+  }
   function renderTabs() {
+    elapsed = 0;
     tabs.forEach(function (btn) {
       var i = Number(btn.getAttribute('data-tab')), selected = i === state.tab;
       btn.setAttribute('aria-selected', selected ? 'true' : 'false');
+      btn.tabIndex = selected ? 0 : -1;
       btn.style.cssText = TAB_BASE + (selected ? TAB_ON : TAB_OFF);
       var bar = btn.querySelector('.tabbar');
       if (bar) bar.remove();
@@ -62,7 +74,9 @@
         bar.className = 'tabbar';
         btn.appendChild(bar);
       }
+      if (selected && panel) panel.setAttribute('aria-labelledby', btn.id);
     });
+    syncBar();
     Object.keys(IFS).forEach(function (k) { setIf(IFS[k], Number(k) === state.tab); });
     all('[data-op="l2op"]').forEach(function (el) { el.style.opacity = state.tab === 3 ? '0.4' : '1'; });
     all('[data-op="l3op"]').forEach(function (el) { el.style.opacity = state.tab >= 2 ? '0.4' : '1'; });
@@ -73,15 +87,29 @@
       state.manual = true;
       renderTabs();
     });
-    // setas trocam de aba, como num tablist
+    // setas, Home e End trocam de aba, como num tablist
     btn.addEventListener('keydown', function (e) {
-      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-      var i = (state.tab + (e.key === 'ArrowRight' ? 1 : 3)) % 4;
+      var n = tabs.length, i;
+      if (e.key === 'ArrowRight') i = (state.tab + 1) % n;
+      else if (e.key === 'ArrowLeft') i = (state.tab + n - 1) % n;
+      else if (e.key === 'Home') i = 0;
+      else if (e.key === 'End') i = n - 1;
+      else return;
       state.tab = i;
       state.manual = true;
       renderTabs();
       tabs[i].focus();
       e.preventDefault();
+    });
+  });
+  [tabs.length ? tabs[0].parentNode : null, panel].forEach(function (el) {
+    if (!el) return;
+    el.addEventListener('mouseenter', function () { hold.mouse = true; syncBar(); });
+    el.addEventListener('mouseleave', function () { hold.mouse = false; syncBar(); });
+    el.addEventListener('focusin', function () { hold.focus = true; syncBar(); });
+    el.addEventListener('focusout', function (e) {
+      var to = e.relatedTarget, inside = to && ((tabs[0] && tabs[0].parentNode.contains(to)) || (panel && panel.contains(to)));
+      if (!inside) { hold.focus = false; syncBar(); }
     });
   });
 
@@ -109,11 +137,14 @@
         renderPanel();
       }
     }, 50);
+    // conta só o tempo sem pausa, no mesmo ritmo da barrinha de progresso da aba
     setInterval(function () {
-      if (state.manual) return;
-      state.tab = (state.tab + 1) % 4;
+      if (state.manual || held()) return;
+      elapsed += 100;
+      if (elapsed < TAB_MS) return;
+      state.tab = (state.tab + 1) % tabs.length;
       renderTabs();
-    }, 6000);
+    }, 100);
   }
 
   renderPanel();
