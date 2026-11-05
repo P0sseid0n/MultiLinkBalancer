@@ -228,7 +228,9 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 @keyframes d-p1{0%{transform:scaleX(0);opacity:1}30%{transform:scaleX(1);opacity:1}32%,100%{transform:scaleX(1);opacity:0}}
 @keyframes d-p2{0%,30%{transform:scaleX(0);opacity:1}55%{transform:scaleX(1);opacity:1}57%,100%{transform:scaleX(1);opacity:0}}
 @keyframes d-p3{0%,55%{transform:scaleX(0);opacity:1}94%{transform:scaleX(1);opacity:1}96%,100%{transform:scaleX(1);opacity:0}}
-@media (max-width: 640px){.stage{zoom:.58}}
+/* 560 px de palco: cabe na largura útil (tela menos 2 × 32 px) */
+@media (max-width: 640px){.stage{zoom:.54}}
+@media (max-width: 365px){.stage{zoom:.45}}
 /* ---------- logo do final ---------- */
 .cta-logo .pkt{stroke-dasharray:3 14;animation:ml-flow-fast 1.4s linear infinite}
 .cta-orbit{animation:ml-spin 18s linear infinite}
