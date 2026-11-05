@@ -6,7 +6,7 @@ próprio PC: cada link tem seu gateway e o app distribui o tráfego entre eles. 
 
 ![MultiLink Balancer](screenshot.png)
 
-[Site](https://p0sseid0n.github.io/MultiLinkBalancer/) · Licença [GPL-3.0](LICENSE) · [Privacidade](#privacidade)
+[Site](https://multilink.p0sseid0n.dev/) · Licença [GPL-3.0](LICENSE) · [Privacidade](#privacidade)
 
 ## Como usar
 
@@ -173,7 +173,7 @@ Para funcionar, ele só fala com o GitHub (atualizações), a Cloudflare (mediç
 9.9.9.9 (teste de internet de cada link).
 
 A política completa, com o que cada serviço vê, o DNS com a captura ligada, o que fica no PC e como apagar tudo, está em
-[p0sseid0n.github.io/MultiLinkBalancer/privacidade.html](https://p0sseid0n.github.io/MultiLinkBalancer/privacidade.html)
+[multilink.p0sseid0n.dev/privacidade.html](https://multilink.p0sseid0n.dev/privacidade.html)
 (fonte em [`site/privacidade.html`](site/privacidade.html); mudou algo que afeta a privacidade, atualize a página no mesmo commit).
 
 ## Desinstalar

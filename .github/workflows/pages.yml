@@ -1,5 +1,5 @@
 # Publica a pasta site/ (landing page e política de privacidade) no GitHub Pages:
-#   https://p0sseid0n.github.io/MultiLinkBalancer/
+#   https://multilink.p0sseid0n.dev/ (domínio próprio, configurado em Settings › Pages; o DNS fica na Hostinger)
 # Roda quando site/ muda na main e depois de cada release (o build da tag terminou), para a versão
 # escrita na página (<span data-versao>) acompanhar a última tag.
 name: Site
