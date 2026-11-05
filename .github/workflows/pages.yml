@@ -45,6 +45,8 @@ jobs:
           versao=$(git tag --list 'v*.*.*' --sort=-v:refname | head -n 1)
           if [ -n "$versao" ]; then
             sed -i -E "s|(<span data-versao>)[^<]*|\1${versao}|g" site/*.html
+            # nos dados estruturados (JSON-LD) a versão vai sem o "v"
+            sed -i -E "s|(\"softwareVersion\": \")[^\"]*|\1${versao#v}|g" site/*.html
             echo "Versão: $versao"
           fi
 
