@@ -7,8 +7,8 @@
   var state = { on: true, s1: 0, s2: 0, t1: 339, t2: 73, tab: 0, manual: false };
 
   var TAB_BASE = 'position: relative; min-height: 44px; padding: 0 18px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; ';
-  var TAB_ON = 'background: #20262d; color: #e8ecef; border: 1px solid #3a434e;';
-  var TAB_OFF = 'background: transparent; color: #9aa4ae; border: 1px solid #242a32;';
+  var TAB_ON = 'background: var(--line-soft); color: var(--fg); border: 1px solid var(--line-hover);';
+  var TAB_OFF = 'background: transparent; color: var(--muted); border: 1px solid var(--line);';
   var IFS = { 0: 'tNav', 1: 'tDl', 2: 'tUdp', 3: 'tOne' };
 
   function all(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }

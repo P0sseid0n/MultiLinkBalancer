@@ -20,10 +20,16 @@
 <meta property="og:image:alt" content="MultiLink Balancer: Múltiplas internets em casa? Use todas.">
 <meta name="twitter:card" content="summary_large_image">
 <style>
+/* ---------- cores e tipos (as cores dos atributos fill/stroke do SVG continuam em hex: atributo não aceita var()) ---------- */
+:root{--bg:#13171c;--surface:#171b21;--surface-2:#1a1f26;--line-soft:#20262d;--track:#222830;--line:#242a32;--line-mid:#2a3139;--line-strong:#2c333c;--line-hover:#3a434e;--dim:#4a525c;--dim-2:#5d6670;--subtle:#7d8792;--muted:#9aa4ae;--fg-2:#c9d1d8;--fg:#e8ecef;--white:#ffffff;--accent:#4cc38a;--accent-hover:#7fd9ad;--link-1:#3987e5;--link-2:#d95926;--link-3:#199e70;--warn:#d9a33a;--warn-fg:#e8c27a;--danger:#e5534b;--danger-fg:#f0a39e;--focus:#5598e7}
+.mono{font-family:'Cascadia Mono',ui-monospace,Consolas,monospace}
+.display{font-family:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif}
+.h-sec{margin:0;font-family:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;font-weight:600;font-size:clamp(30px,7.5vw,40px);line-height:1.1;letter-spacing:-0.03em;text-wrap:balance}
+.eyebrow{margin:0;font-family:'Cascadia Mono',ui-monospace,Consolas,monospace;font-size:13px;color:var(--accent)}
 @font-face{font-family:"Cascadia Mono";src:local("Cascadia Mono"),url("fonts/CascadiaMono.woff2") format("woff2");font-weight:200 700;font-display:swap}
-body{margin:0;background:#13171c}
-a{color:#e8ecef}a:hover{color:#ffffff}
-a:focus-visible,button:focus-visible{outline:2px solid #5598e7;outline-offset:2px}
+body{margin:0;background:var(--bg)}
+a{color:var(--fg)}a:hover{color:var(--white)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 
 /* ---------- curvas e keyframes ---------- */
 .ml{--ease:cubic-bezier(.22,1,.36,1)}
@@ -54,7 +60,7 @@ a:focus-visible,button:focus-visible{outline:2px solid #5598e7;outline-offset:2p
 .word{display:inline-block;opacity:0;animation:ml-rise .6s var(--ease) both}
 
 /* ---------- fundo do hero ---------- */
-.hero-grid{background-image:radial-gradient(#2c333c 1px,transparent 1px);background-size:24px 24px;animation:ml-gridpan 6s linear infinite;-webkit-mask-image:radial-gradient(ellipse 70% 60% at 60% 45%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse 70% 60% at 60% 45%,#000 20%,transparent 75%)}
+.hero-grid{background-image:radial-gradient(var(--line-strong) 1px,transparent 1px);background-size:24px 24px;animation:ml-gridpan 6s linear infinite;-webkit-mask-image:radial-gradient(ellipse 70% 60% at 60% 45%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse 70% 60% at 60% 45%,#000 20%,transparent 75%)}
 .pkt{fill:none;stroke-linecap:round;stroke-dasharray:2 38;animation:ml-flow 3.2s linear infinite}
 .pkt.s2{animation-duration:4.1s}.pkt.s3{animation-duration:2.6s}.pkt.out{stroke-dasharray:3 22;animation:ml-flow 1.6s linear infinite}
 .trace{fill:none;stroke-dasharray:var(--len,1400);animation:ml-draw 2.2s var(--ease) both}
@@ -65,7 +71,7 @@ a:focus-visible,button:focus-visible{outline:2px solid #5598e7;outline-offset:2p
 .io:hover{transform:scale(1.03)}.io:active{transform:scale(.96)}
 .io-on{animation:ml-breathe 3s ease-in-out .9s infinite}
 .ring{stroke-dasharray:503;animation:ml-ring .8s var(--ease) both;transform:rotate(-90deg);transform-origin:50% 50%}
-.wave{position:absolute;inset:-2px;border-radius:50%;border:2px solid #4cc38a;pointer-events:none;animation:ml-wave 1.6s var(--ease) .5s both}
+.wave{position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--accent);pointer-events:none;animation:ml-wave 1.6s var(--ease) .5s both}
 .wave.w2{animation-delay:.9s}.wave.w3{animation:ml-wave 2.4s var(--ease) 2s infinite}
 .pwr{transition:transform .4s var(--ease)}.io:hover .pwr{transform:rotate(-12deg)}
 .state-in{animation:ml-rise-sm .45s var(--ease) both}
@@ -88,29 +94,29 @@ a:focus-visible,button:focus-visible{outline:2px solid #5598e7;outline-offset:2p
 .btn:hover{transform:translateY(-3px)}
 .btn:active{transform:translateY(0) scale(.97)}
 .btn-primary:hover{box-shadow:0 0 0 6px #e8ecef14,0 20px 40px -14px rgba(76,195,138,.45)}
-.btn-ghost:hover{border-color:#3a434e;background-color:#1a1f26}
+.btn-ghost:hover{border-color:var(--line-hover);background-color:var(--surface-2)}
 .btn .arrow{transition:transform .25s var(--ease)}
 .btn:hover .arrow{animation:ml-bounce .7s ease-in-out infinite}
 .shine::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);animation:ml-shine 3.6s ease-in-out 1.5s infinite;pointer-events:none}
 .navlink{position:relative}
-.navlink::after{content:"";position:absolute;left:0;right:0;bottom:6px;height:1px;background:#4cc38a;transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease)}
-.navlink:hover{color:#e8ecef !important}.navlink:hover::after{transform:scaleX(1)}
+.navlink::after{content:"";position:absolute;left:0;right:0;bottom:6px;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease)}
+.navlink:hover{color:var(--fg) !important}.navlink:hover::after{transform:scaleX(1)}
 .logo-mark{transition:transform .5s var(--ease)}
 a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 
 /* ---------- como funciona: simulador ---------- */
 .lane{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px;align-items:center;transition:opacity .4s}
 .lane-label{display:flex;align-items:center;gap:10px}
-.track{position:relative;display:block;height:38px;border-radius:8px;background:#13171c;border:1px solid #20262d;overflow:hidden}
+.track{position:relative;display:block;height:38px;border-radius:8px;background:var(--bg);border:1px solid var(--line-soft);overflow:hidden}
 .pk{position:absolute;top:50%;left:-40px;width:34px;height:10px;margin-top:-5px;border-radius:5px;animation-name:pk-move;animation-timing-function:linear;animation-iteration-count:infinite}
-.pk.part{width:28px;height:20px;margin-top:-10px;font-family:'Cascadia Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#13171c;display:flex;align-items:center;justify-content:center}
+.pk.part{width:28px;height:20px;margin-top:-10px;font-family:'Cascadia Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:var(--bg);display:flex;align-items:center;justify-content:center}
 @keyframes pk-move{from{left:-40px}to{left:100%}}
 .flow{position:absolute;inset:0;background-size:14px 100%;background-repeat:repeat-x;background-position:0 50%;animation:flow-move .5s linear infinite}
 @keyframes flow-move{to{background-position:14px 50%}}
-.idle{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#7d8792}
-.tabbar{position:absolute;left:14px;right:14px;bottom:5px;height:2px;border-radius:1px;background:#4cc38a;transform-origin:left;animation:tab-prog 6s linear both}
+.idle{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--subtle)}
+.tabbar{position:absolute;left:14px;right:14px;bottom:5px;height:2px;border-radius:1px;background:var(--accent);transform-origin:left;animation:tab-prog 6s linear both}
 @keyframes tab-prog{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-.fillbar{display:block;height:100%;background:#4cc38a;animation:fill-loop 3.2s var(--ease) infinite}
+.fillbar{display:block;height:100%;background:var(--accent);animation:fill-loop 3.2s var(--ease) infinite}
 @keyframes fill-loop{0%{width:0}80%,100%{width:100%}}
 .verdict{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;border:1px solid;font-size:13px;font-weight:600;flex:none}
 @media (max-width: 640px){.lane{grid-template-columns:104px minmax(0,1fr)}}
@@ -119,9 +125,9 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 .bento{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
 .b2{grid-column:span 2}.b3{grid-column:span 3}.b4{grid-column:span 4}
 @media (max-width: 960px){.b2,.b3,.b4{grid-column:span 6}}
-.bcard{background:#171b21;border:1px solid #242a32;border-radius:14px;padding:20px 20px 24px;display:flex;flex-direction:column;gap:20px;transition:border-color .3s,transform .35s var(--ease)}
-.bcard:hover{border-color:#3a434e;transform:translateY(-4px)}
-.dbox{position:relative;height:210px;border-radius:10px;background:#13171c;border:1px solid #20262d;overflow:hidden}
+.bcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 20px 24px;display:flex;flex-direction:column;gap:20px;transition:border-color .3s,transform .35s var(--ease)}
+.bcard:hover{border-color:var(--line-hover);transform:translateY(-4px)}
+.dbox{position:relative;height:210px;border-radius:10px;background:var(--bg);border:1px solid var(--line-soft);overflow:hidden}
 .lp{animation-duration:8s;animation-iteration-count:infinite;animation-timing-function:linear;animation-fill-mode:both}
 .stk{position:relative;display:inline-block;height:20px}
 .stk>span{position:absolute;right:0;top:0;white-space:nowrap}
@@ -130,7 +136,7 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 @keyframes w-a{0%,32%{opacity:1}38%,84%{opacity:0}90%,100%{opacity:1}}
 @keyframes w-b{0%,34%{opacity:0}42%,80%{opacity:1}86%,100%{opacity:0}}
 /* quedas */
-@keyframes q-led{0%,30%{background:#4cc38a;box-shadow:0 0 0 3px #4cc38a24}34%,68%{background:#e5534b;box-shadow:0 0 0 3px #e5534b33}72%,100%{background:#4cc38a;box-shadow:0 0 0 3px #4cc38a24}}
+@keyframes q-led{0%,30%{background:var(--accent);box-shadow:0 0 0 3px #4cc38a24}34%,68%{background:var(--danger);box-shadow:0 0 0 3px #e5534b33}72%,100%{background:var(--accent);box-shadow:0 0 0 3px #4cc38a24}}
 @keyframes q-on{0%,30%{opacity:1}33%,69%{opacity:0}73%,100%{opacity:1}}
 @keyframes q-off{0%,31%{opacity:0}35%,68%{opacity:1}71%,100%{opacity:0}}
 @keyframes q-t1{0%,33%{opacity:0;transform:translateY(16px)}38%,64%{opacity:1;transform:none}68%,100%{opacity:0;transform:translateY(-8px)}}
@@ -147,17 +153,17 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 @keyframes h-fade{0%,90%{opacity:1}97%,100%{opacity:0}}
 @keyframes h-drop{0%,32%{opacity:0}38%,100%{opacity:1}}
 /* atalhos */
-@keyframes k-ctrl{0%,16%{transform:none;box-shadow:0 3px 0 #2c333c;border-color:#2c333c}18%,30%{transform:translateY(3px);box-shadow:0 0 0 #2c333c;border-color:#4cc38a}32%,64%{transform:none;box-shadow:0 3px 0 #2c333c;border-color:#2c333c}66%,78%{transform:translateY(3px);box-shadow:0 0 0 #2c333c;border-color:#4cc38a}80%,100%{transform:none;box-shadow:0 3px 0 #2c333c;border-color:#2c333c}}
-@keyframes k-alt{0%,19%{transform:none;box-shadow:0 3px 0 #2c333c;border-color:#2c333c}21%,30%{transform:translateY(3px);box-shadow:0 0 0 #2c333c;border-color:#4cc38a}32%,67%{transform:none;box-shadow:0 3px 0 #2c333c;border-color:#2c333c}69%,78%{transform:translateY(3px);box-shadow:0 0 0 #2c333c;border-color:#4cc38a}80%,100%{transform:none;box-shadow:0 3px 0 #2c333c;border-color:#2c333c}}
-@keyframes k-m{0%,23%{transform:none;box-shadow:0 3px 0 #2c333c;border-color:#2c333c}25%,29%{transform:translateY(3px);box-shadow:0 0 0 #2c333c;border-color:#4cc38a}31%,71%{transform:none;box-shadow:0 3px 0 #2c333c;border-color:#2c333c}73%,77%{transform:translateY(3px);box-shadow:0 0 0 #2c333c;border-color:#4cc38a}79%,100%{transform:none;box-shadow:0 3px 0 #2c333c;border-color:#2c333c}}
-@keyframes k-io{0%,26%{color:#9aa4ae;border-color:#2c333c;box-shadow:0 10px 24px -12px rgba(4,8,14,.7)}30%,74%{color:#4cc38a;border-color:#4cc38a;box-shadow:0 0 0 6px #4cc38a14,0 10px 24px -8px #4cc38a47}78%,100%{color:#9aa4ae;border-color:#2c333c;box-shadow:0 10px 24px -12px rgba(4,8,14,.7)}}
+@keyframes k-ctrl{0%,16%{transform:none;box-shadow:0 3px 0 var(--line-strong);border-color:var(--line-strong)}18%,30%{transform:translateY(3px);box-shadow:0 0 0 var(--line-strong);border-color:var(--accent)}32%,64%{transform:none;box-shadow:0 3px 0 var(--line-strong);border-color:var(--line-strong)}66%,78%{transform:translateY(3px);box-shadow:0 0 0 var(--line-strong);border-color:var(--accent)}80%,100%{transform:none;box-shadow:0 3px 0 var(--line-strong);border-color:var(--line-strong)}}
+@keyframes k-alt{0%,19%{transform:none;box-shadow:0 3px 0 var(--line-strong);border-color:var(--line-strong)}21%,30%{transform:translateY(3px);box-shadow:0 0 0 var(--line-strong);border-color:var(--accent)}32%,67%{transform:none;box-shadow:0 3px 0 var(--line-strong);border-color:var(--line-strong)}69%,78%{transform:translateY(3px);box-shadow:0 0 0 var(--line-strong);border-color:var(--accent)}80%,100%{transform:none;box-shadow:0 3px 0 var(--line-strong);border-color:var(--line-strong)}}
+@keyframes k-m{0%,23%{transform:none;box-shadow:0 3px 0 var(--line-strong);border-color:var(--line-strong)}25%,29%{transform:translateY(3px);box-shadow:0 0 0 var(--line-strong);border-color:var(--accent)}31%,71%{transform:none;box-shadow:0 3px 0 var(--line-strong);border-color:var(--line-strong)}73%,77%{transform:translateY(3px);box-shadow:0 0 0 var(--line-strong);border-color:var(--accent)}79%,100%{transform:none;box-shadow:0 3px 0 var(--line-strong);border-color:var(--line-strong)}}
+@keyframes k-io{0%,26%{color:var(--muted);border-color:var(--line-strong);box-shadow:0 10px 24px -12px rgba(4,8,14,.7)}30%,74%{color:var(--accent);border-color:var(--accent);box-shadow:0 0 0 6px #4cc38a14,0 10px 24px -8px #4cc38a47}78%,100%{color:var(--muted);border-color:var(--line-strong);box-shadow:0 10px 24px -12px rgba(4,8,14,.7)}}
 @keyframes k-on{0%,26%{opacity:0}30%,74%{opacity:1}78%,100%{opacity:0}}
 @keyframes k-off{0%,26%{opacity:1}30%,74%{opacity:0}78%,100%{opacity:1}}
 
 /* ---------- privacidade: cofre animado ---------- */
 .b6{grid-column:span 6}
 .bento .pv-main{flex-direction:row;flex-wrap:wrap;align-items:center;gap:24px 40px;padding:20px 20px 20px 32px;border-color:#4cc38a66;box-shadow:0 0 0 4px #4cc38a0a;scroll-margin-top:96px}
-.bento .pv-main:hover{border-color:#4cc38a;transform:none}
+.bento .pv-main:hover{border-color:var(--accent);transform:none}
 .pv-ring{animation:pv-ring 2s ease-in-out .3s infinite}
 @keyframes pv-ring{0%,100%{stroke-opacity:.45;stroke-width:1.5}45%{stroke-opacity:1;stroke-width:3}}
 .pv-chip{animation-duration:8s;animation-iteration-count:infinite;animation-timing-function:cubic-bezier(.22,1,.36,1)}
@@ -168,11 +174,11 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 @keyframes pv-left{0%,30%{transform:translate(0,0)}40%{transform:translate(-12px,0)}48%{transform:translate(3px,0)}56%,100%{transform:translate(0,0)}}
 .pv-shield{transform-origin:240px 240px;animation:pv-shield 3s ease-in-out infinite}
 @keyframes pv-shield{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-.pv-dom{display:flex;align-items:center;gap:8px;font-family:'Cascadia Mono',ui-monospace,monospace;font-size:12.5px;letter-spacing:-.01em;color:#e8ecef}
+.pv-dom{display:flex;align-items:center;gap:8px;font-family:'Cascadia Mono',ui-monospace,monospace;font-size:12.5px;letter-spacing:-.01em;color:var(--fg)}
 .pv-list{display:none}
 @media (max-width: 640px){
 .pv-list{flex:1 1 100%;display:flex;flex-direction:column;gap:10px;padding:0 4px}
-.pv-list li{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-top:1px solid #242a32;font-size:13.5px;color:#9aa4ae}
+.pv-list li{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
 .pv-lbl{display:none}
 }
 
@@ -201,14 +207,14 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 @keyframes d-dbl{0%,38.5%{opacity:0;transform:scale(.5)}39%{opacity:.8;transform:scale(.7)}43%,100%{opacity:0;transform:scale(1.8)}}
 @keyframes d-click{0%,64%{opacity:0;transform:scale(.8)}65%{opacity:.85;transform:scale(1)}74%,100%{opacity:0;transform:scale(1.9)}}
 @keyframes d-ring{0%,65%{stroke-dashoffset:340}73%,100%{stroke-dashoffset:0}}
-@keyframes d-io{0%,65%{color:#9aa4ae;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 14px 30px -12px rgba(4,8,14,.7)}70%,100%{color:#4cc38a;box-shadow:0 0 0 8px #4cc38a12,inset 0 1px 0 rgba(255,255,255,.05),0 14px 34px -10px #4cc38a47}}
+@keyframes d-io{0%,65%{color:var(--muted);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 14px 30px -12px rgba(4,8,14,.7)}70%,100%{color:var(--accent);box-shadow:0 0 0 8px #4cc38a12,inset 0 1px 0 rgba(255,255,255,.05),0 14px 34px -10px #4cc38a47}}
 @keyframes d-off{0%,65%{opacity:1}67%,100%{opacity:0}}
 @keyframes d-on{0%,66%{opacity:0;transform:translateY(4px)}69%,100%{opacity:1;transform:none}}
 @keyframes d-n0{0%,66%{opacity:1}66.5%,100%{opacity:0}}
 @keyframes d-n1{0%,66.5%{opacity:0}67%,68%{opacity:1}68.5%,100%{opacity:0}}
 @keyframes d-n2{0%,68%{opacity:0}68.5%,69.5%{opacity:1}70%,100%{opacity:0}}
 @keyframes d-n3{0%,69.5%{opacity:0}70%,100%{opacity:1}}
-@keyframes d-led{0%,68%{background:#4a525c;box-shadow:0 0 0 0 #4cc38a00}71%,100%{background:#4cc38a;box-shadow:0 0 0 3px #4cc38a24}}
+@keyframes d-led{0%,68%{background:var(--dim);box-shadow:0 0 0 0 #4cc38a00}71%,100%{background:var(--accent);box-shadow:0 0 0 3px #4cc38a24}}
 @keyframes d-b1{0%,68%{width:0}77%,100%{width:82%}}
 @keyframes d-b2{0%,68%{width:0}77%,100%{width:18%}}
 @keyframes d-s1{0%,29%{opacity:1}32%,100%{opacity:.4}}
@@ -255,21 +261,21 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 </head>
 <body>
 
-<div class="ml" style="min-height: 100vh; background: #13171c; color: #e8ecef; font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; font-size: 16px; line-height: 1.5; overflow-x: clip">
+<div class="ml" style="min-height: 100vh; background: var(--bg); color: var(--fg); font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; font-size: 16px; line-height: 1.5; overflow-x: clip">
 
 <!-- Navegação -->
-<header class="in d1 site-header" style="position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #242a32; background: rgba(19,23,28,0.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px)">
+<header class="in d1 site-header" style="position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--line); background: rgba(19,23,28,0.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px)">
 <nav class="nav" aria-label="Principal" style="max-width: 1200px; margin: 0 auto; padding: 14px 32px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
-<a href="#topo" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: #e8ecef">
+<a href="#topo" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--fg)">
 <svg class="logo-mark" width="32" height="32" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg-nav" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262d36"></stop><stop offset="1" stop-color="#13171c"></stop></linearGradient></defs><rect x="0" y="0" width="64" height="64" rx="14" fill="url(#lg-nav)" stroke="#2c333c" stroke-width="1.5"></rect><path d="M14 20 C26 20 28 32 36 32 M14 32 H36 M14 44 C26 44 28 32 36 32 M36 32 H50" fill="none" stroke="#4cc38a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="50" cy="32" r="4" fill="#4cc38a"></circle></svg>
-<span style="font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 17px; letter-spacing: -0.01em">MultiLink Balancer</span>
+<span class="display" style="font-weight: 600; font-size: 17px; letter-spacing: -0.01em">MultiLink Balancer</span>
 </a>
 <div class="nav-links" style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; font-size: 14px">
-<a class="navlink" href="#como-funciona" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">Como funciona</a>
-<a class="navlink" href="#recursos" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">Recursos</a>
-<a class="navlink" href="#privacidade" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">Privacidade</a>
-<a class="navlink nav-gh" href="https://github.com/P0sseid0n/MultiLinkBalancer" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">GitHub</a>
-<a class="btn btn-primary nav-cta" href="https://github.com/P0sseid0n/MultiLinkBalancer/releases/latest/download/MultiLinkBalancer.exe" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 6px; background: #e8ecef; color: #13171c; font-weight: 600; font-size: 14px; text-decoration: none">
+<a class="navlink" href="#como-funciona" style="color: var(--muted); text-decoration: none; padding: 10px 0">Como funciona</a>
+<a class="navlink" href="#recursos" style="color: var(--muted); text-decoration: none; padding: 10px 0">Recursos</a>
+<a class="navlink" href="#privacidade" style="color: var(--muted); text-decoration: none; padding: 10px 0">Privacidade</a>
+<a class="navlink nav-gh" href="https://github.com/P0sseid0n/MultiLinkBalancer" style="color: var(--muted); text-decoration: none; padding: 10px 0">GitHub</a>
+<a class="btn btn-primary nav-cta" href="https://github.com/P0sseid0n/MultiLinkBalancer/releases/latest/download/MultiLinkBalancer.exe" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 6px; background: var(--fg); color: var(--bg); font-weight: 600; font-size: 14px; text-decoration: none">
 <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg>
 Baixar</a>
 </div>
@@ -294,34 +300,34 @@ Baixar</a>
 <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(19,23,28,0.45); pointer-events: none"></div>
 <section id="topo" style="position: relative; max-width: 1200px; margin: 0 auto; padding: 88px 32px 104px; display: flex; flex-wrap: wrap; align-items: center; gap: 64px">
 <div style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 28px">
-<p class="in d1" style="margin: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13px; letter-spacing: -0.01em; color: #9aa4ae">
-<span style="display: inline-flex; align-items: center; gap: 8px"><span class="led-on" style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a; box-shadow: 0 0 0 3px #4cc38a24"></span><span data-versao>v1.0.0</span></span>
+<p class="in d1 mono" style="margin: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; letter-spacing: -0.01em; color: var(--muted)">
+<span style="display: inline-flex; align-items: center; gap: 8px"><span class="led-on" style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px #4cc38a24"></span><span data-versao>v1.0.0</span></span>
 <span>Windows 11</span>
 <span>Código aberto · GPL-3.0</span>
 </p>
-<h1 style="margin: 0; font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(40px, 10vw, 64px); line-height: 1.04; letter-spacing: -0.035em; text-wrap: balance"><span class="word" style="animation-delay: .04s">Múltiplas</span> <span class="word" style="animation-delay: .09s">internets</span> <span class="word" style="animation-delay: .14s">em</span> <span class="word" style="animation-delay: .19s">casa?</span> <span class="word" style="animation-delay: .28s">Use</span> <span class="word" style="animation-delay: .34s; color: #4cc38a">todas.</span></h1>
-<p class="in d3" style="margin: 0; max-width: 560px; font-size: 19px; line-height: 1.55; color: #9aa4ae; text-wrap: pretty">O MultiLink Balancer divide o tráfego do PC entre cabo, Wi-Fi e 4G pelo USB, na medida do que cada um aguenta.</p>
+<h1 class="display" style="margin: 0; font-weight: 600; font-size: clamp(40px, 10vw, 64px); line-height: 1.04; letter-spacing: -0.035em; text-wrap: balance"><span class="word" style="animation-delay: .04s">Múltiplas</span> <span class="word" style="animation-delay: .09s">internets</span> <span class="word" style="animation-delay: .14s">em</span> <span class="word" style="animation-delay: .19s">casa?</span> <span class="word" style="animation-delay: .28s">Use</span> <span class="word" style="animation-delay: .34s; color: var(--accent)">todas.</span></h1>
+<p class="in d3" style="margin: 0; max-width: 560px; font-size: 19px; line-height: 1.55; color: var(--muted); text-wrap: pretty">O MultiLink Balancer divide o tráfego do PC entre cabo, Wi-Fi e 4G pelo USB, na medida do que cada um aguenta.</p>
 <div class="in d4" style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px">
-<a class="btn btn-primary shine" href="https://github.com/P0sseid0n/MultiLinkBalancer/releases/latest/download/MultiLinkBalancer.exe" style="display: inline-flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 26px; border-radius: 10px; background: #e8ecef; color: #13171c; font-weight: 600; font-size: 17px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 14px 30px -12px rgba(4,8,14,0.7)">
+<a class="btn btn-primary shine" href="https://github.com/P0sseid0n/MultiLinkBalancer/releases/latest/download/MultiLinkBalancer.exe" style="display: inline-flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 26px; border-radius: 10px; background: var(--fg); color: var(--bg); font-weight: 600; font-size: 17px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 14px 30px -12px rgba(4,8,14,0.7)">
 <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg>
 Baixar para Windows</a>
 </div>
-<p class="in d5" style="margin: 0; max-width: 520px; font-size: 13px; line-height: 1.6; color: #7d8792; text-wrap: pretty"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; letter-spacing: -0.01em">MultiLinkBalancer.exe · ~13 MB</span> · um arquivo só, sem instalação<br>Não é assinado: se o SmartScreen avisar, clique em Mais informações e em Executar assim mesmo.</p>
+<p class="in d5" style="margin: 0; max-width: 520px; font-size: 13px; line-height: 1.6; color: var(--subtle); text-wrap: pretty"><span class="mono" style="letter-spacing: -0.01em">MultiLinkBalancer.exe · ~13 MB</span> · um arquivo só, sem instalação<br>Não é assinado: se o SmartScreen avisar, clique em Mais informações e em Executar assim mesmo.</p>
 </div>
 
 <!-- Painel do app (demonstração interativa) -->
 <div class="in-panel" style="flex: 0 1 380px; min-width: 0; display: flex; justify-content: center">
-<div style="width: 100%; max-width: 360px; background: #13171c; border: 1px solid #242a32; border-radius: 14px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 40px 80px -24px rgba(4,8,14,0.9), 0 2px 6px rgba(4,8,14,0.35)">
+<div style="width: 100%; max-width: 360px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 40px 80px -24px rgba(4,8,14,0.9), 0 2px 6px rgba(4,8,14,0.35)">
 <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px 24px">
-<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.01em; color: #9aa4ae">MultiLink</span>
-<span style="display: flex; gap: 18px; color: #7d8792" aria-hidden="true">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.01em; color: var(--muted)">MultiLink</span>
+<span style="display: flex; gap: 18px; color: var(--subtle)" aria-hidden="true">
 <svg style="animation: ml-spin 12s linear infinite" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 12h12"></path></svg>
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="m7 7 10 10M17 7 7 17"></path></svg>
 </span>
 </div>
-<div style="display: flex; align-items: center; gap: 10px; padding: 12px 16px 12px 24px; background: #171b21; border-top: 1px solid #20262d; border-bottom: 1px solid #20262d; font-size: 12.5px; color: #c9d1d8">
-<span class="blink" style="width: 6px; height: 6px; border-radius: 50%; background: #4cc38a; flex: none"></span>
+<div style="display: flex; align-items: center; gap: 10px; padding: 12px 16px 12px 24px; background: var(--surface); border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); font-size: 12.5px; color: var(--fg-2)">
+<span class="blink" style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none"></span>
 <span class="ticker" aria-hidden="true" style="flex: 1; min-width: 0"><span>
 <span>Dividindo conexões entre 2 links</span>
 <span>Pesos ajustados pelo tráfego</span>
@@ -329,48 +335,48 @@ Baixar para Windows</a>
 <span>Principal rendendo mais agora</span>
 <span>Dividindo conexões entre 2 links</span>
 </span></span>
-<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 12px; color: #7d8792">19:04</span>
+<span class="mono" style="font-size: 12px; color: var(--subtle)">19:04</span>
 </div>
 
 <div style="display: flex; flex-direction: column; align-items: center; padding: 30px 16px 8px 24px">
 <span data-if="on">
-<button class="io io-on" type="button" aria-label="Desligar o MultiLink (demonstração)" aria-pressed="true" data-action="toggle" style="width: 152px; height: 152px; border-radius: 50%; background: #1a1f26; border: 2px solid #2c333c; color: #4cc38a; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0">
+<button class="io io-on" type="button" aria-label="Desligar o MultiLink (demonstração)" aria-pressed="true" data-action="toggle" style="width: 152px; height: 152px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--line-strong); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0">
 <svg style="position: absolute; inset: -2px; width: 152px; height: 152px; pointer-events: none" viewBox="0 0 164 164" aria-hidden="true"><circle class="ring" cx="82" cy="82" r="80" fill="none" stroke="#4cc38a" stroke-width="3"></circle></svg>
 <span class="wave"></span><span class="wave w2"></span><span class="wave w3"></span>
 <svg class="pwr" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"></path><path d="M6.3 6.8a8 8 0 1 0 11.4 0"></path></svg>
 </button>
 <p class="state-in" style="margin: 18px 0 0; font-size: 15px; font-weight: 600; text-align: center">Ligado</p>
-<p class="state-in d2" style="margin: 4px 0 0; font-size: 12px; color: #9aa4ae; text-align: center">Dividindo conexões entre 2 links</p>
-<p class="state-in d3" style="margin: 22px 0 0; display: flex; align-items: baseline; justify-content: center; gap: 8px"><span class="num-live" style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 44px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums"><span data-v="total">412</span></span><span style="font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-size: 15px; font-weight: 500; color: #9aa4ae">Mbps</span></p>
+<p class="state-in d2" style="margin: 4px 0 0; font-size: 12px; color: var(--muted); text-align: center">Dividindo conexões entre 2 links</p>
+<p class="state-in d3" style="margin: 22px 0 0; display: flex; align-items: baseline; justify-content: center; gap: 8px"><span class="num-live mono" style="font-size: 44px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums"><span data-v="total">412</span></span><span class="display" style="font-size: 15px; font-weight: 500; color: var(--muted)">Mbps</span></p>
 </span>
 <span data-if="off" hidden>
-<button class="io" type="button" aria-label="Ligar o MultiLink (demonstração)" aria-pressed="false" data-action="toggle" style="width: 152px; height: 152px; border-radius: 50%; background: #1a1f26; border: 2px solid #2c333c; color: #9aa4ae; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 14px 30px -12px rgba(4,8,14,0.7)">
+<button class="io" type="button" aria-label="Ligar o MultiLink (demonstração)" aria-pressed="false" data-action="toggle" style="width: 152px; height: 152px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--line-strong); color: var(--muted); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 14px 30px -12px rgba(4,8,14,0.7)">
 <svg class="pwr" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"></path><path d="M6.3 6.8a8 8 0 1 0 11.4 0"></path></svg>
 </button>
 <p class="state-in" style="margin: 18px 0 0; font-size: 15px; font-weight: 600; text-align: center">Desligado</p>
-<p class="state-in d2" style="margin: 4px 0 0; font-size: 12px; color: #9aa4ae; text-align: center">Clique para dividir as conexões</p>
-<p class="state-in d3" style="margin: 22px 0 0; display: flex; align-items: baseline; justify-content: center; gap: 8px"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 44px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; color: #4a525c; font-variant-numeric: tabular-nums"><span data-v="total">412</span></span><span style="font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-size: 15px; font-weight: 500; color: #9aa4ae">Mbps</span></p>
+<p class="state-in d2" style="margin: 4px 0 0; font-size: 12px; color: var(--muted); text-align: center">Clique para dividir as conexões</p>
+<p class="state-in d3" style="margin: 22px 0 0; display: flex; align-items: baseline; justify-content: center; gap: 8px"><span class="mono" style="font-size: 44px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; color: var(--dim); font-variant-numeric: tabular-nums"><span data-v="total">412</span></span><span class="display" style="font-size: 15px; font-weight: 500; color: var(--muted)">Mbps</span></p>
 </span>
 <div style="width: 100%; margin-top: 22px; display: flex; flex-direction: column; gap: 6px">
-<div style="display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: #222830; gap: 2px" aria-hidden="true"><span class="bar" data-w="w1" style="width: 82%; background: #3987e5"></span><span class="bar" data-w="w2" style="width: 18%; background: #d95926"></span></div>
-<div style="display: flex; justify-content: space-between; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 12px; letter-spacing: -0.01em; color: #7d8792"><span>Principal <span data-v="p1">82%</span></span><span>Secundaria <span data-v="p2">18%</span></span></div>
+<div style="display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--track); gap: 2px" aria-hidden="true"><span class="bar" data-w="w1" style="width: 82%; background: var(--link-1)"></span><span class="bar" data-w="w2" style="width: 18%; background: var(--link-2)"></span></div>
+<div class="mono" style="display: flex; justify-content: space-between; font-size: 12px; letter-spacing: -0.01em; color: var(--subtle)"><span>Principal <span data-v="p1">82%</span></span><span>Secundaria <span data-v="p2">18%</span></span></div>
 </div>
 </div>
 
 <ul style="list-style: none; margin: 8px 16px 18px 24px; padding: 0">
-<li style="display: flex; align-items: center; gap: 10px; min-height: 60px; border-top: 1px solid #242a32">
-<span style="width: 36px; height: 20px; border-radius: 10px; background: #4cc38a; position: relative; flex: none" aria-hidden="true"><span style="position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: #13171c"></span></span>
-<span data-if="on"><span class="led-on" style="display: block; width: 8px; height: 8px; border-radius: 50%; background: #4cc38a; box-shadow: 0 0 0 3px #4cc38a24; margin-left: 8px; flex: none" aria-hidden="true"></span></span>
-<span data-if="off" hidden><span style="display: block; width: 8px; height: 8px; border-radius: 50%; background: #4a525c; margin-left: 8px; flex: none" aria-hidden="true"></span></span>
+<li style="display: flex; align-items: center; gap: 10px; min-height: 60px; border-top: 1px solid var(--line)">
+<span style="width: 36px; height: 20px; border-radius: 10px; background: var(--accent); position: relative; flex: none" aria-hidden="true"><span style="position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg)"></span></span>
+<span data-if="on"><span class="led-on" style="display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px #4cc38a24; margin-left: 8px; flex: none" aria-hidden="true"></span></span>
+<span data-if="off" hidden><span style="display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--dim); margin-left: 8px; flex: none" aria-hidden="true"></span></span>
 <span style="flex: 1; font-size: 14px; font-weight: 600">Principal</span>
-<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px; letter-spacing: -0.01em; color: #e8ecef; font-variant-numeric: tabular-nums"><span data-v="speed1">339 Mbps</span></span>
+<span class="mono" style="font-size: 14px; letter-spacing: -0.01em; color: var(--fg); font-variant-numeric: tabular-nums"><span data-v="speed1">339 Mbps</span></span>
 </li>
-<li style="display: flex; align-items: center; gap: 10px; min-height: 60px; border-top: 1px solid #242a32; border-bottom: 1px solid #242a32">
-<span style="width: 36px; height: 20px; border-radius: 10px; background: #4cc38a; position: relative; flex: none" aria-hidden="true"><span style="position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: #13171c"></span></span>
-<span data-if="on"><span class="led-on" style="display: block; width: 8px; height: 8px; border-radius: 50%; background: #4cc38a; box-shadow: 0 0 0 3px #4cc38a24; margin-left: 8px; flex: none; animation-delay: .6s" aria-hidden="true"></span></span>
-<span data-if="off" hidden><span style="display: block; width: 8px; height: 8px; border-radius: 50%; background: #4a525c; margin-left: 8px; flex: none" aria-hidden="true"></span></span>
+<li style="display: flex; align-items: center; gap: 10px; min-height: 60px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line)">
+<span style="width: 36px; height: 20px; border-radius: 10px; background: var(--accent); position: relative; flex: none" aria-hidden="true"><span style="position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg)"></span></span>
+<span data-if="on"><span class="led-on" style="display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px #4cc38a24; margin-left: 8px; flex: none; animation-delay: .6s" aria-hidden="true"></span></span>
+<span data-if="off" hidden><span style="display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--dim); margin-left: 8px; flex: none" aria-hidden="true"></span></span>
 <span style="flex: 1; font-size: 14px; font-weight: 600">Secundaria</span>
-<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px; letter-spacing: -0.01em; color: #e8ecef; font-variant-numeric: tabular-nums"><span data-v="speed2">73 Mbps</span></span>
+<span class="mono" style="font-size: 14px; letter-spacing: -0.01em; color: var(--fg); font-variant-numeric: tabular-nums"><span data-v="speed2">73 Mbps</span></span>
 </li>
 </ul>
 </div>
@@ -379,74 +385,74 @@ Baixar para Windows</a>
 </div>
 
 <!-- Faixa rolante -->
-<div class="marquee-wrap" aria-hidden="true" style="border-top: 1px solid #242a32; border-bottom: 1px solid #242a32; background: #171b21; overflow: hidden; padding: 18px 0">
-<div class="marquee" style="gap: 0; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 15px; letter-spacing: -0.01em; color: #9aa4ae">
+<div class="marquee-wrap" aria-hidden="true" style="border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); overflow: hidden; padding: 18px 0">
+<div class="marquee mono" style="gap: 0; font-size: 15px; letter-spacing: -0.01em; color: var(--muted)">
 <span style="display: flex; gap: 48px; padding-right: 48px; align-items: center; white-space: nowrap">
-<span>Cabo</span><span style="color: #3987e5">●</span><span>Wi-Fi</span><span style="color: #d95926">●</span><span>4G pelo USB</span><span style="color: #199e70">●</span><span>Navegador</span><span style="color: #c98500">●</span><span>Steam</span><span style="color: #d55181">●</span><span>Torrent via SOCKS5</span><span style="color: #9085e9">●</span><span>Windows Update</span><span style="color: #4cc38a">●</span><span>Download acelerado</span><span style="color: #e66767">●</span>
+<span>Cabo</span><span style="color: var(--link-1)">●</span><span>Wi-Fi</span><span style="color: var(--link-2)">●</span><span>4G pelo USB</span><span style="color: var(--link-3)">●</span><span>Navegador</span><span style="color: #c98500">●</span><span>Steam</span><span style="color: #d55181">●</span><span>Torrent via SOCKS5</span><span style="color: #9085e9">●</span><span>Windows Update</span><span style="color: var(--accent)">●</span><span>Download acelerado</span><span style="color: #e66767">●</span>
 </span>
 <span style="display: flex; gap: 48px; padding-right: 48px; align-items: center; white-space: nowrap">
-<span>Cabo</span><span style="color: #3987e5">●</span><span>Wi-Fi</span><span style="color: #d95926">●</span><span>4G pelo USB</span><span style="color: #199e70">●</span><span>Navegador</span><span style="color: #c98500">●</span><span>Steam</span><span style="color: #d55181">●</span><span>Torrent via SOCKS5</span><span style="color: #9085e9">●</span><span>Windows Update</span><span style="color: #4cc38a">●</span><span>Download acelerado</span><span style="color: #e66767">●</span>
+<span>Cabo</span><span style="color: var(--link-1)">●</span><span>Wi-Fi</span><span style="color: var(--link-2)">●</span><span>4G pelo USB</span><span style="color: var(--link-3)">●</span><span>Navegador</span><span style="color: #c98500">●</span><span>Steam</span><span style="color: #d55181">●</span><span>Torrent via SOCKS5</span><span style="color: #9085e9">●</span><span>Windows Update</span><span style="color: var(--accent)">●</span><span>Download acelerado</span><span style="color: #e66767">●</span>
 </span>
 </div>
 </div>
 
 <!-- Faixa de números -->
-<section aria-label="Em números" style="border-bottom: 1px solid #242a32">
+<section aria-label="Em números" style="border-bottom: 1px solid var(--line)">
 <div style="max-width: 1200px; margin: 0 auto; padding: 44px 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px 40px">
-<div class="rv" style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 32px; font-weight: 600; letter-spacing: -0.03em">1 .exe</span><span style="font-size: 14px; color: #9aa4ae">~13 MB, sem instalador</span></div>
-<div class="rv" style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 32px; font-weight: 600; letter-spacing: -0.03em; display: flex; align-items: center; gap: 12px">3 s<span class="led-on" style="width: 10px; height: 10px; border-radius: 50%; background: #4cc38a"></span></span><span style="font-size: 14px; color: #9aa4ae">entre cada teste de queda, por link</span></div>
-<div class="rv" style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 32px; font-weight: 600; letter-spacing: -0.03em">~29 MB</span><span style="font-size: 14px; color: #9aa4ae">de memória quando fica na bandeja</span></div>
-<div class="rv" style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 32px; font-weight: 600; letter-spacing: -0.03em">0</span><span style="font-size: 14px; color: #9aa4ae">dados enviados sobre você ou o que acessa</span></div>
+<div class="rv" style="display: flex; flex-direction: column; gap: 4px"><span class="mono" style="font-size: 32px; font-weight: 600; letter-spacing: -0.03em">1 .exe</span><span style="font-size: 14px; color: var(--muted)">~13 MB, sem instalador</span></div>
+<div class="rv" style="display: flex; flex-direction: column; gap: 4px"><span class="mono" style="font-size: 32px; font-weight: 600; letter-spacing: -0.03em; display: flex; align-items: center; gap: 12px">3 s<span class="led-on" style="width: 10px; height: 10px; border-radius: 50%; background: var(--accent)"></span></span><span style="font-size: 14px; color: var(--muted)">entre cada teste de queda, por link</span></div>
+<div class="rv" style="display: flex; flex-direction: column; gap: 4px"><span class="mono" style="font-size: 32px; font-weight: 600; letter-spacing: -0.03em">~29 MB</span><span style="font-size: 14px; color: var(--muted)">de memória quando fica na bandeja</span></div>
+<div class="rv" style="display: flex; flex-direction: column; gap: 4px"><span class="mono" style="font-size: 32px; font-weight: 600; letter-spacing: -0.03em">0</span><span style="font-size: 14px; color: var(--muted)">dados enviados sobre você ou o que acessa</span></div>
 </div>
 </section>
 
 <!-- Como funciona: simulador por situação -->
 <section id="como-funciona" style="max-width: 1200px; margin: 0 auto; padding: 120px 32px 0">
 <div class="rv" style="display: flex; flex-direction: column; gap: 14px; max-width: 720px; margin-bottom: 36px">
-<p style="margin: 0; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13px; color: #4cc38a">Como funciona</p>
-<h2 style="margin: 0; font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(30px, 7.5vw, 40px); line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance">Cada conexão sai por um link. Veja quando isso soma.</h2>
-<p style="margin: 0; font-size: 16px; color: #9aa4ae">Tudo no seu PC, sem servidor externo.</p>
+<p class="eyebrow">Como funciona</p>
+<h2 class="h-sec">Cada conexão sai por um link. Veja quando isso soma.</h2>
+<p style="margin: 0; font-size: 16px; color: var(--muted)">Tudo no seu PC, sem servidor externo.</p>
 </div>
 
 <div role="tablist" aria-label="Situações" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px">
-<button type="button" role="tab" id="tab-0" data-tab="0" aria-selected="true" aria-controls="sim-painel" tabindex="0" style="position: relative; min-height: 44px; padding: 0 18px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; background: #20262d; color: #e8ecef; border: 1px solid #3a434e;">Navegador</button>
-<button type="button" role="tab" id="tab-1" data-tab="1" aria-selected="false" aria-controls="sim-painel" tabindex="-1" style="position: relative; min-height: 44px; padding: 0 18px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; background: transparent; color: #9aa4ae; border: 1px solid #242a32;">Download acelerado</button>
-<button type="button" role="tab" id="tab-2" data-tab="2" aria-selected="false" aria-controls="sim-painel" tabindex="-1" style="position: relative; min-height: 44px; padding: 0 18px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; background: transparent; color: #9aa4ae; border: 1px solid #242a32;">Jogos e chamadas</button>
-<button type="button" role="tab" id="tab-3" data-tab="3" aria-selected="false" aria-controls="sim-painel" tabindex="-1" style="position: relative; min-height: 44px; padding: 0 18px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; background: transparent; color: #9aa4ae; border: 1px solid #242a32;">Um único stream</button>
+<button type="button" role="tab" id="tab-0" data-tab="0" aria-selected="true" aria-controls="sim-painel" tabindex="0" style="position: relative; min-height: 44px; padding: 0 18px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; background: var(--line-soft); color: var(--fg); border: 1px solid var(--line-hover)">Navegador</button>
+<button type="button" role="tab" id="tab-1" data-tab="1" aria-selected="false" aria-controls="sim-painel" tabindex="-1" style="position: relative; min-height: 44px; padding: 0 18px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; background: transparent; color: var(--muted); border: 1px solid var(--line)">Download acelerado</button>
+<button type="button" role="tab" id="tab-2" data-tab="2" aria-selected="false" aria-controls="sim-painel" tabindex="-1" style="position: relative; min-height: 44px; padding: 0 18px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; background: transparent; color: var(--muted); border: 1px solid var(--line)">Jogos e chamadas</button>
+<button type="button" role="tab" id="tab-3" data-tab="3" aria-selected="false" aria-controls="sim-painel" tabindex="-1" style="position: relative; min-height: 44px; padding: 0 18px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; background: transparent; color: var(--muted); border: 1px solid var(--line)">Um único stream</button>
 </div>
 
-<div role="tabpanel" id="sim-painel" aria-labelledby="tab-0" tabindex="0" style="background: #171b21; border: 1px solid #242a32; border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 22px">
+<div role="tabpanel" id="sim-painel" aria-labelledby="tab-0" tabindex="0" style="background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 22px">
 <div style="display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: stretch">
 
 <!-- pistas -->
 <div style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 12px; justify-content: center" aria-hidden="true">
-<div class="lane" style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 11.5px; color: #7d8792"><span></span><span style="display: flex; justify-content: space-between; gap: 8px; white-space: nowrap"><span>internet</span><span>seu PC →</span></span></div>
+<div class="lane mono" style="font-size: 11.5px; color: var(--subtle)"><span></span><span style="display: flex; justify-content: space-between; gap: 8px; white-space: nowrap"><span>internet</span><span>seu PC →</span></span></div>
 
 <div class="lane" style="opacity: 1">
-<span class="lane-label"><span style="width: 8px; height: 8px; border-radius: 50%; background: #3987e5; flex: none"></span><span style="display: flex; flex-direction: column; line-height: 1.25"><strong style="font-weight: 600; font-size: 13.5px">Principal</strong><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 11.5px; color: #7d8792">339 Mbps</span></span></span>
+<span class="lane-label"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--link-1); flex: none"></span><span style="display: flex; flex-direction: column; line-height: 1.25"><strong style="font-weight: 600; font-size: 13.5px">Principal</strong><span class="mono" style="font-size: 11.5px; color: var(--subtle)">339 Mbps</span></span></span>
 <span class="track">
-<span data-if="tNav"><span class="pk" style="background: #3987e5; animation-duration: 2.2s"></span><span class="pk" style="background: #3987e5; animation-duration: 2.2s; animation-delay: -0.44s"></span><span class="pk" style="background: #3987e5; animation-duration: 2.2s; animation-delay: -0.88s"></span><span class="pk" style="background: #3987e5; animation-duration: 2.2s; animation-delay: -1.32s"></span><span class="pk" style="background: #3987e5; animation-duration: 2.2s; animation-delay: -1.76s"></span></span>
-<span data-if="tDl" hidden><span class="pk part" style="background: #3987e5; animation-duration: 2.4s">1</span><span class="pk part" style="background: #3987e5; animation-duration: 2.4s; animation-delay: -0.6s">3</span><span class="pk part" style="background: #3987e5; animation-duration: 2.4s; animation-delay: -1.2s">5</span><span class="pk part" style="background: #3987e5; animation-duration: 2.4s; animation-delay: -1.8s">7</span></span>
-<span data-if="tUdp" hidden><span class="flow" style="background-image: radial-gradient(circle, #3987e5 2.5px, transparent 3px)"></span></span>
-<span data-if="tOne" hidden><span class="flow" style="background-image: radial-gradient(circle, #3987e5 2.5px, transparent 3px)"></span></span>
+<span data-if="tNav"><span class="pk" style="background: var(--link-1); animation-duration: 2.2s"></span><span class="pk" style="background: var(--link-1); animation-duration: 2.2s; animation-delay: -0.44s"></span><span class="pk" style="background: var(--link-1); animation-duration: 2.2s; animation-delay: -0.88s"></span><span class="pk" style="background: var(--link-1); animation-duration: 2.2s; animation-delay: -1.32s"></span><span class="pk" style="background: var(--link-1); animation-duration: 2.2s; animation-delay: -1.76s"></span></span>
+<span data-if="tDl" hidden><span class="pk part" style="background: var(--link-1); animation-duration: 2.4s">1</span><span class="pk part" style="background: var(--link-1); animation-duration: 2.4s; animation-delay: -0.6s">3</span><span class="pk part" style="background: var(--link-1); animation-duration: 2.4s; animation-delay: -1.2s">5</span><span class="pk part" style="background: var(--link-1); animation-duration: 2.4s; animation-delay: -1.8s">7</span></span>
+<span data-if="tUdp" hidden><span class="flow" style="background-image: radial-gradient(circle, var(--link-1) 2.5px, transparent 3px)"></span></span>
+<span data-if="tOne" hidden><span class="flow" style="background-image: radial-gradient(circle, var(--link-1) 2.5px, transparent 3px)"></span></span>
 </span>
 </div>
 
 <div class="lane" data-op="l2op" style="opacity: 1">
-<span class="lane-label"><span style="width: 8px; height: 8px; border-radius: 50%; background: #d95926; flex: none"></span><span style="display: flex; flex-direction: column; line-height: 1.25"><strong style="font-weight: 600; font-size: 13.5px">Secundaria</strong><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 11.5px; color: #7d8792">73 Mbps</span></span></span>
+<span class="lane-label"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--link-2); flex: none"></span><span style="display: flex; flex-direction: column; line-height: 1.25"><strong style="font-weight: 600; font-size: 13.5px">Secundaria</strong><span class="mono" style="font-size: 11.5px; color: var(--subtle)">73 Mbps</span></span></span>
 <span class="track">
-<span data-if="tNav"><span class="pk" style="background: #d95926; animation-duration: 2.6s; animation-delay: -0.3s"></span><span class="pk" style="background: #d95926; animation-duration: 2.6s; animation-delay: -1.6s"></span></span>
-<span data-if="tDl" hidden><span class="pk part" style="background: #d95926; animation-duration: 2.8s; animation-delay: -0.2s">2</span><span class="pk part" style="background: #d95926; animation-duration: 2.8s; animation-delay: -1.6s">6</span></span>
-<span data-if="tUdp" hidden><span class="flow" style="background-image: radial-gradient(circle, #d95926 2.5px, transparent 3px)"></span></span>
+<span data-if="tNav"><span class="pk" style="background: var(--link-2); animation-duration: 2.6s; animation-delay: -0.3s"></span><span class="pk" style="background: var(--link-2); animation-duration: 2.6s; animation-delay: -1.6s"></span></span>
+<span data-if="tDl" hidden><span class="pk part" style="background: var(--link-2); animation-duration: 2.8s; animation-delay: -0.2s">2</span><span class="pk part" style="background: var(--link-2); animation-duration: 2.8s; animation-delay: -1.6s">6</span></span>
+<span data-if="tUdp" hidden><span class="flow" style="background-image: radial-gradient(circle, var(--link-2) 2.5px, transparent 3px)"></span></span>
 <span data-if="tOne" hidden><span class="idle">sem tráfego</span></span>
 </span>
 </div>
 
 <div class="lane" data-op="l3op" style="opacity: 1">
-<span class="lane-label"><span style="width: 8px; height: 8px; border-radius: 50%; background: #199e70; flex: none"></span><span style="display: flex; flex-direction: column; line-height: 1.25"><strong style="font-weight: 600; font-size: 13.5px">4G USB</strong><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 11.5px; color: #7d8792">18 Mbps</span></span></span>
+<span class="lane-label"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--link-3); flex: none"></span><span style="display: flex; flex-direction: column; line-height: 1.25"><strong style="font-weight: 600; font-size: 13.5px">4G USB</strong><span class="mono" style="font-size: 11.5px; color: var(--subtle)">18 Mbps</span></span></span>
 <span class="track">
-<span data-if="tNav"><span class="pk" style="background: #199e70; animation-duration: 3s; animation-delay: -1s"></span></span>
-<span data-if="tDl" hidden><span class="pk part" style="background: #199e70; animation-duration: 3.2s; animation-delay: -0.5s">4</span><span class="pk part" style="background: #199e70; animation-duration: 3.2s; animation-delay: -2.1s">8</span></span>
+<span data-if="tNav"><span class="pk" style="background: var(--link-3); animation-duration: 3s; animation-delay: -1s"></span></span>
+<span data-if="tDl" hidden><span class="pk part" style="background: var(--link-3); animation-duration: 3.2s; animation-delay: -0.5s">4</span><span class="pk part" style="background: var(--link-3); animation-duration: 3.2s; animation-delay: -2.1s">8</span></span>
 <span data-if="tUdp" hidden><span class="idle">sem fluxo agora</span></span>
 <span data-if="tOne" hidden><span class="idle">sem tráfego</span></span>
 </span>
@@ -454,21 +460,21 @@ Baixar para Windows</a>
 </div>
 
 <!-- resultado no PC -->
-<div style="flex: 0 1 200px; min-width: 180px; border: 1px solid #2c333c; border-radius: 12px; background: #13171c; padding: 20px; display: flex; flex-direction: column; justify-content: center; gap: 6px">
-<span style="font-size: 12px; color: #7d8792">Chega no seu PC</span>
-<span data-if="tNav"><div class="state-in" style="display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: baseline; gap: 6px"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">430</span><span style="font-size: 14px; color: #9aa4ae">Mbps</span></span><span style="font-size: 12.5px; color: #9aa4ae">somando os 3 links</span></div></span>
-<span data-if="tDl" hidden><div class="state-in" style="display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: baseline; gap: 6px"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">430</span><span style="font-size: 14px; color: #9aa4ae">Mbps</span></span><span style="font-size: 12.5px; color: #9aa4ae">8 partes em paralelo</span><span style="display: block; height: 4px; margin-top: 8px; border-radius: 2px; background: #222830; overflow: hidden"><span class="fillbar"></span></span></div></span>
-<span data-if="tUdp" hidden><div class="state-in" style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">2 fluxos</span><span style="font-size: 12.5px; color: #9aa4ae">cada um preso a um link</span></div></span>
-<span data-if="tOne" hidden><div class="state-in" style="display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: baseline; gap: 6px"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">339</span><span style="font-size: 14px; color: #9aa4ae">Mbps</span></span><span style="font-size: 12.5px; color: #9aa4ae">só o Principal</span></div></span>
+<div style="flex: 0 1 200px; min-width: 180px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--bg); padding: 20px; display: flex; flex-direction: column; justify-content: center; gap: 6px">
+<span style="font-size: 12px; color: var(--subtle)">Chega no seu PC</span>
+<span data-if="tNav"><div class="state-in" style="display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: baseline; gap: 6px"><span class="mono" style="font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">430</span><span style="font-size: 14px; color: var(--muted)">Mbps</span></span><span style="font-size: 12.5px; color: var(--muted)">somando os 3 links</span></div></span>
+<span data-if="tDl" hidden><div class="state-in" style="display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: baseline; gap: 6px"><span class="mono" style="font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">430</span><span style="font-size: 14px; color: var(--muted)">Mbps</span></span><span style="font-size: 12.5px; color: var(--muted)">8 partes em paralelo</span><span style="display: block; height: 4px; margin-top: 8px; border-radius: 2px; background: var(--track); overflow: hidden"><span class="fillbar"></span></span></div></span>
+<span data-if="tUdp" hidden><div class="state-in" style="display: flex; flex-direction: column; gap: 4px"><span class="mono" style="font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">2 fluxos</span><span style="font-size: 12.5px; color: var(--muted)">cada um preso a um link</span></div></span>
+<span data-if="tOne" hidden><div class="state-in" style="display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: baseline; gap: 6px"><span class="mono" style="font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1">339</span><span style="font-size: 14px; color: var(--muted)">Mbps</span></span><span style="font-size: 12.5px; color: var(--muted)">só o Principal</span></div></span>
 </div>
 </div>
 
 <!-- veredito -->
-<div style="border-top: 1px solid #242a32; padding-top: 18px; min-height: 52px">
-<span data-if="tNav"><div class="state-in" style="display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline"><span class="verdict" style="color: #4cc38a; border-color: #4cc38a59"><span class="led-on" style="width: 7px; height: 7px; border-radius: 50%; background: #4cc38a"></span>Soma</span><p style="margin: 0; flex: 1 1 300px; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Cada conexão sai por um link, na proporção dos pesos.</p></div></span>
-<span data-if="tDl" hidden><div class="state-in" style="display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline"><span class="verdict" style="color: #4cc38a; border-color: #4cc38a59"><span class="led-on" style="width: 7px; height: 7px; border-radius: 50%; background: #4cc38a"></span>Soma</span><p style="margin: 0; flex: 1 1 300px; font-size: 15px; color: #9aa4ae; text-wrap: pretty">O arquivo vem em partes, por todos os links ao mesmo tempo.</p></div></span>
-<span data-if="tUdp" hidden><div class="state-in" style="display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline"><span class="verdict" style="color: #e8c27a; border-color: #d9a33a59"><span class="led-warn" style="width: 7px; height: 7px; border-radius: 50%; background: #d9a33a"></span>Balanceia</span><p style="margin: 0; flex: 1 1 300px; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Cada fluxo fica preso a um link: divide, mas não acelera.</p></div></span>
-<span data-if="tOne" hidden><div class="state-in" style="display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline"><span class="verdict" style="color: #c9d1d8; border-color: #3a434e"><span style="width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid #9aa4ae; box-sizing: border-box"></span>Não soma</span><p style="margin: 0; flex: 1 1 300px; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Uma conexão usa um link só. Somar isso exige um servidor externo.</p></div></span>
+<div style="border-top: 1px solid var(--line); padding-top: 18px; min-height: 52px">
+<span data-if="tNav"><div class="state-in" style="display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline"><span class="verdict" style="color: var(--accent); border-color: #4cc38a59"><span class="led-on" style="width: 7px; height: 7px; border-radius: 50%; background: var(--accent)"></span>Soma</span><p style="margin: 0; flex: 1 1 300px; font-size: 15px; color: var(--muted); text-wrap: pretty">Cada conexão sai por um link, na proporção dos pesos.</p></div></span>
+<span data-if="tDl" hidden><div class="state-in" style="display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline"><span class="verdict" style="color: var(--accent); border-color: #4cc38a59"><span class="led-on" style="width: 7px; height: 7px; border-radius: 50%; background: var(--accent)"></span>Soma</span><p style="margin: 0; flex: 1 1 300px; font-size: 15px; color: var(--muted); text-wrap: pretty">O arquivo vem em partes, por todos os links ao mesmo tempo.</p></div></span>
+<span data-if="tUdp" hidden><div class="state-in" style="display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline"><span class="verdict" style="color: var(--warn-fg); border-color: #d9a33a59"><span class="led-warn" style="width: 7px; height: 7px; border-radius: 50%; background: var(--warn)"></span>Balanceia</span><p style="margin: 0; flex: 1 1 300px; font-size: 15px; color: var(--muted); text-wrap: pretty">Cada fluxo fica preso a um link: divide, mas não acelera.</p></div></span>
+<span data-if="tOne" hidden><div class="state-in" style="display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline"><span class="verdict" style="color: var(--fg-2); border-color: var(--line-hover)"><span style="width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--muted); box-sizing: border-box"></span>Não soma</span><p style="margin: 0; flex: 1 1 300px; font-size: 15px; color: var(--muted); text-wrap: pretty">Uma conexão usa um link só. Somar isso exige um servidor externo.</p></div></span>
 </div>
 </div>
 
@@ -477,18 +483,18 @@ Baixar para Windows</a>
 <!-- Recursos: bento com mini-demos -->
 <section id="recursos" style="max-width: 1200px; margin: 0 auto; padding: 128px 32px 0">
 <div class="rv" style="display: flex; flex-direction: column; gap: 14px; max-width: 640px; margin-bottom: 40px">
-<p style="margin: 0; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13px; color: #4cc38a">Recursos</p>
-<h2 style="margin: 0; font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(30px, 7.5vw, 40px); line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance">Cuida de tudo sozinho, sem olhar o que você faz.</h2>
+<p class="eyebrow">Recursos</p>
+<h2 class="h-sec">Cuida de tudo sozinho, sem olhar o que você faz.</h2>
 </div>
 <div class="bento">
 
 <!-- Privacidade: o primeiro e maior card dos recursos -->
 <div id="privacidade" class="bcard pv-main b6 rv">
 <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 0 4px">
-<p style="margin: 0; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13px; color: #4cc38a; display: flex; align-items: center; gap: 8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Privacidade</p>
-<h3 style="margin: 0; font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(24px, 6.5vw, 30px); line-height: 1.12; letter-spacing: -0.03em; text-wrap: balance">Mede os seus links. <span style="color: #4cc38a">Não o que você faz neles.</span></h3>
-<p style="margin: 0; max-width: 440px; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Nada sobre você sai do PC. Só três checagens técnicas, e o código é aberto para quem quiser conferir.</p>
-<a class="navlink" href="privacidade.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 10px 0; font-size: 14px; font-weight: 500; color: #4cc38a; text-decoration: none">Ler a política de privacidade<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
+<p class="mono" style="margin: 0; font-size: 13px; color: var(--accent); display: flex; align-items: center; gap: 8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Privacidade</p>
+<h3 class="display" style="margin: 0; font-weight: 600; font-size: clamp(24px, 6.5vw, 30px); line-height: 1.12; letter-spacing: -0.03em; text-wrap: balance">Mede os seus links. <span style="color: var(--accent)">Não o que você faz neles.</span></h3>
+<p style="margin: 0; max-width: 440px; font-size: 15px; color: var(--muted); text-wrap: pretty">Nada sobre você sai do PC. Só três checagens técnicas, e o código é aberto para quem quiser conferir.</p>
+<a class="navlink" href="privacidade.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 10px 0; font-size: 14px; font-weight: 500; color: var(--accent); text-decoration: none">Ler a política de privacidade<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
 </div>
 <div class="dbox" style="flex: 1 1 420px; min-width: 0; height: auto; padding: 20px; display: flex; justify-content: center">
 <svg width="100%" viewBox="0 0 480 500" style="max-width: 380px; overflow: visible" role="img" aria-label="Diagrama: sites visitados, histórico, ajustes e logs ficam dentro do PC; só três verificações técnicas saem para GitHub, Cloudflare e servidores de teste">
@@ -539,7 +545,7 @@ Baixar para Windows</a>
 </div>
 <!-- no celular o diagrama fica pequeno demais para ler: a mesma informação em texto -->
 <div class="pv-list">
-<p style="margin: 0; font-size: 13px; color: #7d8792">Fica no PC: sites visitados, histórico, ajustes e logs. Sai do PC só isto:</p>
+<p style="margin: 0; font-size: 13px; color: var(--subtle)">Fica no PC: sites visitados, histórico, ajustes e logs. Sai do PC só isto:</p>
 <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
 <li><span class="pv-dom">github.com</span><span>versão nova?</span></li>
 <li><span class="pv-dom">speed.cloudflare.com</span><span>quanto cada link rende?</span></li>
@@ -552,31 +558,31 @@ Baixar para Windows</a>
 <div class="bcard b4 rv">
 <div class="dbox" aria-hidden="true" style="padding: 24px 24px 0; display: flex; flex-direction: column; gap: 14px">
 <div style="display: flex; align-items: center; gap: 10px; font-size: 14px">
-<span style="width: 8px; height: 8px; border-radius: 50%; background: #3987e5; flex: none"></span>
+<span style="width: 8px; height: 8px; border-radius: 50%; background: var(--link-1); flex: none"></span>
 <span style="flex: 1; font-weight: 600">Principal</span>
-<span class="stk" style="width: 90px; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; letter-spacing: -0.01em"><span class="lp" style="animation-name: w-a">339 Mbps</span><span class="lp" style="animation-name: w-b; opacity: 0; color: #e8c27a">142 Mbps</span></span>
+<span class="stk mono" style="width: 90px; letter-spacing: -0.01em"><span class="lp" style="animation-name: w-a">339 Mbps</span><span class="lp" style="animation-name: w-b; opacity: 0; color: var(--warn-fg)">142 Mbps</span></span>
 </div>
 <div style="display: flex; align-items: center; gap: 10px; font-size: 14px">
-<span style="width: 8px; height: 8px; border-radius: 50%; background: #d95926; flex: none"></span>
+<span style="width: 8px; height: 8px; border-radius: 50%; background: var(--link-2); flex: none"></span>
 <span style="flex: 1; font-weight: 600">Secundaria</span>
-<span class="stk" style="width: 90px; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; letter-spacing: -0.01em"><span class="lp" style="animation-name: w-a">73 Mbps</span><span class="lp" style="animation-name: w-b; opacity: 0">118 Mbps</span></span>
+<span class="stk mono" style="width: 90px; letter-spacing: -0.01em"><span class="lp" style="animation-name: w-a">73 Mbps</span><span class="lp" style="animation-name: w-b; opacity: 0">118 Mbps</span></span>
 </div>
 <div style="display: flex; height: 14px; gap: 3px; margin-top: 6px">
-<span class="lp" style="animation-name: w-seg; width: 82%; background: #3987e5; border-radius: 7px 2px 2px 7px"></span>
-<span style="flex: 1; background: #d95926; border-radius: 2px 7px 7px 2px"></span>
+<span class="lp" style="animation-name: w-seg; width: 82%; background: var(--link-1); border-radius: 7px 2px 2px 7px"></span>
+<span style="flex: 1; background: var(--link-2); border-radius: 2px 7px 7px 2px"></span>
 </div>
-<div style="display: flex; justify-content: space-between; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 12px; letter-spacing: -0.01em; color: #7d8792">
+<div class="mono" style="display: flex; justify-content: space-between; font-size: 12px; letter-spacing: -0.01em; color: var(--subtle)">
 <span style="display: flex; gap: 6px">peso <span class="stk" style="width: 30px; height: 18px"><span class="lp" style="animation-name: w-a; right: auto; left: 0">82%</span><span class="lp" style="animation-name: w-b; opacity: 0; right: auto; left: 0">55%</span></span></span>
 <span style="display: flex; gap: 6px">peso <span class="stk" style="width: 30px; height: 18px"><span class="lp" style="animation-name: w-a">18%</span><span class="lp" style="animation-name: w-b; opacity: 0">45%</span></span></span>
 </div>
-<div style="position: relative; height: 36px; margin-top: 4px; border-top: 1px solid #20262d; font-size: 12.5px; color: #c9d1d8">
-<span class="lp" style="animation-name: w-a; position: absolute; left: 0; top: 10px; display: flex; align-items: center; gap: 8px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #5d6670"></span>Cada link recebe conexões na proporção do que rende</span>
-<span class="lp" style="animation-name: w-b; opacity: 0; position: absolute; left: 0; top: 10px; display: flex; align-items: center; gap: 8px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #d9a33a"></span>Principal rendendo menos: pesos ajustados</span>
+<div style="position: relative; height: 36px; margin-top: 4px; border-top: 1px solid var(--line-soft); font-size: 12.5px; color: var(--fg-2)">
+<span class="lp" style="animation-name: w-a; position: absolute; left: 0; top: 10px; display: flex; align-items: center; gap: 8px"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--dim-2)"></span>Cada link recebe conexões na proporção do que rende</span>
+<span class="lp" style="animation-name: w-b; opacity: 0; position: absolute; left: 0; top: 10px; display: flex; align-items: center; gap: 8px"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--warn)"></span>Principal rendendo menos: pesos ajustados</span>
 </div>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px; padding: 0 4px">
 <h3 style="margin: 0; font-size: 17px; font-weight: 600">Pesos automáticos</h3>
-<p style="margin: 0; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Quando um link rende menos, ele recebe menos conexões. Sem configurar nada.</p>
+<p style="margin: 0; font-size: 15px; color: var(--muted); text-wrap: pretty">Quando um link rende menos, ele recebe menos conexões. Sem configurar nada.</p>
 </div>
 </div>
 
@@ -584,26 +590,26 @@ Baixar para Windows</a>
 <div class="bcard b2 rv">
 <div class="dbox" aria-hidden="true" style="padding: 8px 16px 0">
 <div style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 13.5px">
-<span class="led-on" style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a; box-shadow: 0 0 0 3px #4cc38a24; flex: none"></span>
+<span class="led-on" style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px #4cc38a24; flex: none"></span>
 <span style="flex: 1; font-weight: 600">Principal</span>
-<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 12.5px; letter-spacing: -0.01em">339 Mbps</span>
+<span class="mono" style="font-size: 12.5px; letter-spacing: -0.01em">339 Mbps</span>
 </div>
-<div style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 13.5px; border-top: 1px solid #242a32">
-<span class="lp" style="animation-name: q-led; width: 8px; height: 8px; border-radius: 50%; background: #4cc38a; box-shadow: 0 0 0 3px #4cc38a24; flex: none"></span>
+<div style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 13.5px; border-top: 1px solid var(--line)">
+<span class="lp" style="animation-name: q-led; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px #4cc38a24; flex: none"></span>
 <span style="flex: 1; font-weight: 600">Secundaria</span>
-<span class="stk" style="width: 80px; font-size: 12.5px"><span class="lp" style="animation-name: q-on; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; letter-spacing: -0.01em">73 Mbps</span><span class="lp" style="animation-name: q-off; opacity: 0; color: #f0a39e">fora do ar</span></span>
+<span class="stk" style="width: 80px; font-size: 12.5px"><span class="lp mono" style="animation-name: q-on; letter-spacing: -0.01em">73 Mbps</span><span class="lp" style="animation-name: q-off; opacity: 0; color: var(--danger-fg)">fora do ar</span></span>
 </div>
-<div class="lp" style="animation-name: q-t1; opacity: 0; position: absolute; left: 12px; right: 12px; bottom: 14px; padding: 10px 12px; border-radius: 10px; border: 1px solid #e5534b59; background: linear-gradient(180deg, #2e1c1f, #1a1f26); font-size: 12px; display: flex; flex-direction: column; gap: 2px">
-<strong style="font-weight: 600; font-size: 12.5px; color: #e8ecef">Secundaria caiu</strong>
-<span style="color: #f0a39e">Sem internet (operadora)</span>
+<div class="lp" style="animation-name: q-t1; opacity: 0; position: absolute; left: 12px; right: 12px; bottom: 14px; padding: 10px 12px; border-radius: 10px; border: 1px solid #e5534b59; background: linear-gradient(180deg, #2e1c1f, var(--surface-2)); font-size: 12px; display: flex; flex-direction: column; gap: 2px">
+<strong style="font-weight: 600; font-size: 12.5px; color: var(--fg)">Secundaria caiu</strong>
+<span style="color: var(--danger-fg)">Sem internet (operadora)</span>
 </div>
-<div class="lp" style="animation-name: q-t2; opacity: 0; position: absolute; left: 12px; right: 12px; bottom: 14px; padding: 10px 12px; border-radius: 10px; border: 1px solid #242a32; background: #1a1f26; font-size: 12px; display: flex; align-items: center; gap: 8px; color: #c9d1d8">
-<span style="width: 6px; height: 6px; border-radius: 50%; background: #4cc38a; flex: none"></span>Secundaria voltou depois de 3 min
+<div class="lp" style="animation-name: q-t2; opacity: 0; position: absolute; left: 12px; right: 12px; bottom: 14px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); font-size: 12px; display: flex; align-items: center; gap: 8px; color: var(--fg-2)">
+<span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none"></span>Secundaria voltou depois de 3 min
 </div>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px; padding: 0 4px">
 <h3 style="margin: 0; font-size: 17px; font-weight: 600">Quedas com diagnóstico</h3>
-<p style="margin: 0; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Teste a cada 3 s e aviso quando cai e quando volta, dizendo onde está o problema.</p>
+<p style="margin: 0; font-size: 15px; color: var(--muted); text-wrap: pretty">Teste a cada 3 s e aviso quando cai e quando volta, dizendo onde está o problema.</p>
 </div>
 </div>
 
@@ -630,7 +636,7 @@ Baixar para Windows</a>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px; padding: 0 4px">
 <h3 style="margin: 0; font-size: 17px; font-weight: 600">Capturar todos os programas</h3>
-<p style="margin: 0; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Jogos, chat, terminal e UDP também passam pelo MultiLink.</p>
+<p style="margin: 0; font-size: 15px; color: var(--muted); text-wrap: pretty">Jogos, chat, terminal e UDP também passam pelo MultiLink.</p>
 </div>
 </div>
 
@@ -638,41 +644,41 @@ Baixar para Windows</a>
 <div class="bcard b4 rv">
 <div class="dbox" aria-hidden="true" style="padding: 24px; display: flex; flex-direction: column; gap: 18px">
 <div style="display: flex; align-items: center; gap: 12px">
-<span style="width: 36px; height: 36px; border-radius: 8px; background: #1a1f26; border: 1px solid #2c333c; display: flex; align-items: center; justify-content: center; color: #9aa4ae; flex: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg></span>
+<span style="width: 36px; height: 36px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; color: var(--muted); flex: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg></span>
 <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
-<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13px; letter-spacing: -0.01em">arquivo.iso</span>
-<span class="stk" style="display: block; width: 100%; height: 18px; font-size: 12.5px"><span class="lp" style="animation-name: p-busy; right: auto; left: 0; color: #9aa4ae">Baixando em 8 partes</span><span class="lp" style="animation-name: p-done; opacity: 0; right: auto; left: 0; color: #4cc38a; display: inline-flex; align-items: center; gap: 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"></path></svg>Concluído</span></span>
+<span class="mono" style="font-size: 13px; letter-spacing: -0.01em">arquivo.iso</span>
+<span class="stk" style="display: block; width: 100%; height: 18px; font-size: 12.5px"><span class="lp" style="animation-name: p-busy; right: auto; left: 0; color: var(--muted)">Baixando em 8 partes</span><span class="lp" style="animation-name: p-done; opacity: 0; right: auto; left: 0; color: var(--accent); display: inline-flex; align-items: center; gap: 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"></path></svg>Concluído</span></span>
 </span>
 </div>
 <div class="lp" style="animation-name: p-wrap; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; height: 30px">
-<span style="background: #222830; border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-fast; display: block; height: 100%; width: 100%; background: #3987e5"></span></span>
-<span style="background: #222830; border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-mid; display: block; height: 100%; width: 100%; background: #d95926"></span></span>
-<span style="background: #222830; border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-fast; display: block; height: 100%; width: 100%; background: #3987e5"></span></span>
-<span style="background: #222830; border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-slow; display: block; height: 100%; width: 100%; background: #199e70"></span></span>
-<span style="background: #222830; border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-fast; display: block; height: 100%; width: 100%; background: #3987e5"></span></span>
-<span style="background: #222830; border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-mid; display: block; height: 100%; width: 100%; background: #d95926"></span></span>
-<span style="background: #222830; border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-fast; display: block; height: 100%; width: 100%; background: #3987e5"></span></span>
-<span style="background: #222830; border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-slow; display: block; height: 100%; width: 100%; background: #199e70"></span></span>
+<span style="background: var(--track); border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-fast; display: block; height: 100%; width: 100%; background: var(--link-1)"></span></span>
+<span style="background: var(--track); border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-mid; display: block; height: 100%; width: 100%; background: var(--link-2)"></span></span>
+<span style="background: var(--track); border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-fast; display: block; height: 100%; width: 100%; background: var(--link-1)"></span></span>
+<span style="background: var(--track); border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-slow; display: block; height: 100%; width: 100%; background: var(--link-3)"></span></span>
+<span style="background: var(--track); border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-fast; display: block; height: 100%; width: 100%; background: var(--link-1)"></span></span>
+<span style="background: var(--track); border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-mid; display: block; height: 100%; width: 100%; background: var(--link-2)"></span></span>
+<span style="background: var(--track); border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-fast; display: block; height: 100%; width: 100%; background: var(--link-1)"></span></span>
+<span style="background: var(--track); border-radius: 4px; overflow: hidden"><span class="lp" style="animation-name: p-slow; display: block; height: 100%; width: 100%; background: var(--link-3)"></span></span>
 </div>
-<div style="display: flex; flex-wrap: wrap; gap: 8px 22px; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 12px; letter-spacing: -0.01em; color: #9aa4ae">
-<span style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #3987e5"></span>Principal</span>
-<span style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #d95926"></span>Secundaria</span>
-<span style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #199e70"></span>4G USB</span>
+<div class="mono" style="display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 12px; letter-spacing: -0.01em; color: var(--muted)">
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--link-1)"></span>Principal</span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--link-2)"></span>Secundaria</span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--link-3)"></span>4G USB</span>
 </div>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px; padding: 0 4px">
 <h3 style="margin: 0; font-size: 17px; font-weight: 600">Download acelerado</h3>
-<p style="margin: 0; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Um arquivo baixado em partes, por todos os links ao mesmo tempo. Soma até um download único.</p>
+<p style="margin: 0; font-size: 15px; color: var(--muted); text-wrap: pretty">Um arquivo baixado em partes, por todos os links ao mesmo tempo. Soma até um download único.</p>
 </div>
 </div>
 
 <!-- Histórico -->
 <div class="bcard b3 rv">
 <div class="dbox" aria-hidden="true">
-<div style="position: absolute; left: 14px; top: 12px; display: flex; gap: 4px; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 11.5px">
-<span style="padding: 3px 9px; border-radius: 6px; background: #20262d; color: #e8ecef">1 h</span>
-<span style="padding: 3px 9px; border-radius: 6px; color: #7d8792">6 h</span>
-<span style="padding: 3px 9px; border-radius: 6px; color: #7d8792">24 h</span>
+<div class="mono" style="position: absolute; left: 14px; top: 12px; display: flex; gap: 4px; font-size: 11.5px">
+<span style="padding: 3px 9px; border-radius: 6px; background: var(--line-soft); color: var(--fg)">1 h</span>
+<span style="padding: 3px 9px; border-radius: 6px; color: var(--subtle)">6 h</span>
+<span style="padding: 3px 9px; border-radius: 6px; color: var(--subtle)">24 h</span>
 </div>
 <svg class="lp" style="animation-name: h-fade; position: absolute; left: 0; top: 30px; width: 100%; height: 170px" viewBox="0 0 400 170" preserveAspectRatio="none">
 <path d="M0 40 H400 M0 85 H400 M0 130 H400" stroke="#20262d" stroke-width="1" vector-effect="non-scaling-stroke"></path>
@@ -680,30 +686,30 @@ Baixar para Windows</a>
 <path class="lp" style="animation-name: h-draw" pathLength="600" stroke-dasharray="600" d="M0 50 L40 44 L70 52 L100 38 L130 42 L160 30 L190 36 L220 28 L250 34 L280 24 L310 32 L340 26 L370 30 L400 22" fill="none" stroke="#3987e5" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path>
 <path class="lp" style="animation-name: h-draw" pathLength="600" stroke-dasharray="600" d="M0 112 L40 108 L70 114 L100 104 L130 110 L160 102 L190 106 L222 100 L234 156 L256 156 L266 104 L280 100 L310 106 L340 98 L370 102 L400 96" fill="none" stroke="#d95926" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path>
 </svg>
-<span class="lp" style="animation-name: h-drop; opacity: 0; position: absolute; right: 14px; top: 12px; font-size: 11.5px; color: #f0a39e; display: flex; align-items: center; gap: 6px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #e5534b"></span>Secundaria fora · 3 min</span>
+<span class="lp" style="animation-name: h-drop; opacity: 0; position: absolute; right: 14px; top: 12px; font-size: 11.5px; color: var(--danger-fg); display: flex; align-items: center; gap: 6px"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--danger)"></span>Secundaria fora · 3 min</span>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px; padding: 0 4px">
 <h3 style="margin: 0; font-size: 17px; font-weight: 600">Histórico</h3>
-<p style="margin: 0; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Velocidade e latência de cada link, e as quedas dos últimos 30 dias com causa e duração.</p>
+<p style="margin: 0; font-size: 15px; color: var(--muted); text-wrap: pretty">Velocidade e latência de cada link, e as quedas dos últimos 30 dias com causa e duração.</p>
 </div>
 </div>
 
 <!-- Atalhos -->
 <div class="bcard b3 rv">
 <div class="dbox" aria-hidden="true" style="display: flex; align-items: center; justify-content: center; gap: 36px; flex-wrap: wrap; padding: 16px">
-<div style="display: flex; align-items: center; gap: 8px; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 15px; color: #7d8792">
-<span class="lp" style="animation-name: k-ctrl; min-width: 58px; height: 46px; padding: 0 10px; border-radius: 8px; border: 1px solid #2c333c; background: #1a1f26; color: #e8ecef; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #2c333c">Ctrl</span>+
-<span class="lp" style="animation-name: k-alt; min-width: 52px; height: 46px; padding: 0 10px; border-radius: 8px; border: 1px solid #2c333c; background: #1a1f26; color: #e8ecef; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #2c333c">Alt</span>+
-<span class="lp" style="animation-name: k-m; min-width: 46px; height: 46px; padding: 0 10px; border-radius: 8px; border: 1px solid #2c333c; background: #1a1f26; color: #e8ecef; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #2c333c">M</span>
+<div class="mono" style="display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--subtle)">
+<span class="lp" style="animation-name: k-ctrl; min-width: 58px; height: 46px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--fg); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 var(--line-strong)">Ctrl</span>+
+<span class="lp" style="animation-name: k-alt; min-width: 52px; height: 46px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--fg); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 var(--line-strong)">Alt</span>+
+<span class="lp" style="animation-name: k-m; min-width: 46px; height: 46px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--fg); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 var(--line-strong)">M</span>
 </div>
 <div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
-<span class="lp" style="animation-name: k-io; width: 72px; height: 72px; border-radius: 50%; border: 2px solid #4cc38a; background: #1a1f26; color: #4cc38a; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v8"></path><path d="M6.3 6.8a8 8 0 1 0 11.4 0"></path></svg></span>
-<span class="stk" style="width: 80px; font-size: 13px; font-weight: 600; text-align: center"><span class="lp" style="animation-name: k-on; left: 0">Ligado</span><span class="lp" style="animation-name: k-off; left: 0; opacity: 0; color: #9aa4ae">Desligado</span></span>
+<span class="lp" style="animation-name: k-io; width: 72px; height: 72px; border-radius: 50%; border: 2px solid var(--accent); background: var(--surface-2); color: var(--accent); display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v8"></path><path d="M6.3 6.8a8 8 0 1 0 11.4 0"></path></svg></span>
+<span class="stk" style="width: 80px; font-size: 13px; font-weight: 600; text-align: center"><span class="lp" style="animation-name: k-on; left: 0">Ligado</span><span class="lp" style="animation-name: k-off; left: 0; opacity: 0; color: var(--muted)">Desligado</span></span>
 </div>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px; padding: 0 4px">
 <h3 style="margin: 0; font-size: 17px; font-weight: 600">Bandeja e atalhos</h3>
-<p style="margin: 0; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Ctrl+Alt+M liga e desliga de qualquer programa. Fechar a janela deixa o app na bandeja.</p>
+<p style="margin: 0; font-size: 15px; color: var(--muted); text-wrap: pretty">Ctrl+Alt+M liga e desliga de qualquer programa. Fechar a janela deixa o app na bandeja.</p>
 </div>
 </div>
 
@@ -713,74 +719,74 @@ Baixar para Windows</a>
 <!-- Como usar: demonstração em loop (baixar, abrir, ligar) -->
 <section class="demo" style="max-width: 1200px; margin: 0 auto; padding: 128px 32px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 56px 80px">
 
-<div class="stage rv-pop" role="img" aria-label="Animação: o MultiLinkBalancer.exe é baixado, aberto, e o MultiLink é ligado com um clique no botão I/O" style="position: relative; flex: none; width: 560px; height: 460px; border-radius: 16px; border: 1px solid #242a32; background: #171b21; overflow: hidden; box-shadow: 0 40px 80px -32px rgba(4,8,14,0.9)">
+<div class="stage rv-pop" role="img" aria-label="Animação: o MultiLinkBalancer.exe é baixado, aberto, e o MultiLink é ligado com um clique no botão I/O" style="position: relative; flex: none; width: 560px; height: 460px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); overflow: hidden; box-shadow: 0 40px 80px -32px rgba(4,8,14,0.9)">
 
 <span class="tl" aria-hidden="true" style="animation-name: d-glow; position: absolute; left: 50%; top: 45%; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%; background: radial-gradient(closest-side, #4cc38a26, transparent); pointer-events: none"></span>
 
 <!-- 1. Download (centralizado) -->
-<div class="tl" aria-hidden="true" style="animation-name: d-card; position: absolute; left: 130px; top: 189px; width: 300px; padding: 14px 16px; z-index: 2; border-radius: 10px; background: #1a1f26; border: 1px solid #2c333c; opacity: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 32px -8px rgba(4,8,14,0.6), 0 2px 6px rgba(4,8,14,0.35)">
+<div class="tl" aria-hidden="true" style="animation-name: d-card; position: absolute; left: 130px; top: 189px; width: 300px; padding: 14px 16px; z-index: 2; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line-strong); opacity: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 32px -8px rgba(4,8,14,0.6), 0 2px 6px rgba(4,8,14,0.35)">
 <div style="display: flex; align-items: center; gap: 12px">
-<span style="width: 36px; height: 36px; border-radius: 8px; flex: none; display: flex; align-items: center; justify-content: center; background: #13171c; border: 1px solid #2c333c">
+<span style="width: 36px; height: 36px; border-radius: 8px; flex: none; display: flex; align-items: center; justify-content: center; background: var(--bg); border: 1px solid var(--line-strong)">
 <svg width="24" height="24" viewBox="0 0 64 64"><path d="M14 20 C26 20 28 32 36 32 M14 32 H36 M14 44 C26 44 28 32 36 32 M36 32 H50" fill="none" stroke="#4cc38a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
 </span>
 <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
-<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 12.5px; letter-spacing: -0.01em; color: #e8ecef">MultiLinkBalancer.exe</span>
+<span class="mono" style="font-size: 12.5px; letter-spacing: -0.01em; color: var(--fg)">MultiLinkBalancer.exe</span>
 <span style="position: relative; height: 18px; font-size: 12px">
-<span class="tl" style="animation-name: d-baixando; position: absolute; left: 0; top: 0; color: #9aa4ae; opacity: 0">Baixando… <span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace">13 MB</span></span>
-<span class="tl" style="animation-name: d-pronto; position: absolute; left: 0; top: 0; color: #4cc38a; display: inline-flex; align-items: center; gap: 5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"></path></svg>Concluído · abrir arquivo</span>
+<span class="tl" style="animation-name: d-baixando; position: absolute; left: 0; top: 0; color: var(--muted); opacity: 0">Baixando… <span class="mono">13 MB</span></span>
+<span class="tl" style="animation-name: d-pronto; position: absolute; left: 0; top: 0; color: var(--accent); display: inline-flex; align-items: center; gap: 5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"></path></svg>Concluído · abrir arquivo</span>
 </span>
 </span>
 </div>
-<div style="margin-top: 12px; height: 4px; border-radius: 2px; background: #222830; overflow: hidden"><span class="tl" style="animation-name: d-prog; display: block; height: 100%; width: 100%; background: #e8ecef"></span></div>
+<div style="margin-top: 12px; height: 4px; border-radius: 2px; background: var(--track); overflow: hidden"><span class="tl" style="animation-name: d-prog; display: block; height: 100%; width: 100%; background: var(--fg)"></span></div>
 </div>
-<span class="tl" aria-hidden="true" style="animation-name: d-dbl; position: absolute; left: 147px; top: 204px; z-index: 3; width: 36px; height: 36px; border-radius: 8px; border: 2px solid #e8ecef; opacity: 0"></span>
+<span class="tl" aria-hidden="true" style="animation-name: d-dbl; position: absolute; left: 147px; top: 204px; z-index: 3; width: 36px; height: 36px; border-radius: 8px; border: 2px solid var(--fg); opacity: 0"></span>
 
 <!-- 2. A janela do app (centralizada, surge quando o download é clicado) -->
-<div class="tl" aria-hidden="true" style="animation-name: d-win; position: absolute; left: 144px; top: 30px; width: 272px; transform-origin: 50% 55%; background: #13171c; border: 1px solid #242a32; border-radius: 12px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 24px 48px -16px rgba(4,8,14,0.85), 0 2px 6px rgba(4,8,14,0.35)">
+<div class="tl" aria-hidden="true" style="animation-name: d-win; position: absolute; left: 144px; top: 30px; width: 272px; transform-origin: 50% 55%; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 24px 48px -16px rgba(4,8,14,0.85), 0 2px 6px rgba(4,8,14,0.35)">
 <div style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px 0 18px">
-<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.01em; color: #9aa4ae">MultiLink</span>
-<span style="display: flex; gap: 14px; color: #7d8792">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.01em; color: var(--muted)">MultiLink</span>
+<span style="display: flex; gap: 14px; color: var(--subtle)">
 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 12h12"></path></svg>
 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="m7 7 10 10M17 7 7 17"></path></svg>
 </span>
 </div>
 <div style="display: flex; flex-direction: column; align-items: center; padding: 24px 14px 4px 18px">
-<span class="tl" style="animation-name: d-io; position: relative; width: 104px; height: 104px; border-radius: 50%; background: #1a1f26; border: 2px solid #2c333c; color: #4cc38a; display: flex; align-items: center; justify-content: center">
+<span class="tl" style="animation-name: d-io; position: relative; width: 104px; height: 104px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--line-strong); color: var(--accent); display: flex; align-items: center; justify-content: center">
 <svg style="position: absolute; left: -6px; top: -6px; width: 112px; height: 112px; overflow: visible" viewBox="0 0 112 112"><circle class="tl" style="animation-name: d-ring; transform: rotate(-90deg); transform-origin: 56px 56px" cx="56" cy="56" r="54" fill="none" stroke="#4cc38a" stroke-width="2.5" stroke-dasharray="340" stroke-dashoffset="0"></circle></svg>
-<span class="tl" style="animation-name: d-click; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid #4cc38a; opacity: 0"></span>
+<span class="tl" style="animation-name: d-click; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0"></span>
 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v8"></path><path d="M6.3 6.8a8 8 0 1 0 11.4 0"></path></svg>
 </span>
 <span style="position: relative; display: block; width: 100%; height: 40px; margin-top: 14px; text-align: center">
-<span class="tl" style="animation-name: d-off; position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; opacity: 0"><span style="font-size: 14px; font-weight: 600">Desligado</span><span style="font-size: 11.5px; color: #9aa4ae">Clique para dividir as conexões</span></span>
-<span class="tl" style="animation-name: d-on; position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center"><span style="font-size: 14px; font-weight: 600">Ligado</span><span style="font-size: 11.5px; color: #9aa4ae">Dividindo conexões entre 2 links</span></span>
+<span class="tl" style="animation-name: d-off; position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; opacity: 0"><span style="font-size: 14px; font-weight: 600">Desligado</span><span style="font-size: 11.5px; color: var(--muted)">Clique para dividir as conexões</span></span>
+<span class="tl" style="animation-name: d-on; position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center"><span style="font-size: 14px; font-weight: 600">Ligado</span><span style="font-size: 11.5px; color: var(--muted)">Dividindo conexões entre 2 links</span></span>
 </span>
 <span style="display: flex; align-items: baseline; justify-content: center; gap: 6px; margin-top: 12px">
-<span style="position: relative; display: inline-block; width: 78px; height: 34px; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 32px; font-weight: 600; letter-spacing: -0.03em; line-height: 34px">
-<span class="tl" style="animation-name: d-n0; position: absolute; right: 0; top: 0; color: #4a525c; opacity: 0">0</span>
+<span class="mono" style="position: relative; display: inline-block; width: 78px; height: 34px; font-size: 32px; font-weight: 600; letter-spacing: -0.03em; line-height: 34px">
+<span class="tl" style="animation-name: d-n0; position: absolute; right: 0; top: 0; color: var(--dim); opacity: 0">0</span>
 <span class="tl" style="animation-name: d-n1; position: absolute; right: 0; top: 0; opacity: 0">156</span>
 <span class="tl" style="animation-name: d-n2; position: absolute; right: 0; top: 0; opacity: 0">318</span>
 <span class="tl" style="animation-name: d-n3; position: absolute; right: 0; top: 0">412</span>
 </span>
-<span style="font-size: 13px; font-weight: 500; color: #9aa4ae">Mbps</span>
+<span style="font-size: 13px; font-weight: 500; color: var(--muted)">Mbps</span>
 </span>
-<span style="display: flex; width: 100%; height: 5px; margin-top: 14px; border-radius: 3px; overflow: hidden; background: #222830; gap: 2px"><span class="tl" style="animation-name: d-b1; width: 82%; background: #3987e5"></span><span class="tl" style="animation-name: d-b2; width: 18%; background: #d95926"></span></span>
+<span style="display: flex; width: 100%; height: 5px; margin-top: 14px; border-radius: 3px; overflow: hidden; background: var(--track); gap: 2px"><span class="tl" style="animation-name: d-b1; width: 82%; background: var(--link-1)"></span><span class="tl" style="animation-name: d-b2; width: 18%; background: var(--link-2)"></span></span>
 </div>
 <div style="margin: 10px 14px 10px 18px">
-<div style="display: flex; align-items: center; gap: 9px; min-height: 44px; border-top: 1px solid #242a32">
-<span style="width: 30px; height: 17px; border-radius: 9px; background: #4cc38a; position: relative; flex: none"><span style="position: absolute; top: 2.5px; right: 2.5px; width: 12px; height: 12px; border-radius: 50%; background: #13171c"></span></span>
-<span class="tl" style="animation-name: d-led; width: 7px; height: 7px; border-radius: 50%; background: #4cc38a; margin-left: 6px; flex: none"></span>
+<div style="display: flex; align-items: center; gap: 9px; min-height: 44px; border-top: 1px solid var(--line)">
+<span style="width: 30px; height: 17px; border-radius: 9px; background: var(--accent); position: relative; flex: none"><span style="position: absolute; top: 2.5px; right: 2.5px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg)"></span></span>
+<span class="tl" style="animation-name: d-led; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-left: 6px; flex: none"></span>
 <span style="flex: 1; font-size: 13px; font-weight: 600">Principal</span>
-<span style="position: relative; display: inline-block; width: 72px; height: 18px; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 12.5px; letter-spacing: -0.01em; text-align: right">
-<span class="tl" style="animation-name: d-off; position: absolute; right: 0; top: 0; color: #7d8792; opacity: 0">—</span>
+<span class="mono" style="position: relative; display: inline-block; width: 72px; height: 18px; font-size: 12.5px; letter-spacing: -0.01em; text-align: right">
+<span class="tl" style="animation-name: d-off; position: absolute; right: 0; top: 0; color: var(--subtle); opacity: 0">—</span>
 <span class="tl" style="animation-name: d-on; position: absolute; right: 0; top: 0">339 Mbps</span>
 </span>
 </div>
-<div style="display: flex; align-items: center; gap: 9px; min-height: 44px; border-top: 1px solid #242a32">
-<span style="width: 30px; height: 17px; border-radius: 9px; background: #4cc38a; position: relative; flex: none"><span style="position: absolute; top: 2.5px; right: 2.5px; width: 12px; height: 12px; border-radius: 50%; background: #13171c"></span></span>
-<span class="tl" style="animation-name: d-led; width: 7px; height: 7px; border-radius: 50%; background: #4cc38a; margin-left: 6px; flex: none"></span>
+<div style="display: flex; align-items: center; gap: 9px; min-height: 44px; border-top: 1px solid var(--line)">
+<span style="width: 30px; height: 17px; border-radius: 9px; background: var(--accent); position: relative; flex: none"><span style="position: absolute; top: 2.5px; right: 2.5px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg)"></span></span>
+<span class="tl" style="animation-name: d-led; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-left: 6px; flex: none"></span>
 <span style="flex: 1; font-size: 13px; font-weight: 600">Secundaria</span>
-<span style="position: relative; display: inline-block; width: 72px; height: 18px; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 12.5px; letter-spacing: -0.01em; text-align: right">
-<span class="tl" style="animation-name: d-off; position: absolute; right: 0; top: 0; color: #7d8792; opacity: 0">—</span>
+<span class="mono" style="position: relative; display: inline-block; width: 72px; height: 18px; font-size: 12.5px; letter-spacing: -0.01em; text-align: right">
+<span class="tl" style="animation-name: d-off; position: absolute; right: 0; top: 0; color: var(--subtle); opacity: 0">—</span>
 <span class="tl" style="animation-name: d-on; position: absolute; right: 0; top: 0">73 Mbps</span>
 </span>
 </div>
@@ -795,59 +801,59 @@ Baixar para Windows</a>
 
 <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 28px">
 <div class="rv" style="display: flex; flex-direction: column; gap: 14px">
-<p style="margin: 0; font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 13px; color: #4cc38a">Como usar</p>
-<h2 style="margin: 0; font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(30px, 7.5vw, 40px); line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance">Baixou, abriu, ligou.</h2>
-<p style="margin: 0; font-size: 16px; color: #9aa4ae; text-wrap: pretty">Sem instalador. Os ajustes já vêm prontos para começar.</p>
+<p class="eyebrow">Como usar</p>
+<h2 class="h-sec">Baixou, abriu, ligou.</h2>
+<p style="margin: 0; font-size: 16px; color: var(--muted); text-wrap: pretty">Sem instalador. Os ajustes já vêm prontos para começar.</p>
 </div>
 <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
-<li class="tl" style="animation-name: d-s1; display: flex; gap: 20px; padding: 20px 0 0; border-top: 1px solid #242a32">
-<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px; color: #4cc38a; width: 24px; flex: none">01</span>
-<span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><strong style="font-weight: 600; font-size: 16px">Baixe</strong><span style="font-size: 15px; color: #9aa4ae">Um arquivo de ~13 MB, sem instalador.</span><span style="display: block; height: 2px; margin: 16px 0 0; background: #242a32; border-radius: 1px; overflow: hidden"><span class="tl" style="animation-name: d-p1; display: block; height: 100%; background: #4cc38a; transform-origin: left; transform: scaleX(0)"></span></span></span>
+<li class="tl" style="animation-name: d-s1; display: flex; gap: 20px; padding: 20px 0 0; border-top: 1px solid var(--line)">
+<span class="mono" style="font-size: 14px; color: var(--accent); width: 24px; flex: none">01</span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><strong style="font-weight: 600; font-size: 16px">Baixe</strong><span style="font-size: 15px; color: var(--muted)">Um arquivo de ~13 MB, sem instalador.</span><span style="display: block; height: 2px; margin: 16px 0 0; background: var(--line); border-radius: 1px; overflow: hidden"><span class="tl" style="animation-name: d-p1; display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0)"></span></span></span>
 </li>
 <li class="tl" style="animation-name: d-s2; display: flex; gap: 20px; padding: 20px 0 0">
-<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px; color: #4cc38a; width: 24px; flex: none">02</span>
-<span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><strong style="font-weight: 600; font-size: 16px">Abra</strong><span style="font-size: 15px; color: #9aa4ae">Os links que o Windows já conhece aparecem na lista.</span><span style="display: block; height: 2px; margin: 16px 0 0; background: #242a32; border-radius: 1px; overflow: hidden"><span class="tl" style="animation-name: d-p2; display: block; height: 100%; background: #4cc38a; transform-origin: left; transform: scaleX(0)"></span></span></span>
+<span class="mono" style="font-size: 14px; color: var(--accent); width: 24px; flex: none">02</span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><strong style="font-weight: 600; font-size: 16px">Abra</strong><span style="font-size: 15px; color: var(--muted)">Os links que o Windows já conhece aparecem na lista.</span><span style="display: block; height: 2px; margin: 16px 0 0; background: var(--line); border-radius: 1px; overflow: hidden"><span class="tl" style="animation-name: d-p2; display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0)"></span></span></span>
 </li>
 <li class="tl" style="animation-name: d-s3; display: flex; gap: 20px; padding: 20px 0 0">
-<span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace; font-size: 14px; color: #4cc38a; width: 24px; flex: none">03</span>
-<span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><strong style="font-weight: 600; font-size: 16px">Clique no botão I/O</strong><span style="font-size: 15px; color: #9aa4ae">O anel fica verde e as conexões passam a ser divididas entre os links.</span><span style="display: block; height: 2px; margin: 16px 0 0; background: #242a32; border-radius: 1px; overflow: hidden"><span class="tl" style="animation-name: d-p3; display: block; height: 100%; background: #4cc38a; transform-origin: left; transform: scaleX(0)"></span></span></span>
+<span class="mono" style="font-size: 14px; color: var(--accent); width: 24px; flex: none">03</span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><strong style="font-weight: 600; font-size: 16px">Clique no botão I/O</strong><span style="font-size: 15px; color: var(--muted)">O anel fica verde e as conexões passam a ser divididas entre os links.</span><span style="display: block; height: 2px; margin: 16px 0 0; background: var(--line); border-radius: 1px; overflow: hidden"><span class="tl" style="animation-name: d-p3; display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0)"></span></span></span>
 </li>
 </ol>
-<p class="rv" style="margin: 0; font-size: 13px; color: #7d8792; text-wrap: pretty">Fechar a janela mantém o app na bandeja, monitorando as quedas. Para sair, use Sair no menu da bandeja.</p>
+<p class="rv" style="margin: 0; font-size: 13px; color: var(--subtle); text-wrap: pretty">Fechar a janela mantém o app na bandeja, monitorando as quedas. Para sair, use Sair no menu da bandeja.</p>
 </div>
 </section>
 <!-- Chamada final: compacta, com os dois links -->
 <section style="max-width: 1200px; margin: 0 auto; padding: 120px 32px 96px">
-<div class="rv" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px 48px; padding-top: 48px; border-top: 1px solid #242a32">
+<div class="rv" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px 48px; padding-top: 48px; border-top: 1px solid var(--line)">
 <div style="flex: 1 1 420px; min-width: 0; display: flex; align-items: center; gap: 20px">
 <svg class="cta-logo" width="56" height="56" viewBox="0 0 64 64" aria-hidden="true" style="flex: none"><rect x="0" y="0" width="64" height="64" rx="14" fill="#1a1f26" stroke="#2c333c" stroke-width="1"></rect><path d="M14 20 C26 20 28 32 36 32 M14 32 H36 M14 44 C26 44 28 32 36 32 M36 32 H50" fill="none" stroke="#4cc38a55" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path class="pkt" d="M14 20 C26 20 28 32 36 32 H50" stroke="#4cc38a" stroke-width="3"></path><path class="pkt s2" d="M14 32 H50" stroke="#4cc38a" stroke-width="3"></path><path class="pkt s3" d="M14 44 C26 44 28 32 36 32 H50" stroke="#4cc38a" stroke-width="3"></path><circle cx="50" cy="32" r="3.5" fill="#4cc38a"></circle></svg>
 <div style="display: flex; flex-direction: column; gap: 6px">
-<h2 style="margin: 0; font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(24px, 6.5vw, 30px); line-height: 1.15; letter-spacing: -0.03em; text-wrap: balance">Seus links parados também podem trabalhar.</h2>
-<p style="margin: 0; font-size: 15px; color: #9aa4ae; text-wrap: pretty">Grátis e de código aberto. Ele se atualiza sozinho e confere o SHA-256 de cada versão nova.</p>
+<h2 class="display" style="margin: 0; font-weight: 600; font-size: clamp(24px, 6.5vw, 30px); line-height: 1.15; letter-spacing: -0.03em; text-wrap: balance">Seus links parados também podem trabalhar.</h2>
+<p style="margin: 0; font-size: 15px; color: var(--muted); text-wrap: pretty">Grátis e de código aberto. Ele se atualiza sozinho e confere o SHA-256 de cada versão nova.</p>
 </div>
 </div>
 <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px">
 <div style="display: flex; flex-wrap: wrap; gap: 12px">
-<a class="btn btn-primary shine" href="https://github.com/P0sseid0n/MultiLinkBalancer/releases/latest/download/MultiLinkBalancer.exe" style="display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 22px; border-radius: 10px; background: #e8ecef; color: #13171c; font-weight: 600; font-size: 16px; text-decoration: none">
+<a class="btn btn-primary shine" href="https://github.com/P0sseid0n/MultiLinkBalancer/releases/latest/download/MultiLinkBalancer.exe" style="display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 22px; border-radius: 10px; background: var(--fg); color: var(--bg); font-weight: 600; font-size: 16px; text-decoration: none">
 <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg>
 Baixar para Windows</a>
-<a class="btn btn-ghost" href="https://github.com/P0sseid0n/MultiLinkBalancer" style="display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 20px; border-radius: 10px; border: 1px solid #2c333c; color: #e8ecef; font-weight: 500; font-size: 15px; text-decoration: none">
+<a class="btn btn-ghost" href="https://github.com/P0sseid0n/MultiLinkBalancer" style="display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 20px; border-radius: 10px; border: 1px solid var(--line-strong); color: var(--fg); font-weight: 500; font-size: 15px; text-decoration: none">
 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5"></path><path d="m16 7 5 5-5 5"></path><path d="m14 4-4 16"></path></svg>
 Ver o código</a>
 </div>
-<p style="margin: 0; max-width: 420px; font-size: 12.5px; color: #7d8792; text-wrap: pretty"><span style="font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace"><span data-versao>v1.0.0</span> · ~13 MB</span> · Windows 11. O .exe não é assinado: se o SmartScreen avisar, clique em Mais informações e em Executar assim mesmo.</p>
+<p style="margin: 0; max-width: 420px; font-size: 12.5px; color: var(--subtle); text-wrap: pretty"><span class="mono"><span data-versao>v1.0.0</span> · ~13 MB</span> · Windows 11. O .exe não é assinado: se o SmartScreen avisar, clique em Mais informações e em Executar assim mesmo.</p>
 </div>
 </div>
 </section>
 
-<footer style="border-top: 1px solid #242a32">
-<div style="max-width: 1200px; margin: 0 auto; padding: 28px 32px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-size: 13px; color: #7d8792">
+<footer style="border-top: 1px solid var(--line)">
+<div style="max-width: 1200px; margin: 0 auto; padding: 28px 32px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-size: 13px; color: var(--subtle)">
 <span>MultiLink Balancer · Licença GPL-3.0</span>
 <span style="display: flex; flex-wrap: wrap; gap: 8px 22px">
-<a class="navlink" href="https://github.com/P0sseid0n/MultiLinkBalancer" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">GitHub</a>
-<a class="navlink" href="https://github.com/P0sseid0n/MultiLinkBalancer/releases" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">Versões</a>
-<a class="navlink" href="https://github.com/P0sseid0n/MultiLinkBalancer/blob/main/LICENSE" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">Licença</a>
-<a class="navlink" href="privacidade.html" style="color: #9aa4ae; text-decoration: none; padding: 10px 0">Política de privacidade</a>
+<a class="navlink" href="https://github.com/P0sseid0n/MultiLinkBalancer" style="color: var(--muted); text-decoration: none; padding: 10px 0">GitHub</a>
+<a class="navlink" href="https://github.com/P0sseid0n/MultiLinkBalancer/releases" style="color: var(--muted); text-decoration: none; padding: 10px 0">Versões</a>
+<a class="navlink" href="https://github.com/P0sseid0n/MultiLinkBalancer/blob/main/LICENSE" style="color: var(--muted); text-decoration: none; padding: 10px 0">Licença</a>
+<a class="navlink" href="privacidade.html" style="color: var(--muted); text-decoration: none; padding: 10px 0">Política de privacidade</a>
 </span>
 </div>
 </footer>
