@@ -1,0 +1,115 @@
+// Partes vivas da landing: o painel de demonstração do hero (liga/desliga, números variando)
+// e as abas do simulador de "Como funciona" (trocam sozinhas a cada 6 s até alguém clicar).
+(function () {
+  'use strict';
+
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var state = { on: true, s1: 0, s2: 0, t1: 339, t2: 73, tab: 0, manual: false };
+
+  var TAB_BASE = 'position: relative; min-height: 44px; padding: 0 18px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; ';
+  var TAB_ON = 'background: #20262d; color: #e8ecef; border: 1px solid #3a434e;';
+  var TAB_OFF = 'background: transparent; color: #9aa4ae; border: 1px solid #242a32;';
+  var IFS = { 0: 'tNav', 1: 'tDl', 2: 'tUdp', 3: 'tOne' };
+
+  function all(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  function setIf(name, visible) {
+    all('[data-if="' + name + '"]').forEach(function (el) {
+      if (el.hidden === visible) el.hidden = !visible;
+    });
+  }
+  function setText(name, value) {
+    all('[data-v="' + name + '"]').forEach(function (el) {
+      if (el.textContent !== value) el.textContent = value;
+    });
+  }
+
+  // ---------- painel do hero ----------
+  function renderPanel() {
+    var a = Math.round(state.s1), b = Math.round(state.s2), sum = a + b;
+    var p1 = sum > 0 ? Math.round(a / sum * 100) : 0, p2 = sum > 0 ? 100 - p1 : 0;
+    setIf('on', state.on);
+    setIf('off', !state.on);
+    setText('total', String(sum));
+    setText('speed1', state.on && a > 0 ? a + ' Mbps' : '—');
+    setText('speed2', state.on && b > 0 ? b + ' Mbps' : '—');
+    setText('p1', state.on ? p1 + '%' : '—');
+    setText('p2', state.on ? p2 + '%' : '—');
+    all('[data-w="w1"]').forEach(function (el) { el.style.width = (state.on ? p1 : 0) + '%'; });
+    all('[data-w="w2"]').forEach(function (el) { el.style.width = (state.on ? p2 : 0) + '%'; });
+  }
+
+  all('[data-action="toggle"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      state.on = !state.on;
+      renderPanel();
+      // o botão do outro estado acabou de aparecer: o foco vai para ele
+      var next = all('[data-if="' + (state.on ? 'on' : 'off') + '"] [data-action="toggle"]')[0];
+      if (next) next.focus();
+    });
+  });
+
+  // ---------- abas de "Como funciona" ----------
+  var tabs = all('[role="tab"][data-tab]');
+  function renderTabs() {
+    tabs.forEach(function (btn) {
+      var i = Number(btn.getAttribute('data-tab')), selected = i === state.tab;
+      btn.setAttribute('aria-selected', selected ? 'true' : 'false');
+      btn.style.cssText = TAB_BASE + (selected ? TAB_ON : TAB_OFF);
+      var bar = btn.querySelector('.tabbar');
+      if (bar) bar.remove();
+      if (selected && !state.manual && !reduce) {
+        bar = document.createElement('span');
+        bar.className = 'tabbar';
+        btn.appendChild(bar);
+      }
+    });
+    Object.keys(IFS).forEach(function (k) { setIf(IFS[k], Number(k) === state.tab); });
+    all('[data-op="l2op"]').forEach(function (el) { el.style.opacity = state.tab === 3 ? '0.4' : '1'; });
+    all('[data-op="l3op"]').forEach(function (el) { el.style.opacity = state.tab >= 2 ? '0.4' : '1'; });
+  }
+  tabs.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      state.tab = Number(btn.getAttribute('data-tab'));
+      state.manual = true;
+      renderTabs();
+    });
+    // setas trocam de aba, como num tablist
+    btn.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var i = (state.tab + (e.key === 'ArrowRight' ? 1 : 3)) % 4;
+      state.tab = i;
+      state.manual = true;
+      renderTabs();
+      tabs[i].focus();
+      e.preventDefault();
+    });
+  });
+
+  // ---------- tempo ----------
+  if (reduce) {
+    state.s1 = 339;
+    state.s2 = 73;
+  } else {
+    setInterval(function () {
+      state.t1 = Math.round(339 * (0.9 + Math.random() * 0.18));
+      state.t2 = Math.round(73 * (0.8 + Math.random() * 0.4));
+    }, 1200);
+    setInterval(function () {
+      var g1 = state.on ? state.t1 : 0, g2 = state.on ? state.t2 : 0;
+      var n1 = state.s1 + (g1 - state.s1) * 0.18, n2 = state.s2 + (g2 - state.s2) * 0.18;
+      if (Math.abs(n1 - state.s1) > 0.3 || Math.abs(n2 - state.s2) > 0.3) {
+        state.s1 = Math.abs(n1 - g1) < 0.5 ? g1 : n1;
+        state.s2 = Math.abs(n2 - g2) < 0.5 ? g2 : n2;
+        renderPanel();
+      }
+    }, 50);
+    setInterval(function () {
+      if (state.manual) return;
+      state.tab = (state.tab + 1) % 4;
+      renderTabs();
+    }, 6000);
+  }
+
+  renderPanel();
+  renderTabs();
+})();
