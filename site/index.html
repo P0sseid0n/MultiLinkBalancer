@@ -247,14 +247,16 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 .pk{animation-play-state:paused !important}
 }
 
-/* ---------- cabeçalho no celular: logo e Baixar na 1ª linha, links na 2ª, e ele não fica preso no topo ---------- */
+/* ---------- cabeçalho no celular: só o ícone do logo e os links, numa linha; sem Baixar (o app é para Windows,
+   e o hero já tem o botão), sem GitHub (fica no rodapé) e sem ficar preso no topo ---------- */
 @media (max-width: 640px){
 .site-header{position:static !important}
-.nav{gap:0 16px !important;padding-top:10px !important;padding-bottom:6px !important}
+.nav{gap:0 12px !important;padding-top:6px !important;padding-bottom:6px !important}
 .nav-links{display:contents !important}
-.nav-cta{order:1}
-.nav .navlink{order:2;font-size:14px}
-.nav-gh{display:none}
+.nav-cta,.nav-gh{display:none !important}
+.nav .navlink{font-size:14px}
+/* o nome continua para leitores de tela */
+.brand-name{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
 
 [data-if]{display:contents}
@@ -270,7 +272,7 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 <nav class="nav" aria-label="Principal" style="max-width: 1200px; margin: 0 auto; padding: 14px 32px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
 <a href="#topo" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--fg)">
 <svg class="logo-mark" width="32" height="32" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg-nav" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262d36"></stop><stop offset="1" stop-color="#13171c"></stop></linearGradient></defs><rect x="0" y="0" width="64" height="64" rx="14" fill="url(#lg-nav)" stroke="#2c333c" stroke-width="1.5"></rect><path d="M14 20 C26 20 28 32 36 32 M14 32 H36 M14 44 C26 44 28 32 36 32 M36 32 H50" fill="none" stroke="#4cc38a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="50" cy="32" r="4" fill="#4cc38a"></circle></svg>
-<span class="display" style="font-weight: 600; font-size: 17px; letter-spacing: -0.01em">MultiLink Balancer</span>
+<span class="display brand-name" style="font-weight: 600; font-size: 17px; letter-spacing: -0.01em">MultiLink Balancer</span>
 </a>
 <div class="nav-links" style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; font-size: 14px">
 <a class="navlink" href="#como-funciona" style="color: var(--muted); text-decoration: none; padding: 10px 0">Como funciona</a>
