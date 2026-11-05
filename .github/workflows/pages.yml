@@ -1,0 +1,58 @@
+# Publica a pasta site/ (landing page e política de privacidade) no GitHub Pages:
+#   https://p0sseid0n.github.io/MultiLinkBalancer/
+# Roda quando site/ muda na main e depois de cada release (o build da tag terminou), para a versão
+# escrita na página (<span data-versao>) acompanhar a última tag.
+name: Site
+
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', '.github/workflows/pages.yml']
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    # do Build, só as releases (push de tag vX.Y.Z) que deram certo
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0 # as tags definem a versão mostrada no site
+
+      - name: Versão no site
+        run: |
+          versao=$(git tag --list 'v*.*.*' --sort=-v:refname | head -n 1)
+          if [ -n "$versao" ]; then
+            sed -i -E "s|(<span data-versao>)[^<]*|\1${versao}|g" site/*.html
+            echo "Versão: $versao"
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
