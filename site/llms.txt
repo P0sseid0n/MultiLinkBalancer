@@ -1,0 +1,27 @@
+# MultiLink Balancer
+
+> Balanceador de internet grátis e de código aberto (GPL-3.0) para Windows 11. Um proxy local divide as conexões do PC entre vários links de internet (cabo, Wi-Fi e 4G pelo USB do celular), na proporção do que cada um rende. Roda só no PC, sem servidor externo, sem conta e sem telemetria. É um .exe único de ~13 MB, sem instalador.
+
+## O que soma e o que não soma
+
+- Várias conexões ao mesmo tempo (navegador, vários downloads, Steam, speedtest, torrent via SOCKS5): soma. Cada conexão sai por um link.
+- Um arquivo pelo Download acelerado do app: soma. O arquivo vem em partes (HTTP Range) por todos os links.
+- Uma conexão única (um stream, um download comum de uma conexão só): não soma, usa um link. Somar isso exige bonding com servidor externo (ex.: Speedify, OpenMPTCProuter).
+- UDP (jogos, chamadas, QUIC): com "Capturar todos os programas", cada fluxo sai por um link. Balanceia, não acelera um fluxo.
+- Os links precisam ser internets diferentes. Dois adaptadores no mesmo roteador dividem a mesma internet.
+
+## Recursos
+
+- Pesos automáticos pelo que cada link rende, e menos conexões para um link que perde pacotes.
+- Teste de queda a cada 3 s por link, com diagnóstico: sem internet (operadora), modem não responde, cabo desconectado.
+- Captura de todos os programas (tun2socks + Wintun, requer administrador), inclusive UDP.
+- Proxy local em 127.0.0.1:1080 (SOCKS4, SOCKS5 e HTTP).
+- Histórico de velocidade, latência e quedas (30 dias). Atalho Ctrl+Alt+M e ícone na bandeja.
+- Atualização pelo GitHub Releases, com conferência do SHA-256.
+
+## Links
+
+- [Site](https://multilink.p0sseid0n.dev/): apresentação e perguntas frequentes
+- [Download do .exe](https://github.com/P0sseid0n/MultiLinkBalancer/releases/latest/download/MultiLinkBalancer.exe)
+- [Código e documentação (README)](https://github.com/P0sseid0n/MultiLinkBalancer)
+- [Política de privacidade](https://multilink.p0sseid0n.dev/privacidade.html)
