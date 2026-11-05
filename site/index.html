@@ -227,9 +227,14 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 @keyframes d-p1{0%{transform:scaleX(0);opacity:1}30%{transform:scaleX(1);opacity:1}32%,100%{transform:scaleX(1);opacity:0}}
 @keyframes d-p2{0%,30%{transform:scaleX(0);opacity:1}55%{transform:scaleX(1);opacity:1}57%,100%{transform:scaleX(1);opacity:0}}
 @keyframes d-p3{0%,55%{transform:scaleX(0);opacity:1}94%{transform:scaleX(1);opacity:1}96%,100%{transform:scaleX(1);opacity:0}}
-/* 560 px de palco: cabe na largura útil (tela menos 2 × 32 px) */
-@media (max-width: 640px){.stage{zoom:.54}}
-@media (max-width: 365px){.stage{zoom:.45}}
+/* 560 × 460 px de palco, reduzido com scale (e não zoom) para caber na largura útil (tela menos 2 × 32 px).
+   Com zoom, as fontes ficavam com ~6 px de verdade, e no celular o tamanho mínimo de fonte e o ajuste
+   automático de texto aumentavam só o texto, que então grudava e saía das caixas de largura fixa. Com scale,
+   a página é montada no tamanho normal e só depois reduzida por inteiro. O stage-wrap reserva o tamanho já reduzido. */
+.stage-wrap{flex:none}
+.stage{-webkit-text-size-adjust:100%;text-size-adjust:100%;transform-origin:0 0}
+@media (max-width: 640px){.stage-wrap{width:302.4px;height:248.4px}.stage{scale:.54}}
+@media (max-width: 365px){.stage-wrap{width:252px;height:207px}.stage{scale:.45}}
 /* ---------- logo do final ---------- */
 .cta-logo .pkt{stroke-dasharray:3 14;animation:ml-flow-fast 1.4s linear infinite}
 .cta-orbit{animation:ml-spin 18s linear infinite}
@@ -735,7 +740,8 @@ Baixar para Windows</a>
 <!-- Como usar: demonstração em loop (baixar, abrir, ligar) -->
 <section class="demo" style="max-width: 1200px; margin: 0 auto; padding: 128px 32px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 56px 80px">
 
-<div class="stage rv-pop" role="img" aria-label="Animação: o MultiLinkBalancer.exe é baixado, aberto, e o MultiLink é ligado com um clique no botão I/O" style="position: relative; flex: none; width: 560px; height: 460px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); overflow: hidden; box-shadow: 0 40px 80px -32px rgba(4,8,14,0.9)">
+<div class="stage-wrap rv-pop">
+<div class="stage" role="img" aria-label="Animação: o MultiLinkBalancer.exe é baixado, aberto, e o MultiLink é ligado com um clique no botão I/O" style="position: relative; flex: none; width: 560px; height: 460px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); overflow: hidden; box-shadow: 0 40px 80px -32px rgba(4,8,14,0.9)">
 
 <span class="tl" aria-hidden="true" style="animation-name: d-glow; position: absolute; left: 50%; top: 45%; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%; background: radial-gradient(closest-side, #4cc38a26, transparent); pointer-events: none"></span>
 
@@ -813,6 +819,7 @@ Baixar para Windows</a>
 <span class="tl" aria-hidden="true" style="animation-name: d-cursor; position: absolute; left: 0; top: 0; width: 22px; height: 22px; z-index: 5; opacity: 0; transform-origin: 3px 2px; filter: drop-shadow(0 2px 4px rgba(4,8,14,0.6))">
 <svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 2 L3 19 L8 14.5 L11.5 22 L14.5 20.7 L11 13.3 L17.5 13.3 Z" fill="#e8ecef" stroke="#13171c" stroke-width="1.2" stroke-linejoin="round"></path></svg>
 </span>
+</div>
 </div>
 
 <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 28px">
