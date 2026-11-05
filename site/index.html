@@ -64,6 +64,102 @@
  ]
 }
 </script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "O MultiLink Balancer soma a velocidade das minhas internets?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Soma quando há várias conexões ao mesmo tempo, como no navegador, em vários downloads, na Steam, num speedtest ou num torrent via SOCKS5: cada conexão sai por um link, na proporção do que cada um rende. Um arquivo baixado pelo Download acelerado também soma, porque vem em partes por todos os links. Uma conexão única, como um stream ou um download comum de uma conexão só, usa um link só. Somar isso exige um servidor externo que junte os links (bonding)."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Preciso de duas operadoras?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Precisa de internets diferentes, cada uma com o seu roteador ou modem: por exemplo, a fibra pelo cabo, outro roteador pelo Wi-Fi e o 4G do celular pelo USB. Dois adaptadores ligados ao mesmo roteador dividem a mesma internet, e o ganho fica pequeno ou nenhum."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Funciona com o 4G do celular pelo USB?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Sim. Com a ancoragem USB ligada no celular, o Windows ganha um adaptador de rede novo, e o MultiLink Balancer usa esse adaptador como mais um link, junto com o cabo e o Wi-Fi."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Com quais programas funciona?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Sem configurar nada, com tudo o que usa o proxy do Windows: navegadores, Microsoft Store e Windows Update. Programas com opção de proxy, como clientes de torrent, podem usar 127.0.0.1:1080 (SOCKS4, SOCKS5 ou HTTP). O resto, como jogos, apps de chat e o terminal, passa pelo MultiLink com Capturar todos os programas."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Funciona com jogos e chamadas de vídeo?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Com Capturar todos os programas ligado, sim, inclusive o tráfego UDP. Cada partida ou chamada fica presa a um link: o app divide os fluxos entre os links, mas não acelera um fluxo sozinho. Alguns anti-cheats e VPNs podem não conviver com o adaptador virtual da captura."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Precisa ser administrador?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Não para o uso normal: o proxy local e o balanceamento funcionam como usuário comum. Pedem administrador só Capturar todos os programas, ativar ou desativar um adaptador e Tirar link caído do roteamento do Windows."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Pode deixar a internet mais lenta?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Os pesos automáticos seguem o que cada link rende de verdade, e um link que está perdendo pacotes recebe menos conexões até melhorar. Para conferir, Testar a soma dos links (em Ajustes ou no menu da bandeja) compara a soma com o melhor link sozinho. Se o ganho for pequeno, os links podem estar dividindo o mesmo gargalo."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Qual a diferença para uma VPN de bonding, como o Speedify?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Uma VPN de bonding manda todo o tráfego por um servidor dela, que junta os links: assim até uma conexão única e o upload somam, mas tudo passa por terceiros e costuma ter plano pago. O OpenMPTCProuter faz o mesmo com um servidor (VPS) e um roteador seus. O MultiLink Balancer roda só no PC, sem servidor: soma quando há várias conexões, e o seu tráfego vai direto para os sites. Já o Windows sozinho, com dois links ligados, usa um de cada vez para a internet."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Por que o Windows avisa ao abrir o .exe?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "O .exe não é assinado digitalmente, então o SmartScreen avisa. Clique em Mais informações e em Executar assim mesmo. O código é aberto, e cada versão no GitHub publica o SHA-256 do .exe, que o próprio app confere ao se atualizar."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "É grátis? Precisa de conta?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "É grátis e de código aberto (GPL-3.0), sem conta, cadastro ou anúncios. Nada sobre você ou sobre o que você acessa sai do PC."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Como desinstalar?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Não tem instalador. Em Ajustes, desligue Iniciar com o Windows, clique em Sair (o proxy, as rotas e o adaptador da captura voltam ao que eram) e apague o MultiLinkBalancer.exe e as pastas %APPDATA%\\MultiLinkBalancer e %LOCALAPPDATA%\\MultiLinkBalancer."
+   }
+  }
+ ]
+}
+</script>
 <style>
 /* ---------- cores e tipos (as cores dos atributos fill/stroke do SVG continuam em hex: atributo não aceita var()) ---------- */
 :root{--bg:#13171c;--surface:#171b21;--surface-2:#1a1f26;--line-soft:#20262d;--track:#222830;--line:#242a32;--line-mid:#2a3139;--line-strong:#2c333c;--line-hover:#3a434e;--dim:#4a525c;--dim-2:#5d6670;--subtle:#7d8792;--muted:#9aa4ae;--fg-2:#c9d1d8;--fg:#e8ecef;--white:#ffffff;--accent:#4cc38a;--accent-hover:#7fd9ad;--link-1:#3987e5;--link-2:#d95926;--link-3:#199e70;--warn:#d9a33a;--warn-fg:#e8c27a;--danger:#e5534b;--danger-fg:#f0a39e;--focus:#5598e7}
@@ -284,6 +380,20 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 .cta-logo .pkt{stroke-dasharray:3 14;animation:ml-flow-fast 1.4s linear infinite}
 .cta-orbit{animation:ml-spin 18s linear infinite}
 
+/* ---------- perguntas frequentes ---------- */
+.faq-item{border-top:1px solid var(--line)}
+.faq-item:last-child{border-bottom:1px solid var(--line)}
+.faq-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:18px 0;border-radius:6px}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.faq-item h3{margin:0;font-size:17px;font-weight:600;line-height:1.35;text-wrap:pretty;transition:color .2s}
+.faq-item summary:hover h3{color:var(--accent)}
+.faq-ico{flex:none;color:var(--muted);transition:transform .3s var(--ease),color .2s}
+.faq-item[open] .faq-ico{transform:rotate(45deg);color:var(--accent)}
+.faq-a{display:flex;flex-direction:column;gap:10px;padding:0 0 22px;max-width:720px;font-size:15.5px;line-height:1.6;color:var(--muted);text-wrap:pretty}
+.faq-a p{margin:0}
+.faq-item[open] .faq-a{animation:ml-rise-sm .35s var(--ease) both}
+
 /* ---------- revelação ao rolar ---------- */
 @supports (animation-timeline: view()){
 .rv{animation:ml-rise linear both;animation-timeline:view();animation-range:entry 0% cover 28%}
@@ -330,6 +440,7 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 <a class="navlink" href="#como-funciona" style="color: var(--muted); text-decoration: none; padding: 10px 0">Como funciona</a>
 <a class="navlink" href="#recursos" style="color: var(--muted); text-decoration: none; padding: 10px 0">Recursos</a>
 <a class="navlink" href="#privacidade" style="color: var(--muted); text-decoration: none; padding: 10px 0">Privacidade</a>
+<a class="navlink nav-gh" href="#perguntas" style="color: var(--muted); text-decoration: none; padding: 10px 0">Perguntas</a>
 <a class="navlink nav-gh" href="https://github.com/P0sseid0n/MultiLinkBalancer" style="color: var(--muted); text-decoration: none; padding: 10px 0">GitHub</a>
 <a class="btn btn-primary nav-cta" href="https://github.com/P0sseid0n/MultiLinkBalancer/releases/latest/download/MultiLinkBalancer.exe" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 6px; background: var(--fg); color: var(--bg); font-weight: 600; font-size: 14px; text-decoration: none">
 <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg>
@@ -891,6 +1002,28 @@ Baixar para Windows</a>
 <p class="rv" style="margin: 0; font-size: 13px; color: var(--subtle); text-wrap: pretty">Fechar a janela mantém o app na bandeja, monitorando as quedas. Para sair, use Sair no menu da bandeja.</p>
 </div>
 </section>
+<!-- Perguntas frequentes (o mesmo texto vai no JSON-LD FAQPage do <head>: mude os dois juntos) -->
+<section id="perguntas" aria-labelledby="perguntas-titulo" style="max-width: 1200px; margin: 0 auto; padding: 128px 32px 0; display: flex; flex-wrap: wrap; gap: 32px 80px; align-items: flex-start">
+<div class="rv" style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<p class="eyebrow">Perguntas</p>
+<h2 id="perguntas-titulo" class="h-sec">Perguntas frequentes</h2>
+<p style="margin: 0; font-size: 16px; color: var(--muted); text-wrap: pretty">Não achou a sua? Abra uma <a href="https://github.com/P0sseid0n/MultiLinkBalancer/issues" style="color: var(--accent)">issue no GitHub</a>.</p>
+</div>
+<div class="faq" style="flex: 2 1 560px; min-width: 0">
+<details class="faq-item"><summary><h3>O MultiLink Balancer soma a velocidade das minhas internets?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>Soma quando há várias conexões ao mesmo tempo, como no navegador, em vários downloads, na Steam, num speedtest ou num torrent via SOCKS5: cada conexão sai por um link, na proporção do que cada um rende. Um arquivo baixado pelo Download acelerado também soma, porque vem em partes por todos os links.</p><p>Uma conexão única, como um stream ou um download comum de uma conexão só, usa um link só. Somar isso exige um servidor externo que junte os links (bonding).</p></div></details>
+<details class="faq-item"><summary><h3>Preciso de duas operadoras?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>Precisa de internets diferentes, cada uma com o seu roteador ou modem: por exemplo, a fibra pelo cabo, outro roteador pelo Wi-Fi e o 4G do celular pelo USB. Dois adaptadores ligados ao mesmo roteador dividem a mesma internet, e o ganho fica pequeno ou nenhum.</p></div></details>
+<details class="faq-item"><summary><h3>Funciona com o 4G do celular pelo USB?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>Sim. Com a ancoragem USB ligada no celular, o Windows ganha um adaptador de rede novo, e o MultiLink Balancer usa esse adaptador como mais um link, junto com o cabo e o Wi-Fi.</p></div></details>
+<details class="faq-item"><summary><h3>Com quais programas funciona?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>Sem configurar nada, com tudo o que usa o proxy do Windows: navegadores, Microsoft Store e Windows Update. Programas com opção de proxy, como clientes de torrent, podem usar 127.0.0.1:1080 (SOCKS4, SOCKS5 ou HTTP). O resto, como jogos, apps de chat e o terminal, passa pelo MultiLink com Capturar todos os programas.</p></div></details>
+<details class="faq-item"><summary><h3>Funciona com jogos e chamadas de vídeo?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>Com Capturar todos os programas ligado, sim, inclusive o tráfego UDP. Cada partida ou chamada fica presa a um link: o app divide os fluxos entre os links, mas não acelera um fluxo sozinho. Alguns anti-cheats e VPNs podem não conviver com o adaptador virtual da captura.</p></div></details>
+<details class="faq-item"><summary><h3>Precisa ser administrador?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>Não para o uso normal: o proxy local e o balanceamento funcionam como usuário comum. Pedem administrador só Capturar todos os programas, ativar ou desativar um adaptador e Tirar link caído do roteamento do Windows.</p></div></details>
+<details class="faq-item"><summary><h3>Pode deixar a internet mais lenta?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>Os pesos automáticos seguem o que cada link rende de verdade, e um link que está perdendo pacotes recebe menos conexões até melhorar. Para conferir, Testar a soma dos links (em Ajustes ou no menu da bandeja) compara a soma com o melhor link sozinho. Se o ganho for pequeno, os links podem estar dividindo o mesmo gargalo.</p></div></details>
+<details class="faq-item"><summary><h3>Qual a diferença para uma VPN de bonding, como o Speedify?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>Uma VPN de bonding manda todo o tráfego por um servidor dela, que junta os links: assim até uma conexão única e o upload somam, mas tudo passa por terceiros e costuma ter plano pago. O OpenMPTCProuter faz o mesmo com um servidor (VPS) e um roteador seus.</p><p>O MultiLink Balancer roda só no PC, sem servidor: soma quando há várias conexões, e o seu tráfego vai direto para os sites. Já o Windows sozinho, com dois links ligados, usa um de cada vez para a internet.</p></div></details>
+<details class="faq-item"><summary><h3>Por que o Windows avisa ao abrir o .exe?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>O .exe não é assinado digitalmente, então o SmartScreen avisa. Clique em Mais informações e em Executar assim mesmo. O código é aberto, e cada versão no GitHub publica o SHA-256 do .exe, que o próprio app confere ao se atualizar.</p></div></details>
+<details class="faq-item"><summary><h3>É grátis? Precisa de conta?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>É grátis e de código aberto (GPL-3.0), sem conta, cadastro ou anúncios. Nada sobre você ou sobre o que você acessa sai do PC.</p></div></details>
+<details class="faq-item"><summary><h3>Como desinstalar?</h3><svg class="faq-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></summary><div class="faq-a"><p>Não tem instalador. Em Ajustes, desligue Iniciar com o Windows, clique em Sair (o proxy, as rotas e o adaptador da captura voltam ao que eram) e apague o MultiLinkBalancer.exe e as pastas %APPDATA%\MultiLinkBalancer e %LOCALAPPDATA%\MultiLinkBalancer.</p></div></details>
+</div>
+</section>
+
 <!-- Chamada final: compacta, com os dois links -->
 <section style="max-width: 1200px; margin: 0 auto; padding: 120px 32px 96px">
 <div class="rv" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px 48px; padding-top: 48px; border-top: 1px solid var(--line)">
@@ -923,6 +1056,7 @@ Ver o código</a>
 <a class="navlink" href="https://github.com/P0sseid0n/MultiLinkBalancer" style="color: var(--muted); text-decoration: none; padding: 10px 0">GitHub</a>
 <a class="navlink" href="https://github.com/P0sseid0n/MultiLinkBalancer/releases" style="color: var(--muted); text-decoration: none; padding: 10px 0">Versões</a>
 <a class="navlink" href="https://github.com/P0sseid0n/MultiLinkBalancer/blob/main/LICENSE" style="color: var(--muted); text-decoration: none; padding: 10px 0">Licença</a>
+<a class="navlink" href="#perguntas" style="color: var(--muted); text-decoration: none; padding: 10px 0">Perguntas frequentes</a>
 <a class="navlink" href="privacidade.html" style="color: var(--muted); text-decoration: none; padding: 10px 0">Política de privacidade</a>
 </span>
 </div>
