@@ -40,16 +40,12 @@ a:focus-visible,button:focus-visible{outline:2px solid #5598e7;outline-offset:2p
 @keyframes ml-led-warn{0%,100%{box-shadow:0 0 0 3px #d9a33a33}50%{box-shadow:0 0 0 6px #d9a33a18}}
 @keyframes ml-ticker{0%,20%{transform:translateY(0)}25%,45%{transform:translateY(-20px)}50%,70%{transform:translateY(-40px)}75%,95%{transform:translateY(-60px)}100%{transform:translateY(-80px)}}
 @keyframes ml-marquee{to{transform:translateX(-50%)}}
-@keyframes ml-float{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-14px) rotate(1deg)}}
 @keyframes ml-glow{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:.8;transform:scale(1.08)}}
 @keyframes ml-shine{0%,70%{transform:translateX(-120%) skewX(-20deg)}100%{transform:translateX(320%) skewX(-20deg)}}
 @keyframes ml-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
 @keyframes ml-blink{0%,100%{opacity:1}50%{opacity:.35}}
-@keyframes ml-grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes ml-spin{to{transform:rotate(360deg)}}
-@keyframes ml-orbit{to{offset-distance:100%}}
 @keyframes ml-gridpan{to{background-position:48px 48px}}
-@keyframes ml-type{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 
 /* ---------- entrada do hero ---------- */
 .in{opacity:0;animation:ml-rise .9s var(--ease) both}
@@ -101,26 +97,6 @@ a:focus-visible,button:focus-visible{outline:2px solid #5598e7;outline-offset:2p
 .navlink:hover{color:#e8ecef !important}.navlink:hover::after{transform:scaleX(1)}
 .logo-mark{transition:transform .5s var(--ease)}
 a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
-
-/* ---------- recursos ---------- */
-.feat{position:relative;transition:transform .35s var(--ease),background-color .3s;border-radius:0 0 10px 10px}
-.feat::before{content:"";position:absolute;left:0;right:0;top:-1px;height:1px;background:#4cc38a;transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
-.feat:hover{transform:translateY(-6px);background-color:#171b21}
-.feat:hover::before{transform:scaleX(1)}
-.feat .ico{transition:transform .5s var(--ease),stroke .3s}
-.feat:hover .ico{transform:scale(1.15) rotate(-6deg);stroke:#4cc38a}
-.feat .ico path,.feat .ico rect,.feat .ico circle{stroke-dasharray:80;stroke-dashoffset:0}
-.feat:hover .ico path,.feat:hover .ico rect,.feat:hover .ico circle{animation:ml-draw .9s var(--ease) both;--len:80}
-
-/* ---------- linhas, tabela, passos ---------- */
-.row{transition:background-color .25s}
-.row:hover{background-color:#171b21}
-.step{transition:padding-left .35s var(--ease)}
-.step:hover{padding-left:12px}
-.step:hover .stepnum{color:#4cc38a}
-.stepnum{transition:color .3s}
-.dest{transition:background-color .25s,padding-left .35s var(--ease)}
-.dest:hover{background-color:#1a1f26;padding-left:12px}
 
 /* ---------- como funciona: simulador ---------- */
 .lane{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px;align-items:center;transition:opacity .4s}
@@ -192,9 +168,6 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 @keyframes pv-left{0%,30%{transform:translate(0,0)}40%{transform:translate(-12px,0)}48%{transform:translate(3px,0)}56%,100%{transform:translate(0,0)}}
 .pv-shield{transform-origin:240px 240px;animation:pv-shield 3s ease-in-out infinite}
 @keyframes pv-shield{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-.pv-check{width:24px;height:24px;border-radius:50%;background:#4cc38a1f;border:1px solid #4cc38a59;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
-.pv-card{display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:12px;background:#13171c;border:1px solid #242a32;transition:border-color .3s,transform .35s cubic-bezier(.22,1,.36,1)}
-.pv-card:hover{border-color:#4cc38a59;transform:translateY(-4px)}
 .pv-dom{display:flex;align-items:center;gap:8px;font-family:'Cascadia Mono',ui-monospace,monospace;font-size:12.5px;letter-spacing:-.01em;color:#e8ecef}
 .pv-list{display:none}
 @media (max-width: 640px){
@@ -202,7 +175,6 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 .pv-list li{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-top:1px solid #242a32;font-size:13.5px;color:#9aa4ae}
 .pv-lbl{display:none}
 }
-@supports (animation-timeline: view()){.chk path{--len:24;stroke-dasharray:24;animation:ml-draw linear both;animation-timeline:view();animation-range:entry 20% cover 45%}}
 
 /* ---------- demonstração: baixar, abrir, ligar (12 s em loop) ---------- */
 .demo *{box-sizing:border-box}
@@ -255,7 +227,6 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 /* ---------- revelação ao rolar ---------- */
 @supports (animation-timeline: view()){
 .rv{animation:ml-rise linear both;animation-timeline:view();animation-range:entry 0% cover 28%}
-.rv-l{animation:ml-grow linear both;animation-timeline:view();animation-range:entry 0% cover 35%;transform-origin:left}
 .rv-pop{animation:ml-pop linear both;animation-timeline:view();animation-range:entry 0% cover 35%}
 }
 
