@@ -241,8 +241,12 @@ a:hover>.logo-mark{transform:rotate(-8deg) scale(1.08)}
 }
 
 @media (prefers-reduced-motion: reduce){
-.ml *,.ml *::before,.ml *::after{animation:none !important;transition:none !important}
+.ml *:not(.pk),.ml *::before,.ml *::after{animation:none !important;transition:none !important}
 .in,.in-panel,.word{opacity:1}
+/* o brilho parado ficaria por cima do texto do botão */
+.shine::after{display:none}
+/* pacotes do simulador: congelados no meio da pista (app.js adianta a fase de cada um) */
+.pk{animation-play-state:paused !important}
 }
 
 [data-if]{display:contents}

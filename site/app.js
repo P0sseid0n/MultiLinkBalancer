@@ -89,6 +89,12 @@
   if (reduce) {
     state.s1 = 339;
     state.s2 = 73;
+    // sem movimento, cada pacote fica parado no ponto da pista em que estaria; o atraso extra de
+    // 15% do ciclo tira de fora da pista os que começariam em 0
+    all('.pk').forEach(function (el) {
+      var cs = getComputedStyle(el), dur = parseFloat(cs.animationDuration) || 0, del = parseFloat(cs.animationDelay) || 0;
+      el.style.animationDelay = (del - dur * 0.15) + 's';
+    });
   } else {
     setInterval(function () {
       state.t1 = Math.round(339 * (0.9 + Math.random() * 0.18));
