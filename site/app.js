@@ -48,6 +48,28 @@
     });
   });
 
+  // ---------- celular: mandar o link do site para o PC ----------
+  // com a folha de compartilhar do sistema quando existe (WhatsApp, e-mail...), senão copia o link
+  var SITE_URL = 'https://multilink.p0sseid0n.dev/';
+  var canShare = typeof navigator.share === 'function';
+  all('[data-share-label]').forEach(function (el) { el.textContent = canShare ? 'Enviar o link' : 'Copiar o link'; });
+  all('[data-action="share-link"]').forEach(function (btn) {
+    var status = btn.parentNode.querySelector('[data-share-status]');
+    function say(msg) { if (status) status.textContent = msg; }
+    btn.addEventListener('click', function () {
+      if (canShare) {
+        navigator.share({ title: 'MultiLink Balancer', text: 'App para usar todas as internets no Windows', url: SITE_URL })
+          .catch(function () { /* a pessoa fechou a folha de compartilhar */ });
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(SITE_URL).then(function () { say('Link copiado'); }, function () { say(SITE_URL); });
+      } else {
+        say(SITE_URL);
+      }
+    });
+  });
+
   // ---------- abas de "Como funciona" ----------
   var tabs = all('[role="tab"][data-tab]');
   var panel = document.getElementById('sim-painel');
