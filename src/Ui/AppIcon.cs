@@ -84,16 +84,21 @@ namespace MultiLink.Ui
             return path;
         }
 
-        // .ico com todos os tamanhos (cada um em PNG), para o Windows escolher o certo em cada DPI.
+        // .ico com todos os tamanhos, para o Windows escolher o certo em cada DPI. Só o 256 vai em PNG;
+        // os menores vão em bitmap clássico (DIB), porque quem lê o ícone sem decodificador de PNG
+        // (ex.: a lista de downloads do Edge/Chrome, num processo isolado) mostraria o ícone genérico.
         public static byte[] IcoBytes(Color accent)
         {
             var images = new byte[IcoSizes.Length][];
             for (int i = 0; i < IcoSizes.Length; i++)
                 using (var bitmap = Render(IcoSizes[i], accent))
-                using (var png = new MemoryStream())
                 {
-                    bitmap.Save(png, ImageFormat.Png);
-                    images[i] = png.ToArray();
+                    if (IcoSizes[i] < 256) { images[i] = Dib(bitmap); continue; }
+                    using (var png = new MemoryStream())
+                    {
+                        bitmap.Save(png, ImageFormat.Png);
+                        images[i] = png.ToArray();
+                    }
                 }
             using (var output = new MemoryStream())
             using (var writer = new BinaryWriter(output))
@@ -112,6 +117,36 @@ namespace MultiLink.Ui
                     offset += images[i].Length;
                 }
                 foreach (var image in images) writer.Write(image);
+                writer.Flush();
+                return output.ToArray();
+            }
+        }
+
+        // Imagem de ícone em DIB: BITMAPINFOHEADER (altura dobrada: cor + máscara), pixels BGRA de baixo
+        // para cima e máscara AND de 1 bit (linhas alinhadas a 4 bytes; 1 = transparente).
+        static byte[] Dib(Bitmap bitmap)
+        {
+            int size = bitmap.Width, maskStride = ((size + 31) / 32) * 4;
+            using (var output = new MemoryStream())
+            using (var writer = new BinaryWriter(output))
+            {
+                writer.Write(40); writer.Write(size); writer.Write(size * 2);
+                writer.Write((short)1); writer.Write((short)32);
+                writer.Write(0); writer.Write(size * size * 4 + maskStride * size);
+                writer.Write(0); writer.Write(0); writer.Write(0); writer.Write(0);
+                for (int y = size - 1; y >= 0; y--)
+                    for (int x = 0; x < size; x++)
+                    {
+                        var c = bitmap.GetPixel(x, y);
+                        writer.Write(c.B); writer.Write(c.G); writer.Write(c.R); writer.Write(c.A);
+                    }
+                for (int y = size - 1; y >= 0; y--)
+                {
+                    var row = new byte[maskStride];
+                    for (int x = 0; x < size; x++)
+                        if (bitmap.GetPixel(x, y).A == 0) row[x / 8] |= (byte)(0x80 >> (x % 8));
+                    writer.Write(row);
+                }
                 writer.Flush();
                 return output.ToArray();
             }
