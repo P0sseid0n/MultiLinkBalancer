@@ -25,3 +25,8 @@
 - [Download do .exe](https://github.com/P0sseid0n/MultiLinkBalancer/releases/latest/download/MultiLinkBalancer.exe)
 - [Código e documentação (README)](https://github.com/P0sseid0n/MultiLinkBalancer)
 - [Política de privacidade](https://multilink.p0sseid0n.dev/privacidade.html)
+
+## Contato
+
+- E-mail: contato@p0sseid0n.dev (dúvidas, privacidade e falhas de segurança)
+- [Issues no GitHub](https://github.com/P0sseid0n/MultiLinkBalancer/issues): problemas e sugestões
