@@ -185,6 +185,12 @@ O app não tem instalador: é só o `.exe`.
 2. Clique em **Sair**: o proxy do Windows, as rotas e o adaptador de captura voltam ao que eram.
 3. Apague o `MultiLinkBalancer.exe` e as pastas `%APPDATA%\MultiLinkBalancer` e `%LOCALAPPDATA%\MultiLinkBalancer`.
 
+## Contato
+
+Problemas e sugestões: abra uma [issue](https://github.com/P0sseid0n/MultiLinkBalancer/issues). Dúvidas sobre
+privacidade ou falhas de segurança: escreva para **contato@p0sseid0n.dev** (para falhas de segurança, veja o
+[`SECURITY.md`](SECURITY.md)).
+
 ## Licença
 
 [GPL-3.0](LICENSE). Os componentes de terceiros em `lib/` mantêm as próprias licenças.
