@@ -62,14 +62,28 @@ namespace MultiLink.Platform
             return Assembly.GetExecutingAssembly().GetManifestResourceStream(resource);
         }
 
-        // Só regrava se o arquivo não existe ou mudou de tamanho.
+        // Só regrava se o arquivo não existe ou não é igual ao embutido. Confere o conteúdo (SHA-256), não só o tamanho:
+        // a pasta é do usuário, e o que sai dela roda com o MultiLink, muitas vezes como administrador. Um arquivo
+        // trocado por outro programa é regravado antes de ser usado.
         static void Extract(string resource, string target)
         {
             using (var source = Open(resource))
             {
                 if (source == null) throw new FileNotFoundException("Recurso embutido ausente: " + resource);
-                if (File.Exists(target) && new FileInfo(target).Length == source.Length) return;
+                if (SameContent(source, target)) return;
+                source.Position = 0;
                 using (var destination = File.Create(target)) source.CopyTo(destination);
+            }
+        }
+
+        static bool SameContent(Stream source, string target)
+        {
+            if (!File.Exists(target) || new FileInfo(target).Length != source.Length) return false;
+            using (var sha = SHA256.Create())
+            {
+                var expected = sha.ComputeHash(source);
+                try { using (var existing = File.OpenRead(target)) return expected.SequenceEqual(sha.ComputeHash(existing)); }
+                catch (IOException) { return false; } // não deu para ler: tenta regravar
             }
         }
     }
