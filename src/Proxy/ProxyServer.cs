@@ -25,6 +25,7 @@ namespace MultiLink.Proxy
         readonly UdpBurstLog udpBursts;
         readonly UdpOversizeLog udpOversize;
         readonly LocalCaptureLog localCapture;
+        readonly LanClientGuard lanGuard;
         readonly ConcurrentDictionary<Socket, byte> openSockets = new ConcurrentDictionary<Socket, byte>();
         TcpListener listener;
         CancellationTokenSource stopping;
@@ -32,7 +33,8 @@ namespace MultiLink.Proxy
         public ProxyServer(Balancer balancer, ActivityLog log)
         {
             this.balancer = balancer;
-            connector = new BalancedConnector(balancer, log);
+            lanGuard = new LanClientGuard(log);
+            connector = new BalancedConnector(balancer, log, lanGuard);
             udpBursts = new UdpBurstLog(log);
             udpOversize = new UdpOversizeLog(log);
             udpPorts = new UdpPorts(udpOversize);
@@ -82,10 +84,11 @@ namespace MultiLink.Proxy
                 var client = new NetworkStream(clientSocket, false);
                 var request = await ReadRequest(client);
                 if (request == null) return;
-                if (request.IsUdpAssociate) { await new UdpAssociation(balancer, udpPorts, udpBursts, udpOversize, request.FromCapture ? localCapture : null, client, clientSocket).Run(); return; }
+                if (request.IsUdpAssociate) { await new UdpAssociation(balancer, udpPorts, udpBursts, udpOversize, request.FromCapture ? localCapture : null, lanGuard, client, clientSocket).Run(); return; }
 
                 if (request.FromCapture && localCapture.RefuseTcp(request.Host, request.Port)) { await request.ReplyFailure(); return; }
-                var outbound = await connector.Connect(request.Host, request.Port);
+                var clientAddress = ((IPEndPoint)clientSocket.RemoteEndPoint).Address;
+                var outbound = await connector.Connect(request.Host, request.Port, LanClientGuard.IsThisPc(clientAddress) ? null : clientAddress);
                 if (outbound == null) { await request.ReplyFailure(); return; }
                 remoteSocket = outbound.Socket;
                 openSockets[remoteSocket] = 0;

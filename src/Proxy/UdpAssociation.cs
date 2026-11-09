@@ -28,6 +28,8 @@ namespace MultiLink.Proxy
         readonly UdpBurstLog bursts;
         readonly UdpOversizeLog oversize;
         readonly LocalCaptureLog localCapture; // só nas associações da captura
+        readonly LanClientGuard lanGuard;
+        readonly bool fromThisPc; // o cliente é um programa deste PC, não um aparelho da rede
         readonly NetworkStream control;
         readonly IPAddress clientAddress;
         readonly IPAddress localAddress;
@@ -36,8 +38,9 @@ namespace MultiLink.Proxy
         EndPoint clientEndPoint; // de onde o cliente mandou o último datagrama: as respostas vão para lá
 
         public UdpAssociation(Balancer balancer, UdpPorts ports, UdpBurstLog bursts, UdpOversizeLog oversize,
-                              LocalCaptureLog localCapture, NetworkStream control, Socket controlSocket)
+                              LocalCaptureLog localCapture, LanClientGuard lanGuard, NetworkStream control, Socket controlSocket)
         {
+            this.lanGuard = lanGuard;
             this.balancer = balancer;
             this.ports = ports;
             this.bursts = bursts;
@@ -46,6 +49,7 @@ namespace MultiLink.Proxy
             this.control = control;
             clientAddress = ((IPEndPoint)controlSocket.RemoteEndPoint).Address;
             localAddress = ((IPEndPoint)controlSocket.LocalEndPoint).Address;
+            fromThisPc = LanClientGuard.IsThisPc(clientAddress);
         }
 
         public async Task Run()
@@ -179,7 +183,9 @@ namespace MultiLink.Proxy
 
             var links = balancer.Snapshot();
             Link chosen = null; // continua null na saída direta
-            if (DirectDestination.Find(new[] { target.Address }, links) == null)
+            bool direct = DirectDestination.Find(new[] { target.Address }, links) != null;
+            if (direct && !fromThisPc) { lanGuard.Refused(clientAddress, target.Address.ToString(), target.Port, "UDP"); return null; } // descartado
+            if (!direct)
             {
                 bool ipv6 = target.AddressFamily == AddressFamily.InterNetworkV6;
                 if (ipv6 && !balancer.Ipv6Allowed()) return null; // descartado: sem resposta, o programa passa a usar o IPv4

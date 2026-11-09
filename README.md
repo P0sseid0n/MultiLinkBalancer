@@ -72,6 +72,8 @@ roteador ou a mesma operadora) ou o PC não dá conta de mais tráfego.
   sites só IPv6 ficam sem conexão nesse caso. *Sempre* usa IPv6 pelos links que têm; *Nunca* recusa todo IPv6. Nos
   modos de um link só (*Só um link, com reserva* e *Menor latência*), o automático não recusa.
 - **Aceitar conexões de outros aparelhos da rede**: outros dispositivos podem usar `IP-deste-PC:1080` como proxy.
+  Eles só chegam à internet: pedidos para o próprio PC (`localhost`, os IPs dele) ou para redes de outro adaptador
+  (WSL, Docker, VPN) são recusados e aparecem no registro de eventos. Esses destinos ficam para os programas deste PC.
 
 ## Capturar todos os programas
 

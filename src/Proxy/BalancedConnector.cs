@@ -33,10 +33,13 @@ namespace MultiLink.Proxy
         int warnedNoIpv6; // o aviso de "sem IPv6" sai uma vez só
         int warnedIpv6Refused;
 
-        public BalancedConnector(Balancer balancer, ActivityLog log) { this.balancer = balancer; this.log = log; }
+        readonly LanClientGuard lanGuard;
+
+        public BalancedConnector(Balancer balancer, ActivityLog log, LanClientGuard lanGuard) { this.balancer = balancer; this.log = log; this.lanGuard = lanGuard; }
 
         // Devolve null se nenhum link conseguiu conectar (o motivo vai para o registro de eventos).
-        public async Task<OutboundConnection> Connect(string host, int port)
+        // lanClient: o aparelho da rede que fez o pedido; null se foi um programa deste PC (ver LanClientGuard).
+        public async Task<OutboundConnection> Connect(string host, int port, IPAddress lanClient)
         {
             IPAddress[] resolved = DirectDestination.ForName(host);
             try
@@ -54,6 +57,7 @@ namespace MultiLink.Proxy
             if (resolved.All(DirectDestination.IsUnspecified)) return null;
             var links = balancer.Snapshot();
             var direct = DirectDestination.Find(resolved, links);
+            if (direct != null && lanClient != null) { lanGuard.Refused(lanClient, host, port, "TCP"); return null; }
             if (direct != null) return await ConnectDirect(host, port, direct);
 
             // IPv4 é o padrão; IPv6 só para destinos sem IPv4, e apenas em links cujo IPv6 passou no teste
