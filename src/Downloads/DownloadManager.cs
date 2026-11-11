@@ -103,7 +103,7 @@ namespace MultiLink.Downloads
         public void Cancel() { if (cancellation != null) cancellation.Cancel(); }
 
         // Mostra o arquivo baixado no Explorer.
-        public void Reveal() { if (filePath != null && File.Exists(filePath)) Process.Start("explorer.exe", "/select,\"" + filePath + "\""); }
+        public void Reveal() { if (filePath != null && File.Exists(filePath)) Process.Start(Platform.ProcessRunner.Explorer, "/select,\"" + filePath + "\""); }
 
         // Some com o resultado do último download (não mexe num download em andamento).
         public void Clear() { if (current == null) state = null; }

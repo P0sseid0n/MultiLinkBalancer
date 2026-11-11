@@ -52,7 +52,7 @@ namespace MultiLink.App
                     return null;
 
                 case "dev.rebuild": DevBuild.Start(); return null;
-                case "dev.openFolder": Process.Start("explorer.exe", "\"" + (Text(args, "folder") == "settings" ? AppPaths.Roaming : AppPaths.Local) + "\""); return null;
+                case "dev.openFolder": Process.Start(ProcessRunner.Explorer, "\"" + (Text(args, "folder") == "settings" ? AppPaths.Roaming : AppPaths.Local) + "\""); return null;
 
                 case "app.restartElevated": Elevation.StartElevatedInstance(); host.Exit(); return null;
                 case "app.openNetworkConnections": Process.Start("ncpa.cpl"); return null;

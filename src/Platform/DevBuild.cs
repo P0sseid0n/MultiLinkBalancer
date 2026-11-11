@@ -27,7 +27,7 @@ namespace MultiLink.Platform
             if (Running) return;
             var script = ScriptPath.Replace("'", "''");
             var command = "try { & '" + script + "' -Restart } catch { Write-Host $_ -ForegroundColor Red; Read-Host 'Enter para fechar' }";
-            running = Process.Start(new ProcessStartInfo("powershell.exe", "-NoProfile -ExecutionPolicy Bypass -Command \"" + command + "\"")
+            running = Process.Start(new ProcessStartInfo(PowerShell.Exe,"-NoProfile -ExecutionPolicy Bypass -Command \"" + command + "\"")
                 { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(ScriptPath) });
         }
     }

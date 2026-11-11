@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -36,6 +37,8 @@ namespace MultiLink.Platform
         const string SystemModulesOnly =
             "$env:PSModulePath = [Environment]::GetFolderPath('ProgramFiles') + '\\WindowsPowerShell\\Modules;' + $PSHOME + '\\Modules'; ";
 
+        public static string Exe { get { return Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe"); } }
+
         // Executa um script. Sem administrador, allowUac=true pede elevação (aviso do UAC);
         // nesse caso a saída do script não volta, só se deu certo.
         public static Task<CommandResult> Run(string script, bool allowUac)
@@ -46,7 +49,7 @@ namespace MultiLink.Platform
                 var arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand " + encoded;
                 if (Elevation.IsAdmin)
                 {
-                    var output = ProcessRunner.Run("powershell.exe", arguments);
+                    var output = ProcessRunner.Run(Exe, arguments);
                     return output.ExitCode == 0 ? CommandResult.Success(output.StandardOutput.Trim())
                                                 : CommandResult.Failure(output.StandardError.Trim());
                 }
@@ -57,7 +60,7 @@ namespace MultiLink.Platform
 
         static CommandResult RunElevated(string arguments)
         {
-            var startInfo = new ProcessStartInfo("powershell.exe", arguments)
+            var startInfo = new ProcessStartInfo(Exe, arguments)
             {
                 UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden
             };
