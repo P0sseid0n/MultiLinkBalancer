@@ -158,7 +158,7 @@ namespace MultiLink.Proxy
                     if (length < 7 + nameLength) return;
                     var name = Encoding.ASCII.GetString(datagram, 5, nameLength);
                     offset = 5 + nameLength;
-                    try { destination = (DirectDestination.ForName(name) ?? await Dns.GetHostAddressesAsync(name)).OrderBy(resolved => resolved.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).First(); }
+                    try { destination = (DirectDestination.ForName(name) ?? await ProxyDns.Resolve(name)).OrderBy(resolved => resolved.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).First(); }
                     catch { return; }
                     if (DirectDestination.IsUnspecified(destination)) return;
                     break;

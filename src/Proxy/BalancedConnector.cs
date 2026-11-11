@@ -191,10 +191,10 @@ namespace MultiLink.Proxy
 
         static async Task<IPAddress[]> Resolve(string host)
         {
-            try { return await Dns.GetHostAddressesAsync(host); }
+            try { return await ProxyDns.Resolve(host); }
             catch (SocketException ex) { if (ex.SocketErrorCode == SocketError.HostNotFound) throw; }
             await Task.Delay(DnsRetryDelayMs);
-            return await Dns.GetHostAddressesAsync(host);
+            return await ProxyDns.Resolve(host);
         }
     }
 }
