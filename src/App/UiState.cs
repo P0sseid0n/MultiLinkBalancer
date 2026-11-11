@@ -20,6 +20,7 @@ namespace MultiLink.App
             return new Dictionary<string, object>
             {
                 { "admin", app.IsAdmin },
+                { "installed", Installation.IsInstalled }, // em Arquivos de Programas (Platform/Installation)
                 { "proxy", new Dictionary<string, object> {
                     { "running", app.Proxy.Running }, { "port", settings.Port }, { "lan", settings.AllowLan },
                     { "system", settings.UseSystemProxy }, { "systemApplied", settings.SystemProxyApplied } } },

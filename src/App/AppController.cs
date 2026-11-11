@@ -136,6 +136,8 @@ namespace MultiLink.App
             // O que não é urgente fica para depois (o schtasks.exe demora na partida do Windows).
             Task.Run(async () =>
             {
+                // a versão em "Aplicativos instalados" acompanha as atualizações
+                if (IsAdmin && Installation.IsInstalled) try { Installation.WriteUninstallEntry(); } catch { }
                 var downgraded = await StartupRegistration.DowngradeUnsafeTask();
                 if (downgraded != null) Log.Add(downgraded, ActivityLog.Error);
                 startupRegistered = StartupRegistration.IsRegistered;
@@ -148,6 +150,18 @@ namespace MultiLink.App
             { var ignored = SetStartup(true); }
             Ports.Start();
             RouteFailover.RepairLeftovers(Links.All());
+            if (Installation.UpdateRequested) { var ignored = UpdateAfterElevation(); }
+        }
+
+        // Aberto elevado só para atualizar a cópia instalada (o botão Atualizar sem administrador).
+        async Task UpdateAfterElevation()
+        {
+            try
+            {
+                if (await Updater.Check()) await Updater.Install(Log, host.Exit);
+                else Log.Add(Updater.Error != null ? "Atualização não concluída: " + Updater.Error : "Nenhuma atualização disponível.");
+            }
+            catch (Exception ex) { Log.Add(ex.Message, ActivityLog.Error); }
         }
 
         // Um fechamento inesperado pode ter deixado o Windows apontando para o proxy ou com rotas alteradas.

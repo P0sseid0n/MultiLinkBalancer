@@ -48,8 +48,12 @@ namespace MultiLink.App
                 case "update.check": await CheckUpdate(); return null;
                 case "update.install":
                     if (DevBuild.Available) throw new Exception("No modo de desenvolvimento a atualização trocaria o build local pelo da release. Use Recompilar e reiniciar.");
+                    // instalado em Arquivos de Programas, só um administrador troca o .exe: reabre elevado, que atualiza ao abrir
+                    if (!IsAdmin && Installation.IsInstalled) { Elevation.StartElevatedInstance(Installation.UpdateArgument); host.Exit(); return null; }
                     await Updater.Install(Log, host.Exit);
                     return null;
+
+                case "app.install": await Installation.Start(Log); host.Exit(); return null;
 
                 case "dev.rebuild": DevBuild.Start(); return null;
                 case "dev.openFolder": Process.Start(ProcessRunner.Explorer, "\"" + (Text(args, "folder") == "settings" ? AppPaths.Roaming : AppPaths.Local) + "\""); return null;

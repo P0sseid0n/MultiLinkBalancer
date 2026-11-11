@@ -83,6 +83,15 @@
     if (confirmed) fire('update.install');
   }
 
+  async function install() {
+    const confirmed = await ask({
+      title: 'Instalar no computador?',
+      body: `O MultiLink é copiado para C:\\Program Files\\MultiLinkBalancer e reabre de lá${appState.admin ? '' : '; o Windows vai pedir confirmação de administrador'}. Os ajustes continuam os mesmos, e o arquivo atual pode ser apagado depois.`,
+      confirm: 'Instalar',
+    });
+    if (confirmed) fire('app.install');
+  }
+
   async function exitApp() {
     const confirmed = await ask({
       title: 'Sair do MultiLink?',
@@ -264,7 +273,15 @@
   <div class="body">
     <Toggle checked={appState.settings.startup} onchange={(value) => setSetting('startup', value)}
       label="Iniciar com o Windows"
-      description={appState.admin ? 'Abre na bandeja ao entrar no Windows, já como administrador.' : 'Abre na bandeja ao entrar no Windows.'} />
+      description={!appState.admin ? 'Abre na bandeja ao entrar no Windows.'
+        : appState.installed ? 'Abre na bandeja ao entrar no Windows, já como administrador.'
+        : 'Abre na bandeja ao entrar no Windows, sem administrador. Instalado no computador, abre já como administrador.'} />
+    {#if !appState.installed}
+      <div class="field group">
+        <button class="btn" onclick={install}>Instalar no computador</button>
+        <span class="help">Copia o MultiLink para Arquivos de Programas, com atalho no Menu Iniciar e desinstalação pelo Windows. Só lá ele pode iniciar com o Windows já como administrador: fora dela, qualquer programa poderia trocar o arquivo.</span>
+      </div>
+    {/if}
     <div class="field group">
       <button class="btn danger" onclick={exitApp}>Sair do MultiLink</button>
       <span class="help">Fechar a janela só esconde o app na bandeja.</span>

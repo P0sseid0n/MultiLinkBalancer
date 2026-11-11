@@ -24,9 +24,11 @@ namespace MultiLink.Platform
         }
 
         // Abre outra instância como administrador. Quem chama deve fechar esta em seguida.
-        public static void StartElevatedInstance()
+        // extraArgument: o que a nova instância faz ao abrir (Installation.InstallArgument, UpdateArgument).
+        public static void StartElevatedInstance(string extraArgument = null)
         {
-            try { Process.Start(new ProcessStartInfo(Application.ExecutablePath, WaitForThisProcessArgument) { UseShellExecute = true, Verb = "runas" }); }
+            var arguments = WaitForThisProcessArgument + (extraArgument != null ? " " + extraArgument : "");
+            try { Process.Start(new ProcessStartInfo(Application.ExecutablePath, arguments) { UseShellExecute = true, Verb = "runas" }); }
             catch (Win32Exception) { throw new Exception("Reinício como administrador cancelado."); }
         }
     }

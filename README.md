@@ -2,7 +2,7 @@
 
 App para Windows que soma várias conexões de internet (cabeadas, Wi-Fi ou 4G via USB) usando o
 próprio PC: cada link tem seu gateway e o app distribui o tráfego entre eles. É um `.exe` único
-(~13 MB, quase tudo do tun2socks usado na captura), sem instalação, com a interface em Svelte rodando no WebView2 que já vem no Windows 11.
+(~13 MB, quase tudo do tun2socks usado na captura), que roda de qualquer pasta ou se instala sozinho, com a interface em Svelte rodando no WebView2 que já vem no Windows 11.
 
 ![MultiLink Balancer](screenshot.png)
 
@@ -25,6 +25,15 @@ Os **pesos** (quanto do tráfego vai por cada link) se ajustam sozinhos pelo que
 
 Fechar a janela mantém o app na bandeja (monitorando quedas). Para encerrar: **Sair** no menu do
 ícone da bandeja ou em Ajustes. Abrir o `.exe` de novo traz a janela de volta.
+
+## Instalar
+
+O `.exe` funciona de qualquer pasta. Para **iniciar com o Windows já como administrador** (necessário para a captura e
+para tirar link caído do roteamento), ele precisa estar numa pasta que só administradores alteram: em *Ajustes >
+Sistema*, **Instalar no computador** copia o app para `C:\Program Files\MultiLinkBalancer`, cria o atalho no Menu
+Iniciar e o item em *Aplicativos instalados* do Windows, e reabre de lá (o Windows pede confirmação de administrador).
+Os ajustes continuam os mesmos, e o `.exe` usado antes pode ser apagado. Instalado, só a instância de administrador
+troca o `.exe`: **Atualizar** sem administrador reabre o app elevado, que atualiza sozinho.
 
 ## Como a soma funciona
 
@@ -144,7 +153,7 @@ O app testa cada link a cada 3 s, mesmo com o proxy desligado, e diz **onde** es
 - **Tirar link caído do roteamento do Windows** (opcional, requer administrador): quando um link cai, ele sai
   do roteamento do sistema inteiro (métrica 9000) e volta sozinho quando a internet dele retorna. Ao fechar o
   app, as rotas originais são restauradas. Como administrador, "Iniciar com o Windows" usa uma tarefa agendada elevada,
-  que só é criada com o `.exe` numa pasta que usuários comuns não alteram (ex.: `C:\Program Files\MultiLinkBalancer`).
+  que só é criada com o app instalado no computador (ver [Instalar](#instalar)).
   Na Área de Trabalho ou em Downloads, qualquer programa poderia trocar o `.exe` e rodar como administrador no logon;
   ali o app inicia com o Windows sem administrador.
 
@@ -183,7 +192,12 @@ A política completa, com o que cada serviço vê, o DNS com a captura ligada, o
 
 ## Desinstalar
 
-O app não tem instalador: é só o `.exe`.
+Instalado: *Configurações do Windows > Aplicativos instalados > MultiLink Balancer > Desinstalar*. O app fecha
+(devolvendo o proxy do Windows, as rotas e o adaptador de captura), a inicialização com o Windows, o atalho e a pasta
+em Arquivos de Programas são removidos. Os ajustes e logs ficam: apague `%APPDATA%\MultiLinkBalancer` e
+`%LOCALAPPDATA%\MultiLinkBalancer` se quiser.
+
+Sem instalar (só o `.exe`):
 
 1. Em *Ajustes*, desligue **Iniciar com o Windows** (se ele foi ligado com o app aberto como administrador, desligue
    também como administrador, para remover a tarefa agendada).

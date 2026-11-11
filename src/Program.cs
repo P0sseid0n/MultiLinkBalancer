@@ -41,7 +41,11 @@ namespace MultiLink
             if (background && StartupRegistration.DisabledInTaskManager) return;
             // entrada "Run": a tarefa já abriu o app (o normal) ou ela abre agora; sem tarefa, segue sem elevação
             if (launcher && (SingleInstance.Running() || StartupRegistration.RunTask())) return;
+            if (HasArgument(args, Installation.UninstallArgument)) { Installation.UninstallFromArgument(); return; }
             WaitForPreviousInstance(args);
+            // instalação pedida sem administrador: esta instância elevada instala, abre a cópia instalada e fecha
+            if (HasArgument(args, Installation.InstallArgument) && Elevation.IsAdmin && Installation.InstallFromArgument()) return;
+            Installation.UpdateRequested = HasArgument(args, Installation.UpdateArgument) && Elevation.IsAdmin;
             // per-monitor v2: interface nítida em telas com escala
             try { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); }
             catch { try { SetProcessDPIAware(); } catch { } }
