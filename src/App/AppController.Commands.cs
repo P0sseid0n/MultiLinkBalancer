@@ -55,7 +55,11 @@ namespace MultiLink.App
                 case "dev.openFolder": Process.Start(ProcessRunner.Explorer, "\"" + (Text(args, "folder") == "settings" ? AppPaths.Roaming : AppPaths.Local) + "\""); return null;
 
                 case "app.restartElevated": Elevation.StartElevatedInstance(); host.Exit(); return null;
-                case "app.openNetworkConnections": Process.Start("ncpa.cpl"); return null;
+                // control.exe de System32 pelo caminho completo: abrir "ncpa.cpl" pela associação do shell seguiria uma
+                // associação gravada no HKCU pelo usuário, e a instância elevada abriria o programa dele como administrador.
+                case "app.openNetworkConnections":
+                    Process.Start(new ProcessStartInfo(ProcessRunner.SystemExe("control.exe"), "ncpa.cpl") { UseShellExecute = false }).Dispose();
+                    return null;
                 case "app.exit": host.Exit(); return null;
                 default: throw new Exception("Comando desconhecido: " + command);
             }
