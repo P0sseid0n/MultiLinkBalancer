@@ -73,6 +73,8 @@ namespace MultiLink.Downloads
                     message = "O servidor não aceita download em partes: baixando por um único link.";
                     await current.RunSingle(probe.FinalUri, path, cancellation.Token);
                 }
+                try { MarkOfTheWeb.Apply(path, probe.FinalUri); }
+                catch (Exception ex) { log.Add("Não foi possível marcar " + fileName + " como vindo da internet: " + ex.Message, ActivityLog.Error); }
                 doneBytes = current.Done;
                 totalBytes = current.Total > 0 ? current.Total : current.Done;
                 averageMbps = current.Done * 8 / Math.Max(0.1, stopwatch.Elapsed.TotalSeconds) / 1e6;
