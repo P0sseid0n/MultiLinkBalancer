@@ -7,8 +7,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
@@ -76,6 +78,7 @@ namespace MultiLink.Updates
                     if (name.Equals(AssetName, StringComparison.OrdinalIgnoreCase)) exeUrl = (string)asset["browser_download_url"];
                     if (name.Equals(AssetName + ".sha256", StringComparison.OrdinalIgnoreCase)) checksumUrl = (string)asset["browser_download_url"];
                 }
+                if (!IsReleaseAsset(exeUrl) || !IsReleaseAsset(checksumUrl)) exeUrl = checksumUrl = null;
                 Latest = latest.ToString();
                 Notes = release.ContainsKey("body") ? release["body"] as string : null;
                 bool newer = latest > Current && exeUrl != null && checksumUrl != null;
@@ -187,13 +190,45 @@ namespace MultiLink.Updates
             State = Available; // pode tentar de novo
         }
 
+        // Só arquivos das releases deste repositório, por HTTPS (o GitHub redireciona para o servidor de arquivos dele).
+        static bool IsReleaseAsset(string url)
+        {
+            return url != null && url.StartsWith("https://github.com/" + Repository + "/releases/download/", StringComparison.OrdinalIgnoreCase);
+        }
+
         static HttpWebRequest Request(string url)
         {
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.UserAgent = "MultiLinkBalancer/" + Current;
             request.Timeout = 30000;
+            // Como administrador, o .exe baixado roda como administrador. O proxy do Windows e as autoridades de
+            // certificado do usuário (repositório "Usuário atual") podem ser trocados por qualquer programa dele: a
+            // conexão vai direta e só vale um certificado que chega a uma raiz do computador (instalada por administrador).
+            if (Elevation.IsAdmin)
+            {
+                request.Proxy = null;
+                request.ServerCertificateValidationCallback = (sender, certificate, chain, errors) =>
+                    errors == SslPolicyErrors.None && chain != null && chain.ChainElements.Count > 0 &&
+                    IsMachineRoot(chain.ChainElements[chain.ChainElements.Count - 1].Certificate);
+            }
             return request;
+        }
+
+        static bool IsMachineRoot(X509Certificate2 root)
+        {
+            foreach (var name in new[] { StoreName.Root, StoreName.AuthRoot })
+            {
+                var store = new X509Store(name, StoreLocation.LocalMachine);
+                try
+                {
+                    store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
+                    if (store.Certificates.Find(X509FindType.FindByThumbprint, root.Thumbprint, false).Count > 0) return true;
+                }
+                catch (CryptographicException) { }
+                finally { store.Close(); }
+            }
+            return false;
         }
     }
 }
