@@ -46,6 +46,9 @@ namespace MultiLink.Proxy
         public void Start(int port, bool allowLan)
         {
             var started = new TcpListener(allowLan ? IPAddress.Any : IPAddress.Loopback, port);
+            // exclusiva: sem isso outro programa (até de outro usuário) conseguia abrir a mesma porta em 127.0.0.1, mais
+            // específico que o 0.0.0.0 do modo rede, e receber o tráfego da captura e do proxy do Windows
+            started.ExclusiveAddressUse = true;
             started.Server.DisableInheritance();
             started.Start(Backlog);
             listener = started;
