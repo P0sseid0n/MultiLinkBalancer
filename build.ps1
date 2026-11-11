@@ -83,10 +83,30 @@ if (-not $Restart) { return }
 
 # Fecha o MultiLink aberto pelo evento que ele escuta: sai como pelo "Sair" da bandeja, restaurando o proxy do
 # Windows e as rotas (matar o processo deixaria o Windows apontando para um proxy parado).
+# O processo roda como administrador? Pelo token dele. Sem administrador, nem dá para abrir um processo elevado (isso
+# já responde); com administrador (este terminal elevado), dá, e só o token diz.
+function Test-Elevated($process) {
+    Add-Type -Namespace MultiLinkBuild -Name Token -MemberDefinition @'
+[DllImport("advapi32.dll", SetLastError = true)] public static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
+[DllImport("advapi32.dll", SetLastError = true)] public static extern bool GetTokenInformation(IntPtr token, int infoClass, out int info, int length, out int returned);
+[DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr handle);
+'@ -ErrorAction SilentlyContinue
+    try { $handle = $process.Handle } catch { $handle = $null }
+    if ($null -eq $handle) { return $true } # o PowerShell devolve vazio quando o acesso é negado
+    $token = [IntPtr]::Zero
+    if (-not [MultiLinkBuild.Token]::OpenProcessToken($handle, 0x0008, [ref]$token)) { return $true } # TOKEN_QUERY negado
+    try {
+        $elevated = 0; $size = 0
+        if (-not [MultiLinkBuild.Token]::GetTokenInformation($token, 20, [ref]$elevated, 4, [ref]$size)) { return $true } # TokenElevation
+        return $elevated -ne 0
+    }
+    finally { [MultiLinkBuild.Token]::CloseHandle($token) | Out-Null }
+}
+
 $running = Get-Process MultiLinkBalancer -ErrorAction SilentlyContinue | Select-Object -First 1
 $wasElevated = $false
 if ($running) {
-    $wasElevated = -not $running.Path # sem administrador não dá para ler o caminho de um processo elevado
+    $wasElevated = Test-Elevated $running
     $exitRequest = $null
     if (-not [System.Threading.EventWaitHandle]::TryOpenExisting('Local\MultiLinkBalancer.Exit', [ref]$exitRequest)) {
         throw 'O MultiLink aberto é de uma versão sem fechamento automático: feche pelo "Sair" da bandeja e rode de novo.'
@@ -114,7 +134,8 @@ else { Move-Item -Force $out $final }
 # abre este mesmo .exe; senão o Windows pede a confirmação de administrador.
 $task = Get-ScheduledTask -TaskName MultiLinkBalancer -ErrorAction SilentlyContinue
 $taskRunsThis = $task -and ($task.Actions | Where-Object { $_.Execute -and ([IO.Path]::GetFullPath($_.Execute) -eq [IO.Path]::GetFullPath($final)) })
-if ($wasElevated -and $taskRunsThis) { Start-ScheduledTask -TaskName MultiLinkBalancer }
+# a cópia instalada roda como administrador: reabre pela tarefa mesmo que estivesse aberta sem (ou fechada)
+if (($wasElevated -or $Install) -and $taskRunsThis) { Start-ScheduledTask -TaskName MultiLinkBalancer }
 elseif ($wasElevated) { Start-Process $final '/tray' -Verb RunAs }
 else { Start-Process $final '/tray' }
 "MultiLink reaberto."
