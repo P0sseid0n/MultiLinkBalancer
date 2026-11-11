@@ -4,7 +4,8 @@
 #   ./build.ps1 -SkipUi    reaproveita ui/dist (só recompila o C#)
 #   ./build.ps1 -Version 1.2.0   versão gravada no .exe (padrão: a última tag vX.Y.Z do git)
 #   ./build.ps1 -Restart   compila, fecha o MultiLink aberto (como pelo "Sair"), troca o .exe e reabre
-param([switch]$SkipUi, [string]$Out, [string]$Version, [switch]$Restart)
+#   ./build.ps1 -Install   como -Restart, mas troca a cópia instalada em Arquivos de Programas (pede administrador)
+param([switch]$SkipUi, [string]$Out, [string]$Version, [switch]$Restart, [switch]$Install)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
@@ -24,7 +25,14 @@ $t2s = Join-Path $root 'lib\tun2socks' # captura de todos os programas (ver lib\
 $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 $out = if ($Out) { $Out } else { Join-Path $root 'MultiLinkBalancer.exe' }
 $final = $out
-if ($Restart) { $out = "$final.new" } # o app aberto segura o .exe: compila ao lado e troca depois que ele fechar
+if ($Install) {
+    # a cópia instalada pelo app (Ajustes > Instalar no computador, src/Platform/Installation.cs)
+    $Restart = $true
+    $final = Join-Path ([Environment]::GetFolderPath('ProgramFiles')) 'MultiLinkBalancer\MultiLinkBalancer.exe'
+    if (-not (Test-Path $final)) { throw "O MultiLink não está instalado ($final): instale pelo app em Ajustes > Instalar no computador." }
+    $out = Join-Path $env:TEMP 'multilink-build\MultiLinkBalancer.new.exe' # a pasta instalada só aceita gravação de administrador
+}
+elseif ($Restart) { $out = "$final.new" } # o app aberto segura o .exe: compila ao lado e troca depois que ele fechar
 $sources = Get-ChildItem (Join-Path $root 'src') -Filter *.cs -Recurse | ForEach-Object FullName
 
 # versão: comparada com a última release do GitHub pela atualização automática
@@ -83,7 +91,19 @@ if ($running) {
     if (-not $running.WaitForExit(30000)) { throw 'O MultiLink não fechou em 30 s.' }
     "MultiLink fechado."
 }
-Move-Item -Force $out $final
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if ($Install) {
+    # copia (não move): mover levaria junto as permissões e o dono do %TEMP%, e o .exe instalado deixaria de ser
+    # protegido. Sem administrador, a cópia roda elevada (o Windows pede confirmação).
+    $copy = "Copy-Item -Force -LiteralPath '{0}' -Destination '{1}'" -f $out.Replace("'", "''"), $final.Replace("'", "''")
+    if ($isAdmin) { Copy-Item -Force -LiteralPath $out -Destination $final }
+    else {
+        $copier = Start-Process powershell.exe -Verb RunAs -Wait -PassThru -ArgumentList '-NoProfile', '-Command', $copy
+        if ($copier.ExitCode) { throw 'Não foi possível trocar o .exe instalado (confirmação de administrador cancelada?).' }
+    }
+    Remove-Item $out
+}
+else { Move-Item -Force $out $final }
 
 # Reabre como estava. Elevado: pela tarefa agendada do "iniciar com o Windows" (sem pedir confirmação), se ela
 # abre este mesmo .exe; senão o Windows pede a confirmação de administrador.

@@ -253,6 +253,7 @@ desenvolvimento (com o `build.ps1` ao lado do .exe), sem administrador e para um
 ./build.ps1            # front + app
 ./build.ps1 -SkipUi    # só o C#
 ./build.ps1 -Restart   # compila, fecha o MultiLink aberto (como pelo "Sair"), troca o .exe e reabre
+./build.ps1 -Install   # como -Restart, mas troca a cópia instalada em Arquivos de Programas (pede administrador)
 ```
 
 **Modo de desenvolvimento:** com o `.exe` na pasta do repositório (ao lado do `build.ps1`), o app mostra uma faixa
