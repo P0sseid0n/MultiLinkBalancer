@@ -95,7 +95,7 @@ namespace MultiLink.Proxy
                 catch (Exception ex)
                 {
                     error = ex.Message;
-                    // sem resposta em vários destinos IPv6: o IPv6 do link é que não funciona (o LinkMonitor avisa)
+                    // sem resposta em vários destinos IPv6: testa o IPv6 do link já (ver LinkIpv6.ConnectTimedOut)
                     if (useIpv6 && ex is TimeoutException) link.Ipv6.ConnectTimedOut(host, DateTime.UtcNow);
                 }
                 if (local != null) break; // aparelho da rede local desligado: não é falha do link

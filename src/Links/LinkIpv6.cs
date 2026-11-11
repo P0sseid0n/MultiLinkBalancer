@@ -1,6 +1,6 @@
 // Se vale mandar IPv6 por um link. Muita operadora entrega IPv6 global que funciona mal: o teste periódico
-// (HealthChecker) pode passar por sorte enquanto as conexões reais esgotam o tempo. Por isso o IPv6 sai de uso
-// tanto pelo teste quanto por conexões reais sem resposta, e cada nova queda dobra a espera até o próximo teste,
+// (HealthChecker) pode passar por sorte enquanto as conexões reais esgotam o tempo. Por isso o teste exige todas as
+// sondas, conexões reais sem resposta antecipam o teste, e cada nova queda dobra a espera até o próximo teste,
 // para um IPv6 que oscila não ficar entrando e saindo (nem enchendo o registro de eventos).
 using System;
 using System.Collections.Generic;
@@ -54,13 +54,18 @@ namespace MultiLink.Links
         }
 
         // Conexão real que esgotou o tempo. Um destino fora do ar não conta várias vezes: precisa de destinos diferentes.
+        // Os destinos são escolhidos por quem usa o proxy (qualquer programa, uma página aberta no navegador, um aparelho
+        // da rede): três nomes IPv6 que não respondem bastariam para tirar o IPv6 do PC inteiro. Por isso as quedas só
+        // antecipam o teste do próprio app (HealthChecker, todas as sondas precisam responder), que decide.
         public void ConnectTimedOut(string destination, DateTime now)
         {
             lock (sync)
             {
                 if (!Works) return;
                 timedOut.Add(destination);
-                if (timedOut.Count >= TimeoutsUntilBad) MarkBad(now);
+                if (timedOut.Count < TimeoutsUntilBad) return;
+                timedOut.Clear();
+                if (nextCheck > now) nextCheck = now;
             }
         }
 
