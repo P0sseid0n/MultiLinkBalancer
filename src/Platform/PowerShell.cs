@@ -31,13 +31,18 @@ namespace MultiLink.Platform
             return quoted.Append('\'').ToString();
         }
 
+        // Módulos só das pastas do sistema: o caminho padrão começa pela pasta Documentos do usuário, e um módulo
+        // gravado lá com o nome de um cmdlet (Get-NetIPInterface...) rodaria como administrador.
+        const string SystemModulesOnly =
+            "$env:PSModulePath = [Environment]::GetFolderPath('ProgramFiles') + '\\WindowsPowerShell\\Modules;' + $PSHOME + '\\Modules'; ";
+
         // Executa um script. Sem administrador, allowUac=true pede elevação (aviso do UAC);
         // nesse caso a saída do script não volta, só se deu certo.
         public static Task<CommandResult> Run(string script, bool allowUac)
         {
             return Task.Run(() =>
             {
-                var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes("$ErrorActionPreference='Stop'; " + script));
+                var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(SystemModulesOnly + "$ErrorActionPreference='Stop'; " + script));
                 var arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand " + encoded;
                 if (Elevation.IsAdmin)
                 {
