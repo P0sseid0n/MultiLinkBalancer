@@ -49,6 +49,11 @@ New-Item -ItemType Directory -Force $tmp | Out-Null
 $ico = Join-Path $tmp 'app.ico'
 $verCs = Join-Path $tmp 'Version.cs'
 Set-Content $verCs "[assembly: System.Reflection.AssemblyVersion(`"$Version.0`")]`n[assembly: System.Reflection.AssemblyFileVersion(`"$Version.0`")]"
+# build local: grava a pasta do repositório no .exe (src/Platform/DevBuild.cs). A cópia instalada em Arquivos de Programas
+# continua no modo de desenvolvimento e recompila a partir daqui. O build do GitHub Actions (release) não leva.
+if ($env:GITHUB_ACTIONS -ne 'true') {
+    Add-Content $verCs ("[assembly: System.Reflection.AssemblyMetadata(`"DevRepository`", @`"{0}`")]" -f $root.Replace('"', '""'))
+}
 Set-Content (Join-Path $tmp 'IcoTool.cs') 'namespace MultiLink { static class IcoTool { static void Main(string[] args) { Ui.AppIcon.WriteIco(args[0]); } } }'
 & $csc /nologo /target:exe "/out:$tmp\IcoTool.exe" /r:System.Drawing.dll (Join-Path $root 'src\Ui\AppIcon.cs') (Join-Path $tmp 'IcoTool.cs')
 if ($LASTEXITCODE) { throw 'compilação do gerador de ícone falhou' }

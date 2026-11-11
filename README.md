@@ -261,6 +261,10 @@ nos Ajustes e troca a seção "Atualizações" por "Desenvolvimento". Nesse modo
 GitHub (trocaria o build local pelo da release), libera o DevTools (F12, F5) e tem **Recompilar e reiniciar**, também
 no menu da bandeja, que roda o `build.ps1 -Restart` numa janela do PowerShell (se falhar, a janela fica aberta com o erro).
 
+A cópia instalada de um build local (*Instalar no computador*) continua no modo de desenvolvimento: o `build.ps1` grava a
+pasta do repositório no `.exe` (o build da release, no GitHub Actions, não grava), e **Recompilar e reiniciar** roda o
+`build.ps1 -Install` de lá, sem administrador (o Windows pede confirmação só para trocar o `.exe` instalado).
+
 Usa o `csc.exe` do .NET Framework (já incluído no Windows) e Node.js para o front. A versão gravada no `.exe`
 vem da última tag `vX.Y.Z` do git (ou de `-Version 1.2.3`).
 
