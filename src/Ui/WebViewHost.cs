@@ -37,6 +37,10 @@ namespace MultiLink.Ui
         CoreWebView2Environment environment;
         CoreWebView2Controller controller;
         bool creating;
+        // Muda a cada Destroy. Uma criação que ainda esperava algo (o WebView2, a limpeza do perfil) vê que ficou para
+        // trás e desiste, sem prender a próxima: fechado o WebView no meio da limpeza do perfil, ela nunca termina.
+        int generation;
+        const int ProfileClearTimeoutMs = 10000;
 
         public WebViewHost(MainWindow window, AppController app)
         {
@@ -50,6 +54,7 @@ namespace MultiLink.Ui
         {
             if (controller != null || creating || !window.Visible) return;
             creating = true;
+            int attempt = generation;
             try
             {
                 if (environment == null && Elevation.IsAdmin) ClearWebView2Variables();
@@ -57,11 +62,12 @@ namespace MultiLink.Ui
                     environment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(AppPaths.Local, "WebView2"),
                                                                            new CoreWebView2EnvironmentOptions(BrowserArguments));
                 var created = await environment.CreateCoreWebView2ControllerAsync(window.Handle);
-                if (!window.Visible) { created.Close(); return; } // foi para a bandeja enquanto criava
+                // foi para a bandeja (ou outra abertura começou) enquanto criava
+                if (attempt != generation || !window.Visible) { created.Close(); return; }
                 controller = created;
                 controller.DefaultBackgroundColor = window.BackColor;
                 FitToWindow();
-                await Configure(controller.CoreWebView2);
+                await Configure(controller.CoreWebView2, attempt);
             }
             catch (WebView2RuntimeNotFoundException)
             {
@@ -73,7 +79,7 @@ namespace MultiLink.Ui
             {
                 app.Log.Add("Erro ao abrir a interface: " + ex.Message, ActivityLog.Error);
             }
-            finally { creating = false; }
+            finally { if (attempt == generation) creating = false; }
         }
 
         // O carregador e o runtime do WebView2 leem variáveis WEBVIEW2_* (pasta do navegador, argumentos extras como
@@ -89,7 +95,7 @@ namespace MultiLink.Ui
             }
         }
 
-        async Task Configure(CoreWebView2 webView)
+        async Task Configure(CoreWebView2 webView, int attempt)
         {
             bool devMode = devServerUrl != null;
             bool devTools = devMode || DevBuild.Available; // F12, F5 e o menu de contexto
@@ -115,8 +121,18 @@ namespace MultiLink.Ui
             // ponte. Na instância elevada o perfil é limpo antes de abrir a interface (ela não guarda nada no navegador).
             if (Elevation.IsAdmin)
             {
-                await webView.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.AllProfile);
-                if (controller == null) return; // foi para a bandeja enquanto limpava
+                var clearing = webView.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.AllProfile);
+                if (await Task.WhenAny(clearing, Task.Delay(ProfileClearTimeoutMs)) != clearing)
+                {
+                    // sem a limpeza a interface não abre (é ela que tira o que outro programa pode ter gravado no perfil)
+                    if (attempt != generation) return;
+                    Destroy();
+                    app.Log.Add("Erro ao abrir a interface: a limpeza do perfil do WebView2 não terminou em " +
+                                ProfileClearTimeoutMs / 1000 + " s. Feche e abra o painel de novo.", ActivityLog.Error);
+                    return;
+                }
+                await clearing; // um erro da limpeza vai para o registro, e a interface não abre
+                if (attempt != generation) return; // foi para a bandeja enquanto limpava
             }
             webView.Navigate(devMode ? devServerUrl.AbsoluteUri : Origin + "/");
         }
@@ -136,6 +152,8 @@ namespace MultiLink.Ui
 
         public void Destroy()
         {
+            generation++;
+            creating = false;
             if (controller == null) return;
             try { controller.Close(); } catch { }
             controller = null;
