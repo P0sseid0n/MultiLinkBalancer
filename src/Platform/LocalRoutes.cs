@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 
 namespace MultiLink.Platform
@@ -30,7 +31,17 @@ namespace MultiLink.Platform
         static LocalRoutes() { NetworkChange.NetworkAddressChanged += (sender, e) => current = null; }
 
         // IP de um adaptador deste PC (inclusive dos que não são links e o da captura).
-        public static bool IsOwnAddress(IPAddress address) { return Current().OwnAddresses.Contains(address); }
+        public static bool IsOwnAddress(IPAddress address) { return Current().OwnAddresses.Contains(WithoutScope(address)); }
+
+        // Compara só o endereço. No .NET Framework a igualdade de IPv6 inclui o escopo: os link-local do Windows vêm
+        // com ele (fe80::1%5) e o destino pedido ao proxy vem sem (fe80::1), e o link-local do PC não era reconhecido.
+        // O IPv4 escrito como IPv6 (::ffff:192.168.1.2) também conta como o IPv4.
+        static IPAddress WithoutScope(IPAddress address)
+        {
+            if (address.AddressFamily != AddressFamily.InterNetworkV6) return address;
+            if (address.IsIPv4MappedToIPv6) return address.MapToIPv4();
+            return new IPAddress(address.GetAddressBytes());
+        }
 
         // Interface do adaptador da captura: o que o Windows manda para ela volta para o proxy.
         public static bool IsCaptureInterface(int interfaceIndex) { return interfaceIndex == Current().CaptureIndex; }
@@ -45,7 +56,7 @@ namespace MultiLink.Platform
                 foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
                 {
                     var properties = adapter.GetIPProperties();
-                    snapshot.OwnAddresses.UnionWith(properties.UnicastAddresses.Select(unicast => unicast.Address));
+                    snapshot.OwnAddresses.UnionWith(properties.UnicastAddresses.Select(unicast => WithoutScope(unicast.Address)));
                     if (adapter.Name == TrafficCapture.AdapterName && adapter.Supports(NetworkInterfaceComponent.IPv4))
                         snapshot.CaptureIndex = properties.GetIPv4Properties().Index;
                 }

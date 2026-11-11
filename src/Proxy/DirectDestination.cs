@@ -40,7 +40,7 @@ namespace MultiLink.Proxy
         public static IPAddress[] Find(IPAddress[] resolved, IEnumerable<Link> links)
         {
             var targets = resolved.OrderBy(address => address.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).ToArray();
-            if (targets.Any(address => IPAddress.IsLoopback(address) || LocalRoutes.IsOwnAddress(address))) return targets;
+            if (targets.Any(address => IsLoopback(address) || LocalRoutes.IsOwnAddress(address))) return targets;
 
             // rota mais específica que a padrão por um adaptador que não é link. As rotas da captura (/1) e a rota
             // padrão de uma VPN que leva tudo ficam de fora: esse tráfego continua balanceado, como antes. A rede do
@@ -50,6 +50,12 @@ namespace MultiLink.Proxy
             int interfaceIndex;
             if (ipv4.Length == 0 || !SpecificRoute(ipv4[0], out interfaceIndex) || LocalRoutes.IsCaptureInterface(interfaceIndex)) return null;
             return links.Any(link => link.InterfaceIndex == interfaceIndex) ? null : ipv4;
+        }
+
+        // ::ffff:127.0.0.1 também é loopback (o IPAddress.IsLoopback do .NET Framework só reconhece o ::1 no IPv6)
+        static bool IsLoopback(IPAddress address)
+        {
+            return IPAddress.IsLoopback(address) || (address.IsIPv4MappedToIPv6 && IPAddress.IsLoopback(address.MapToIPv4()));
         }
 
         // Link com uma rota própria para o destino, mais específica que a padrão: outra sub-rede do mesmo adaptador,
