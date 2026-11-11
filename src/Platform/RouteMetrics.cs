@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -23,8 +24,13 @@ namespace MultiLink.Platform
         // saved: o que Raise devolveu (null = volta à métrica automática).
         public static Task<CommandResult> Restore(string adapterName, string saved)
         {
+            // saved vem do config.ini, que qualquer programa do usuário pode alterar: a métrica só entra no script como
+            // número; qualquer outra coisa volta à métrica automática.
             var parts = (saved ?? "Enabled;0").Split(';');
-            var setting = parts[0] == "Enabled" || parts.Length < 2 ? "-AutomaticMetric Enabled" : "-InterfaceMetric " + parts[1];
+            int metric;
+            bool manual = parts[0] != "Enabled" && parts.Length >= 2 &&
+                          int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out metric) && metric >= 1 && metric <= 9999;
+            var setting = manual ? "-InterfaceMetric " + int.Parse(parts[1], CultureInfo.InvariantCulture) : "-AutomaticMetric Enabled";
             return PowerShell.Run("Get-NetIPInterface -InterfaceAlias " + PowerShell.Quote(adapterName) + " -PolicyStore ActiveStore | Set-NetIPInterface -PolicyStore ActiveStore " + setting, false);
         }
 
