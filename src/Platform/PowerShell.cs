@@ -18,8 +18,18 @@ namespace MultiLink.Platform
 
     public static class PowerShell
     {
-        // Texto entre aspas simples do PowerShell.
-        public static string Quote(string text) { return "'" + text.Replace("'", "''") + "'"; }
+        // Texto entre aspas simples do PowerShell. Além do ' o PowerShell aceita como aspa simples as tipográficas
+        // (‘ ’ ‚ ‛): todas são dobradas, senão um nome vindo do config.ini fecharia o texto e viraria código.
+        public static string Quote(string text)
+        {
+            var quoted = new StringBuilder("'", text.Length + 2);
+            foreach (var c in text)
+            {
+                if (c == '\'' || c == '\u2018' || c == '\u2019' || c == '\u201A' || c == '\u201B') quoted.Append(c);
+                quoted.Append(c);
+            }
+            return quoted.Append('\'').ToString();
+        }
 
         // Executa um script. Sem administrador, allowUac=true pede elevação (aviso do UAC);
         // nesse caso a saída do script não volta, só se deu certo.
