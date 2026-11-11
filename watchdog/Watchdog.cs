@@ -19,6 +19,7 @@ namespace MultiLink.Watchdog
     {
         static void Main(string[] args)
         {
+            RedirectionGuard.EnableIfElevated(); // aberto pelo MultiLink elevado, grava no config.ini e no eventos.log
             int processId;
             if (args.Length != 1 || !int.TryParse(args[0], out processId)) return;
             try { using (var watched = Process.GetProcessById(processId)) watched.WaitForExit(); }

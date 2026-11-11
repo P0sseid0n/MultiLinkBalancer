@@ -51,7 +51,7 @@ if ($LASTEXITCODE) { throw 'geração do ícone falhou' }
 $watchdog = Join-Path $tmp 'multilink-watchdog.exe'
 & $csc /nologo /target:winexe /optimize+ /platform:x64 "/out:$watchdog" "/win32icon:$ico" $verCs `
     (Join-Path $root 'watchdog\Watchdog.cs') `
-    (@('Platform\SingleInstance.cs', 'Platform\SystemProxy.cs', 'Storage\AppSettings.cs', 'Storage\AppPaths.cs', 'Common\ActivityLog.cs') | ForEach-Object { Join-Path $root "src\$_" })
+    (@('Platform\SingleInstance.cs', 'Platform\SystemProxy.cs', 'Platform\RedirectionGuard.cs', 'Storage\AppSettings.cs', 'Storage\AppPaths.cs', 'Common\ActivityLog.cs') | ForEach-Object { Join-Path $root "src\$_" })
 if ($LASTEXITCODE) { throw 'compilação do vigia falhou' }
 
 & $csc /nologo /target:winexe /optimize+ /platform:x64 /nowarn:4014 "/out:$out" "/win32icon:$ico" `

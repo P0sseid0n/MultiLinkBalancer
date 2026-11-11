@@ -33,6 +33,8 @@ namespace MultiLink
         static void Main(string[] args)
         {
             StartupTimeline.Mark("carregar o .NET");
+            // antes de qualquer arquivo: como administrador, não segue junções criadas pelo usuário (ver RedirectionGuard)
+            RedirectionGuard.EnableIfElevated();
             bool launcher = HasArgument(args, StartupRegistration.LauncherArgument);
             bool background = launcher || HasArgument(args, StartupRegistration.TrayArgument);
             // desativado em "Aplicativos de inicialização": a tarefa agendada continua rodando no logon, mas o app não abre
