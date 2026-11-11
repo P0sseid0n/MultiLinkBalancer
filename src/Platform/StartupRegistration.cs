@@ -59,12 +59,40 @@ namespace MultiLink.Platform
             if (!enabled) return;
             if (Elevation.IsAdmin)
             {
+                var unsafeReason = ProtectedLocation.WhyNotProtected(Application.ExecutablePath);
+                if (unsafeReason != null)
+                {
+                    WriteRunValue(TrayArgument); // inicia com o Windows, mas sem administrador
+                    throw new Exception(UnsafeLocationMessage(unsafeReason));
+                }
                 var result = await RegisterElevatedTask(Application.ExecutablePath);
                 if (!result.Ok) throw new Exception(result.Output);
                 WriteRunValue(LauncherArgument);
             }
             else
                 WriteRunValue(TrayArgument);
+        }
+
+        // A tarefa elevada roda o .exe como administrador sem aviso do UAC, no logon e quando a entrada "Run" (sem
+        // elevação) a dispara. Só vale com o .exe numa pasta que usuários comuns não alteram (ProtectedLocation).
+        public static bool ElevatedTaskAllowed { get { return ProtectedLocation.WhyNotProtected(Application.ExecutablePath) == null; } }
+
+        static string UnsafeLocationMessage(string reason)
+        {
+            return "a inicialização como administrador exige o MultiLink numa pasta que só administradores alteram, como " +
+                   @"C:\Program Files\MultiLinkBalancer (" + reason + "). Ele vai iniciar com o Windows sem administrador.";
+        }
+
+        // Tarefa elevada criada antes desta verificação, para um .exe que qualquer programa do usuário pode trocar: vira
+        // a entrada "Run" sem elevação. Devolve a mensagem para o registro de eventos, ou null se não precisou mexer.
+        public static async Task<string> DowngradeUnsafeTask()
+        {
+            if (!Elevation.IsAdmin || !ScheduledTaskExists()) return null;
+            var reason = ProtectedLocation.WhyNotProtected(Application.ExecutablePath);
+            if (reason == null) return null;
+            await UnregisterTask();
+            WriteRunValue(TrayArgument); // o "Desativar" do Gerenciador de Tarefas continua valendo (mesmo nome)
+            return "Tarefa de inicialização como administrador removida: " + UnsafeLocationMessage(reason);
         }
 
         // Versões anteriores registravam só a tarefa: acrescenta a entrada "/startup" sem mexer no "Desativar".

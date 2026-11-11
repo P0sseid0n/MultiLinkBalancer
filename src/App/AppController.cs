@@ -134,14 +134,18 @@ namespace MultiLink.App
             Log.Add(string.Format("Partida concluída {0:0.0} s depois de o processo abrir.", (DateTime.Now - processStart).TotalSeconds));
 
             // O que não é urgente fica para depois (o schtasks.exe demora na partida do Windows).
-            Task.Run(() =>
+            Task.Run(async () =>
             {
+                var downgraded = await StartupRegistration.DowngradeUnsafeTask();
+                if (downgraded != null) Log.Add(downgraded, ActivityLog.Error);
                 startupRegistered = StartupRegistration.IsRegistered;
                 // a tarefa das versões anteriores ganha a entrada que aparece no Gerenciador de Tarefas
                 if (IsAdmin) StartupRegistration.AddLauncherIfMissing();
             });
-            // como administrador: troca o atalho "Run" (sem elevação) pela tarefa agendada elevada
-            if (IsAdmin && StartupRegistration.UsesUnelevatedRunKey && !StartupRegistration.DisabledInTaskManager) { var ignored = SetStartup(true); }
+            // como administrador: troca o atalho "Run" (sem elevação) pela tarefa agendada elevada, se o .exe está num
+            // lugar seguro para isso
+            if (IsAdmin && StartupRegistration.UsesUnelevatedRunKey && !StartupRegistration.DisabledInTaskManager && StartupRegistration.ElevatedTaskAllowed)
+            { var ignored = SetStartup(true); }
             Ports.Start();
             RouteFailover.RepairLeftovers(Links.All());
         }

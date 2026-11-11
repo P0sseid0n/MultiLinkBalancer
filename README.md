@@ -143,7 +143,10 @@ O app testa cada link a cada 3 s, mesmo com o proxy desligado, e diz **onde** es
 - **Ativar/Desativar**: interruptor à esquerda de cada link, faz o mesmo que o Painel de Controle (pede confirmação do Windows/UAC).
 - **Tirar link caído do roteamento do Windows** (opcional, requer administrador): quando um link cai, ele sai
   do roteamento do sistema inteiro (métrica 9000) e volta sozinho quando a internet dele retorna. Ao fechar o
-  app, as rotas originais são restauradas. Como administrador, "Iniciar com o Windows" usa uma tarefa agendada elevada.
+  app, as rotas originais são restauradas. Como administrador, "Iniciar com o Windows" usa uma tarefa agendada elevada,
+  que só é criada com o `.exe` numa pasta que usuários comuns não alteram (ex.: `C:\Program Files\MultiLinkBalancer`).
+  Na Área de Trabalho ou em Downloads, qualquer programa poderia trocar o `.exe` e rodar como administrador no logon;
+  ali o app inicia com o Windows sem administrador.
 
 ## Qualidade dos links
 
