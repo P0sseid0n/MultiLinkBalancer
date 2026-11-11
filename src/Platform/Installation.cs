@@ -1,8 +1,7 @@
 // Instalação no computador, feita pelo próprio .exe (não há instalador separado): copia o app para
 // C:\Program Files\MultiLinkBalancer, cria o atalho no Menu Iniciar e o item em "Aplicativos instalados" do Windows.
 // Só lá a tarefa de "Iniciar com o Windows" pode rodar como administrador (ver ProtectedLocation): nenhum usuário
-// comum consegue trocar o .exe dessa pasta. Os ajustes e os logs continuam em %APPDATA% e %LOCALAPPDATA%; os dados da
-// interface da instância elevada ficam em %ProgramData% (ElevatedWebViewData).
+// comum consegue trocar o .exe dessa pasta. Os ajustes e os logs continuam em %APPDATA% e %LOCALAPPDATA%.
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -113,8 +112,7 @@ namespace MultiLink.Platform
         }
 
         // Abertura com /uninstall. Pede administrador se precisar, confirma, fecha o MultiLink aberto (que devolve o
-        // proxy e as rotas do Windows), tira a inicialização com o Windows, o atalho e o item, e apaga a pasta e os dados
-        // da interface da instância elevada (%ProgramData%\MultiLinkBalancer, que só administradores apagam).
+        // proxy e as rotas do Windows), tira a inicialização com o Windows, o atalho e o item, e apaga a pasta.
         public static void UninstallFromArgument()
         {
             if (!Elevation.IsAdmin)
@@ -123,8 +121,8 @@ namespace MultiLink.Platform
                 catch { } // cancelado no aviso do UAC
                 return;
             }
-            if (MessageBox.Show("Desinstalar o MultiLink Balancer?\n\nO app fecha, a inicialização com o Windows é removida e as pastas " + Folder +
-                                " e " + ElevatedWebViewData.Root + " são apagadas. Os ajustes e os logs ficam em %APPDATA% e %LOCALAPPDATA%.", DisplayName,
+            if (MessageBox.Show("Desinstalar o MultiLink Balancer?\n\nO app fecha, a inicialização com o Windows é removida e a pasta " + Folder +
+                                " é apagada. Os ajustes e os logs ficam em %APPDATA% e %LOCALAPPDATA%.", DisplayName,
                                 MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
             try { Task.Run(() => Uninstall()).Wait(); }
             catch (AggregateException ex)
@@ -140,7 +138,6 @@ namespace MultiLink.Platform
         {
             CloseRunningInstance();
             await StartupRegistration.Set(false);
-            try { ElevatedWebViewData.Delete(); } catch { } // só administradores apagam depois
             try { File.Delete(Shortcut); } catch { }
             Registry.LocalMachine.DeleteSubKeyTree(UninstallKey, false);
         }
