@@ -14,6 +14,8 @@ namespace MultiLink.Monitoring
         const int UnstableLossPct = 10, StableLossPct = 3;
         // Ao acordar, a placa de rede volta antes da internet: até este prazo, falha não é queda.
         static readonly TimeSpan WakeHold = TimeSpan.FromSeconds(20);
+        // Adaptador recém-ativado: até este prazo para pegar IP e internet, ele aparece como "conectando", não como queda.
+        static readonly TimeSpan ConnectHold = TimeSpan.FromSeconds(30);
 
         readonly ActivityLog log;
         bool asleep;
@@ -90,9 +92,23 @@ namespace MultiLink.Monitoring
         {
             var current = LinkHealth.Of(link);
             var previous = link.Health;
+            if (previous == LinkHealth.Disabled && current != LinkHealth.Disabled && current != LinkHealth.Ok)
+            {
+                // adaptador ativado (pelo app ou pelo Windows): esperando o IP e a internet, sem aviso
+                link.ConnectingUntil = DateTime.UtcNow + ConnectHold;
+                link.UserDisabled = false;
+                current = LinkHealth.Connecting;
+            }
             link.Health = current;
             if (previous == null) { if (current != LinkHealth.Ok) link.DownSince = DateTime.Now; return; } // primeira avaliação
-            if (previous == current) return;
+            if (previous == current || current == LinkHealth.Connecting) return;
+            if (previous == LinkHealth.Connecting)
+            {
+                link.ConnectingUntil = default(DateTime);
+                if (current == LinkHealth.Disabled) return; // desativado de novo antes de conectar
+                // conectou: avisado como a volta do adaptador desativado; o prazo acabou sem internet: queda nova
+                previous = current == LinkHealth.Ok ? LinkHealth.Disabled : LinkHealth.Ok;
+            }
             if (previous == LinkHealth.Ok) link.DownSince = DateTime.Now;
             if (current == LinkHealth.Ok && link.UserDisabled) link.UserDisabled = false;
             var handler = HealthChanged;

@@ -2,6 +2,7 @@
 
 export const OK = 'ok';
 export const DISABLED = 'disabled';
+export const CONNECTING = 'connecting'; // adaptador recém-ativado, ainda pegando IP e internet (não é queda)
 
 /** Rótulo curto de cada estado de queda, para o histórico. */
 export const outageLabel = {
@@ -15,7 +16,7 @@ export const outageLabel = {
 export const isOnline = (link) => link.health === OK;
 
 /** Fora do ar sem ter sido desativado (cabo, operadora, modem...). */
-export const isDown = (link) => link.health !== OK && link.health !== DISABLED;
+export const isDown = (link) => link.health !== OK && link.health !== DISABLED && link.health !== CONNECTING;
 
 /** Online, ativo e com peso: recebe conexões. */
 export const isUsable = (link) => isOnline(link) && link.enabled && link.weight > 0;

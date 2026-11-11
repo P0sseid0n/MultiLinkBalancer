@@ -39,6 +39,7 @@ namespace MultiLink.Links
         public volatile bool GatewayReachable = true;
         public string Health;                    // último estado avaliado pelo LinkMonitor (LinkHealth)
         public DateTime DownSince;
+        public DateTime ConnectingUntil;         // UTC: adaptador recém-ativado, ainda pegando IP e internet
         public volatile bool UserDisabled;       // desativado pelo próprio app: a queda não gera alerta
         public volatile bool MetricRaised;       // retirado do roteamento do Windows pelo RouteFailover
         public volatile bool MetricBusy;         // alteração de rota em andamento

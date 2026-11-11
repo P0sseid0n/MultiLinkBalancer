@@ -5,7 +5,7 @@
   import { cubicOut } from 'svelte/easing';
   import { app, run, ask } from '../../state/app.svelte.js';
   import { rateText, since, capitalize } from '../../lib/format.js';
-  import { DISABLED, OK, isOnline } from '../../lib/health.js';
+  import { CONNECTING, DISABLED, OK, isOnline } from '../../lib/health.js';
   import { dur } from '../../lib/motion.js';
 
   let { link, color, share, idle, proxyOn, open, ontoggle } = $props();
@@ -16,7 +16,8 @@
 
   const disabled = $derived(link.health === DISABLED);
   const online = $derived(link.health === OK);
-  const down = $derived(!online && !disabled);
+  const connecting = $derived(link.health === CONNECTING); // recém-ativado: ainda não é queda
+  const down = $derived(!online && !disabled && !connecting);
   const unstable = $derived(online && link.loss >= UNSTABLE_LOSS); // no ar, mas perdendo pacotes
 
   // interruptor: mostra o estado pedido enquanto o Windows aplica (pode pedir confirmação de administrador)
@@ -43,11 +44,12 @@
     });
   }
 
-  const led = $derived(down ? 'fail' : disabled ? 'off' : unstable ? 'warn' : proxyOn ? 'on' : 'idle');
+  const led = $derived(down ? 'fail' : disabled ? 'off' : unstable || connecting ? 'warn' : proxyOn ? 'on' : 'idle');
   const statusText = $derived(
     pendingSwitch === true ? 'ativando…'
     : pendingSwitch === false ? 'desativando…'
     : disabled ? 'desativado'
+    : connecting ? 'conectando…'
     : down ? (link.downSince ? `fora ${since(link.downSince)}` : 'fora do ar')
     : !proxyOn ? '—'
     : rateText(link.rateDown),
@@ -84,7 +86,7 @@
       aria-label={open ? `Recolher ${link.name}` : `Ver detalhes de ${link.name}`}>
       <span class="led {led}" aria-hidden="true"></span>
       <span class="name" class:dim={disabled}>{link.name}</span>
-      <span class="status num" class:bad={down} class:muted={disabled || (!proxyOn && online)}>{statusText}</span>
+      <span class="status num" class:bad={down} class:muted={disabled || connecting || (!proxyOn && online)}>{statusText}</span>
       <svg class="chevron" class:open width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
     </button>
   </div>

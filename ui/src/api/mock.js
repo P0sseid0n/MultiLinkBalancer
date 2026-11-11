@@ -39,6 +39,7 @@ export function createMock(deliver) {
     ok: ['Online', ''],
     noinet: ['Sem internet (operadora)', 'sem internet. O modem responde, então o problema é na operadora'],
     disabled: ['Desativado no Windows', 'adaptador desativado no Windows'],
+    connecting: ['Conectando', 'conectando: o adaptador acabou de ser ativado'],
   };
 
   function setHealth(link, health) {
@@ -64,7 +65,7 @@ export function createMock(deliver) {
     const busy = state.proxy.running && (second % 30) < 22;
     const totalRate = busy ? (380 + 240 * Math.sin(second / 5) + Math.random() * 60) * 1e6 / 8 : 0;
     // a cada ~45 s a Secundaria perde a internet por 12 s
-    if (secondary.health !== 'disabled') setHealth(secondary, (second % 45) > 32 ? 'noinet' : 'ok');
+    if (secondary.health !== 'disabled' && secondary.health !== 'connecting') setHealth(secondary, (second % 45) > 32 ? 'noinet' : 'ok');
     applyWeights();
     const usable = links.filter((link) => link.health === 'ok' && link.enabled && link.weight > 0);
     const weightSum = usable.reduce((sum, link) => sum + link.weight, 0) || 1;
@@ -144,7 +145,11 @@ export function createMock(deliver) {
     'link.toggleAdapter': async ({ id }) => {
       const link = links.find((candidate) => candidate.id === id);
       await sleep(900);
-      if (link.health === 'disabled') { setHealth(link, 'ok'); return { enabled: true }; }
+      if (link.health === 'disabled') {
+        setHealth(link, 'connecting'); // como no app: alguns segundos pegando IP e internet
+        setTimeout(() => { if (link.health === 'connecting') setHealth(link, 'ok'); }, 5000);
+        return { enabled: true };
+      }
       link.userDisabled = true;
       setHealth(link, 'disabled');
       addLog(`[${link.name}] adaptador desativado no Windows`);
