@@ -123,10 +123,13 @@ namespace MultiLink.Proxy
                 int length;
                 try { length = await receive; }
                 catch (SocketException ex) { if (ex.SocketErrorCode == SocketError.MessageSize) oversize.Dropped(false); continue; }
-                // só o dono da associação pode usar o relé
+                // só o dono da associação pode usar o relé. A associação fica presa ao endereço e à porta do primeiro
+                // datagrama: no loopback todos os programas do PC têm o mesmo IP, e outro programa que adivinhasse a
+                // porta do relé passaria a receber as respostas da associação de outro (inclusive da captura)
                 var senderAddress = ((IPEndPoint)sender).Address;
                 if (!senderAddress.Equals(clientAddress) && !(IPAddress.IsLoopback(senderAddress) && IPAddress.IsLoopback(clientAddress))) continue;
-                clientEndPoint = sender;
+                if (clientEndPoint == null) clientEndPoint = sender;
+                else if (!clientEndPoint.Equals(sender)) continue;
                 await ForwardToDestination(buffer, length);
             }
         }
