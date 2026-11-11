@@ -2,6 +2,7 @@
 // comandos da interface e devolve as respostas e o estado.
 // O WebView2 só existe enquanto a janela está visível; na bandeja ele é destruído para economizar memória.
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Web.Script.Serialization;
@@ -50,6 +51,7 @@ namespace MultiLink.Ui
             creating = true;
             try
             {
+                if (environment == null && Elevation.IsAdmin) ClearWebView2Variables();
                 if (environment == null)
                     environment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(AppPaths.Local, "WebView2"),
                                                                            new CoreWebView2EnvironmentOptions(BrowserArguments));
@@ -71,6 +73,19 @@ namespace MultiLink.Ui
                 app.Log.Add("Erro ao abrir a interface: " + ex.Message, ActivityLog.Error);
             }
             finally { creating = false; }
+        }
+
+        // O carregador e o runtime do WebView2 leem variáveis WEBVIEW2_* (pasta do navegador, argumentos extras como
+        // porta de depuração remota, pasta de dados). Elas vêm do ambiente do usuário, que qualquer programa dele
+        // altera: na instância elevada são apagadas do processo antes de criar o WebView2.
+        static void ClearWebView2Variables()
+        {
+            foreach (DictionaryEntry variable in Environment.GetEnvironmentVariables())
+            {
+                var name = variable.Key as string;
+                if (name != null && name.StartsWith("WEBVIEW2_", StringComparison.OrdinalIgnoreCase))
+                    Environment.SetEnvironmentVariable(name, null);
+            }
         }
 
         void Configure(CoreWebView2 webView)
