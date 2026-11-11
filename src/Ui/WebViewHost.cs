@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
@@ -60,7 +61,7 @@ namespace MultiLink.Ui
                 controller = created;
                 controller.DefaultBackgroundColor = window.BackColor;
                 FitToWindow();
-                Configure(controller.CoreWebView2);
+                await Configure(controller.CoreWebView2);
             }
             catch (WebView2RuntimeNotFoundException)
             {
@@ -88,7 +89,7 @@ namespace MultiLink.Ui
             }
         }
 
-        void Configure(CoreWebView2 webView)
+        async Task Configure(CoreWebView2 webView)
         {
             bool devMode = devServerUrl != null;
             bool devTools = devMode || DevBuild.Available; // F12, F5 e o menu de contexto
@@ -108,6 +109,14 @@ namespace MultiLink.Ui
             {
                 webView.AddWebResourceRequestedFilter(Origin + "/*", CoreWebView2WebResourceContext.All);
                 webView.WebResourceRequested += ServeUi;
+            }
+            // A pasta de dados do WebView2 fica em %LOCALAPPDATA%, que qualquer programa do usuário altera: um service
+            // worker ou um cache gravado lá para https://app.multilink responderia no lugar do ServeUi e falaria com a
+            // ponte. Na instância elevada o perfil é limpo antes de abrir a interface (ela não guarda nada no navegador).
+            if (Elevation.IsAdmin)
+            {
+                await webView.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.AllProfile);
+                if (controller == null) return; // foi para a bandeja enquanto limpava
             }
             webView.Navigate(devMode ? devServerUrl.AbsoluteUri : Origin + "/");
         }
