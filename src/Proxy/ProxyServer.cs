@@ -103,6 +103,13 @@ namespace MultiLink.Proxy
                 }
                 var request = await reading;
                 if (request == null) return;
+                if (request.IsUdpAssociate && lanClient)
+                {
+                    if (!limits.AdmitUdp(clientAddress)) { await request.ReplyFailure(); return; }
+                    try { await new UdpAssociation(balancer, udpPorts, udpBursts, udpOversize, request.FromCapture ? localCapture : null, lanGuard, client, clientSocket).Run(); }
+                    finally { limits.ReleaseUdp(clientAddress); }
+                    return;
+                }
                 if (request.IsUdpAssociate) { await new UdpAssociation(balancer, udpPorts, udpBursts, udpOversize, request.FromCapture ? localCapture : null, lanGuard, client, clientSocket).Run(); return; }
 
                 if (request.FromCapture && localCapture.RefuseTcp(request.Host, request.Port)) { await request.ReplyFailure(); return; }

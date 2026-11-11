@@ -15,10 +15,14 @@ namespace MultiLink.Proxy
     {
         const int MaxConnections = 16384;          // todas juntas
         const int MaxConnectionsPerLanClient = 256; // por aparelho da rede
+        const int MaxLanUdpAssociations = 512;           // de todos os aparelhos da rede juntos
+        const int MaxUdpAssociationsPerLanClient = 16;
         const int RepeatMinutes = 10;
 
         readonly ActivityLog log;
         readonly ConcurrentDictionary<IPAddress, int> perLanClient = new ConcurrentDictionary<IPAddress, int>();
+        readonly ConcurrentDictionary<IPAddress, int> udpPerLanClient = new ConcurrentDictionary<IPAddress, int>();
+        int lanUdpAssociations;
         readonly ConcurrentDictionary<IPAddress, DateTime> lastLogged = new ConcurrentDictionary<IPAddress, DateTime>();
         int connections;
 
@@ -42,13 +46,42 @@ namespace MultiLink.Proxy
             return true;
         }
 
+        // UDP ASSOCIATE de um aparelho da rede: cada associação prende uma porta UDP do PC até a conexão fechar, e as
+        // portas livres do Windows são umas 16 mil. Quem recebe true chama ReleaseUdp.
+        public bool AdmitUdp(IPAddress client)
+        {
+            if (Interlocked.Increment(ref lanUdpAssociations) > MaxLanUdpAssociations)
+            {
+                Interlocked.Decrement(ref lanUdpAssociations);
+                Refused(client, "os aparelhos da rede já têm " + MaxLanUdpAssociations + " associações UDP abertas");
+                return false;
+            }
+            if (udpPerLanClient.AddOrUpdate(client, 1, (key, count) => count + 1) > MaxUdpAssociationsPerLanClient)
+            {
+                ReleaseUdp(client);
+                Refused(client, "esse aparelho da rede já tem " + MaxUdpAssociationsPerLanClient + " associações UDP abertas");
+                return false;
+            }
+            return true;
+        }
+
+        public void ReleaseUdp(IPAddress client)
+        {
+            Interlocked.Decrement(ref lanUdpAssociations);
+            Decrement(udpPerLanClient, client);
+        }
+
+        static void Decrement(ConcurrentDictionary<IPAddress, int> counts, IPAddress client)
+        {
+            int count = counts.AddOrUpdate(client, 0, (key, current) => current - 1);
+            // tira o aparelho do dicionário só se ninguém somou nesse meio-tempo
+            if (count <= 0) ((ICollection<KeyValuePair<IPAddress, int>>)counts).Remove(new KeyValuePair<IPAddress, int>(client, count));
+        }
+
         public void Release(IPAddress client, bool lanClient)
         {
             Interlocked.Decrement(ref connections);
-            if (!lanClient) return;
-            int count = perLanClient.AddOrUpdate(client, 0, (key, current) => current - 1);
-            // tira o aparelho do dicionário só se ninguém somou nesse meio-tempo
-            if (count <= 0) ((ICollection<KeyValuePair<IPAddress, int>>)perLanClient).Remove(new KeyValuePair<IPAddress, int>(client, count));
+            if (lanClient) Decrement(perLanClient, client);
         }
 
         void Refused(IPAddress client, string reason)
