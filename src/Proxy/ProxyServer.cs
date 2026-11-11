@@ -18,6 +18,9 @@ namespace MultiLink.Proxy
     {
         const int Backlog = 1024;
         const int HalfCloseGraceMs = 30000; // depois que um lado fecha, espera o outro terminar por até 30 s
+        // prazo para o pedido (SOCKS ou cabeçalho HTTP) chegar inteiro: sem ele, uma conexão que manda 1 byte e para
+        // ficava aberta para sempre, segurando 64 KiB
+        const int HandshakeTimeoutMs = 15000;
 
         readonly Balancer balancer;
         readonly BalancedConnector connector;
@@ -26,6 +29,7 @@ namespace MultiLink.Proxy
         readonly UdpOversizeLog udpOversize;
         readonly LocalCaptureLog localCapture;
         readonly LanClientGuard lanGuard;
+        readonly ClientLimits limits;
         readonly ConcurrentDictionary<Socket, byte> openSockets = new ConcurrentDictionary<Socket, byte>();
         TcpListener listener;
         CancellationTokenSource stopping;
@@ -34,6 +38,7 @@ namespace MultiLink.Proxy
         {
             this.balancer = balancer;
             lanGuard = new LanClientGuard(log);
+            limits = new ClientLimits(log);
             connector = new BalancedConnector(balancer, log, lanGuard);
             udpBursts = new UdpBurstLog(log);
             udpOversize = new UdpOversizeLog(log);
@@ -73,11 +78,16 @@ namespace MultiLink.Proxy
                 TcpClient client;
                 try { client = await acceptor.AcceptTcpClientAsync(); }
                 catch { if (token.IsCancellationRequested) break; continue; }
-                var ignored = HandleClient(client.Client);
+                IPAddress address;
+                try { address = ((IPEndPoint)client.Client.RemoteEndPoint).Address; }
+                catch { client.Client.CloseQuietly(); continue; } // fechou antes de ser atendida
+                bool lanClient = !LanClientGuard.IsThisPc(address);
+                if (!limits.Admit(address, lanClient)) { client.Client.CloseQuietly(); continue; }
+                var ignored = HandleClient(client.Client, address, lanClient);
             }
         }
 
-        async Task HandleClient(Socket clientSocket)
+        async Task HandleClient(Socket clientSocket, IPAddress clientAddress, bool lanClient)
         {
             Socket remoteSocket = null;
             openSockets[clientSocket] = 0;
@@ -85,13 +95,18 @@ namespace MultiLink.Proxy
             {
                 clientSocket.NoDelay = true;
                 var client = new NetworkStream(clientSocket, false);
-                var request = await ReadRequest(client);
+                var reading = ReadRequest(client);
+                if (await Task.WhenAny(reading, Task.Delay(HandshakeTimeoutMs)) != reading)
+                {
+                    reading.ContinueWith(task => { var ignoredError = task.Exception; }); // termina quando o socket fechar
+                    return;
+                }
+                var request = await reading;
                 if (request == null) return;
                 if (request.IsUdpAssociate) { await new UdpAssociation(balancer, udpPorts, udpBursts, udpOversize, request.FromCapture ? localCapture : null, lanGuard, client, clientSocket).Run(); return; }
 
                 if (request.FromCapture && localCapture.RefuseTcp(request.Host, request.Port)) { await request.ReplyFailure(); return; }
-                var clientAddress = ((IPEndPoint)clientSocket.RemoteEndPoint).Address;
-                var outbound = await connector.Connect(request.Host, request.Port, LanClientGuard.IsThisPc(clientAddress) ? null : clientAddress);
+                var outbound = await connector.Connect(request.Host, request.Port, lanClient ? clientAddress : null);
                 if (outbound == null) { await request.ReplyFailure(); return; }
                 remoteSocket = outbound.Socket;
                 openSockets[remoteSocket] = 0;
@@ -102,6 +117,7 @@ namespace MultiLink.Proxy
             {
                 Close(remoteSocket);
                 Close(clientSocket);
+                limits.Release(clientAddress, lanClient);
             }
         }
 
