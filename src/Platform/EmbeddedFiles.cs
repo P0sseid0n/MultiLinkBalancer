@@ -1,5 +1,6 @@
 // Arquivos embutidos no .exe pelo build.ps1 (/resource) e extraídos para %LOCALAPPDATA% quando precisos.
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -62,29 +63,48 @@ namespace MultiLink.Platform
             return Assembly.GetExecutingAssembly().GetManifestResourceStream(resource);
         }
 
+        // Arquivos conferidos, abertos só para leitura sem permitir gravar, apagar nem renomear (nem a pasta) até o
+        // processo fechar. Conferir e depois fechar deixaria outro programa trocar o arquivo entre a conferência e o uso
+        // (o loader do WebView2 só é carregado quando o painel abre, às vezes horas depois).
+        static readonly Dictionary<string, FileStream> locked = new Dictionary<string, FileStream>(StringComparer.OrdinalIgnoreCase);
+
         // Só regrava se o arquivo não existe ou não é igual ao embutido. Confere o conteúdo (SHA-256), não só o tamanho:
         // a pasta é do usuário, e o que sai dela roda com o MultiLink, muitas vezes como administrador. Um arquivo
         // trocado por outro programa é regravado antes de ser usado.
         static void Extract(string resource, string target)
         {
-            using (var source = Open(resource))
+            lock (locked)
             {
-                if (source == null) throw new FileNotFoundException("Recurso embutido ausente: " + resource);
-                if (SameContent(source, target)) return;
-                source.Position = 0;
-                using (var destination = File.Create(target)) source.CopyTo(destination);
+                if (locked.ContainsKey(target)) return; // já conferido e travado nesta execução
+                byte[] expected;
+                using (var source = Open(resource))
+                using (var sha = SHA256.Create())
+                {
+                    if (source == null) throw new FileNotFoundException("Recurso embutido ausente: " + resource);
+                    expected = sha.ComputeHash(source);
+                    for (int attempt = 0; attempt < 2; attempt++)
+                    {
+                        var existing = OpenLocked(target);
+                        if (existing != null)
+                        {
+                            // o hash é do mesmo handle que fica aberto: o que foi conferido é o que será usado
+                            if (existing.Length == source.Length && expected.SequenceEqual(sha.ComputeHash(existing))) { locked[target] = existing; return; }
+                            existing.Dispose();
+                        }
+                        if (attempt == 1) break;
+                        source.Position = 0;
+                        using (var destination = new FileStream(target, FileMode.Create, FileAccess.Write, FileShare.None)) source.CopyTo(destination);
+                    }
+                }
+                throw new IOException("O arquivo extraído não confere com o embutido: " + target);
             }
         }
 
-        static bool SameContent(Stream source, string target)
+        static FileStream OpenLocked(string path)
         {
-            if (!File.Exists(target) || new FileInfo(target).Length != source.Length) return false;
-            using (var sha = SHA256.Create())
-            {
-                var expected = sha.ComputeHash(source);
-                try { using (var existing = File.OpenRead(target)) return expected.SequenceEqual(sha.ComputeHash(existing)); }
-                catch (IOException) { return false; } // não deu para ler: tenta regravar
-            }
+            try { return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read); }
+            catch (FileNotFoundException) { return null; }
+            catch (IOException) { return null; } // não deu para ler: tenta regravar
         }
     }
 }
