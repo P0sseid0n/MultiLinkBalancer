@@ -140,9 +140,13 @@ Voltar ao site</a>
 <dt class="mono" style="font-size: 13.5px; color: var(--fg)">%APPDATA%\MultiLinkBalancer</dt>
 <dd style="margin: 0">Os ajustes (<span class="mono" style="font-size: 13.5px">config.ini</span>) e o histórico (<span class="mono" style="font-size: 13.5px">history.json</span>): velocidade, latência e quedas de cada link, e o total recebido por dia. Não guarda quais sites você visitou.</dd>
 </div>
-<div style="padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px">
+<div style="padding: 14px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px">
 <dt class="mono" style="font-size: 13.5px; color: var(--fg)">%LOCALAPPDATA%\MultiLinkBalancer</dt>
 <dd style="margin: 0">O registro de eventos e os logs de diagnóstico, os arquivos internos do app e os dados do WebView2. Os logs de diagnóstico podem conter endereços de destino e nomes de programas, porque servem para descobrir o que está causando um problema de conexão.</dd>
+</div>
+<div style="padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px">
+<dt class="mono" style="font-size: 13.5px; color: var(--fg)">%ProgramData%\MultiLinkBalancer</dt>
+<dd style="margin: 0">Só quando o app roda como administrador: os dados do WebView2 da interface, numa pasta que só administradores alteram. Não guarda nada além do que o navegador da interface precisa para funcionar.</dd>
 </div>
 </dl>
 </section>
@@ -159,11 +163,11 @@ Voltar ao site</a>
 
 <section id="apagar" class="sec rv" style="display: flex; flex-direction: column; gap: 12px">
 <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: var(--fg)">Como apagar tudo</h2>
-<p style="margin: 0">Se ele foi instalado pelo próprio app (Ajustes &gt; Instalar no computador), desinstale em Configurações do Windows &gt; Aplicativos instalados &gt; MultiLink Balancer: o app fecha, devolve o proxy, as rotas e o adaptador de captura, e remove a inicialização com o Windows, o atalho e a pasta em Arquivos de Programas. Depois apague as pastas do passo 3. Sem instalar, para remover sem deixar nada:</p>
+<p style="margin: 0">Se ele foi instalado pelo próprio app (Ajustes &gt; Instalar no computador), desinstale em Configurações do Windows &gt; Aplicativos instalados &gt; MultiLink Balancer: o app fecha, devolve o proxy, as rotas e o adaptador de captura, e remove a inicialização com o Windows, o atalho e a pasta em Arquivos de Programas. A desinstalação também apaga a pasta <span class="mono" style="font-size: 14px">%ProgramData%\MultiLinkBalancer</span>. Depois apague as outras pastas do passo 3. Sem instalar, para remover sem deixar nada:</p>
 <ol style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px">
 <li>Em Ajustes, desligue Iniciar com o Windows. Se ele foi ligado com o app aberto como administrador, desligue também como administrador.</li>
 <li>Clique em Sair. O proxy do Windows, as rotas e o adaptador de captura voltam ao que eram.</li>
-<li>Apague o <span class="mono" style="font-size: 14px">MultiLinkBalancer.exe</span> e as pastas <span class="mono" style="font-size: 14px">%APPDATA%\MultiLinkBalancer</span> e <span class="mono" style="font-size: 14px">%LOCALAPPDATA%\MultiLinkBalancer</span>.</li>
+<li>Apague o <span class="mono" style="font-size: 14px">MultiLinkBalancer.exe</span> e as pastas <span class="mono" style="font-size: 14px">%APPDATA%\MultiLinkBalancer</span> e <span class="mono" style="font-size: 14px">%LOCALAPPDATA%\MultiLinkBalancer</span>. Se ele rodou como administrador, apague também <span class="mono" style="font-size: 14px">%ProgramData%\MultiLinkBalancer</span> (o Windows pede a confirmação de administrador).</li>
 </ol>
 </section>
 

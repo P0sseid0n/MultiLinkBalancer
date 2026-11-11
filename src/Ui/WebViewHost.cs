@@ -36,6 +36,7 @@ namespace MultiLink.Ui
         readonly Uri devServerUrl = DevServerUrl(); // npm run dev, com DevTools
         readonly JavaScriptSerializer json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
         CoreWebView2Environment environment;
+        bool clearProfile; // perfil numa pasta que o usuário altera, na instância elevada: limpo antes de abrir (Configure)
         CoreWebView2Controller controller;
         bool creating;
         // Muda a cada Destroy. Uma criação que ainda esperava algo (o WebView2, a limpeza do perfil) vê que ficou para
@@ -97,10 +98,11 @@ namespace MultiLink.Ui
             int attempt = generation;
             try
             {
-                if (environment == null && Elevation.IsAdmin) ClearWebView2Variables();
                 if (environment == null)
-                    environment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(AppPaths.Local, "WebView2"),
-                                                                           new CoreWebView2EnvironmentOptions(BrowserArguments));
+                {
+                    var dataFolder = DataFolder();
+                    environment = await CoreWebView2Environment.CreateAsync(null, dataFolder, new CoreWebView2EnvironmentOptions(BrowserArguments));
+                }
                 var created = await environment.CreateCoreWebView2ControllerAsync(window.Handle);
                 if (attempt != generation) { created.Close(); return; } // destruído enquanto criava
                 controller = created;
@@ -121,6 +123,22 @@ namespace MultiLink.Ui
                 app.Log.Add("Erro ao abrir a interface: " + ex.Message, ActivityLog.Error);
             }
             finally { if (attempt == generation) creating = false; }
+        }
+
+        // Pasta de dados do WebView2. Na instância elevada, a protegida em %ProgramData% (ElevatedWebViewData); se não der,
+        // a do usuário, com o perfil limpo a cada abertura.
+        string DataFolder()
+        {
+            clearProfile = false;
+            if (!Elevation.IsAdmin) return Path.Combine(AppPaths.Local, "WebView2");
+            ClearWebView2Variables();
+            string problem;
+            var folder = ElevatedWebViewData.Prepare(out problem);
+            if (folder != null) return folder;
+            clearProfile = true;
+            app.Log.Add("Interface: a pasta protegida do WebView2 em " + ElevatedWebViewData.Root + " não pôde ser usada (" + problem +
+                        "). Usando a pasta do usuário, limpa a cada abertura do painel.", ActivityLog.Error);
+            return Path.Combine(AppPaths.Local, "WebView2");
         }
 
         // O carregador e o runtime do WebView2 leem variáveis WEBVIEW2_* (pasta do navegador, argumentos extras como
@@ -158,10 +176,10 @@ namespace MultiLink.Ui
                 webView.AddWebResourceRequestedFilter(Origin + "/*", CoreWebView2WebResourceContext.All);
                 webView.WebResourceRequested += ServeUi;
             }
-            // A pasta de dados do WebView2 fica em %LOCALAPPDATA%, que qualquer programa do usuário altera: um service
-            // worker ou um cache gravado lá para https://app.multilink responderia no lugar do ServeUi e falaria com a
-            // ponte. Na instância elevada o perfil é limpo antes de abrir a interface (ela não guarda nada no navegador).
-            if (Elevation.IsAdmin)
+            // Pasta de dados em %LOCALAPPDATA%, que qualquer programa do usuário altera: um service worker ou um cache gravado
+            // lá para https://app.multilink responderia no lugar do ServeUi e falaria com a ponte. Na instância elevada que
+            // não conseguiu a pasta protegida, o perfil é limpo antes de abrir a interface (ela não guarda nada no navegador).
+            if (clearProfile)
             {
                 var clearing = webView.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.AllProfile);
                 if (await Task.WhenAny(clearing, Task.Delay(ProfileClearTimeoutMs)) != clearing)

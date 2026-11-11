@@ -32,11 +32,32 @@ namespace MultiLink.Platform
                 var problem = Check(File.GetAccessControl(exePath), FileChange, exePath);
                 var folder = new DirectoryInfo(Path.GetDirectoryName(exePath));
                 if (problem == null) problem = Check(folder.GetAccessControl(), FolderChange, folder.FullName);
-                for (var ancestor = folder.Parent; problem == null && ancestor != null; ancestor = ancestor.Parent)
-                    problem = Check(ancestor.GetAccessControl(), AncestorChange, ancestor.FullName);
-                return problem;
+                return problem ?? CheckAncestors(folder);
             }
             catch (Exception ex) { return "não foi possível ler as permissões de " + exePath + ": " + ex.Message; }
+        }
+
+        // O mesmo para uma pasta de dados (ElevatedWebViewData): só administradores criam, trocam ou apagam algo nela, e
+        // ninguém mais consegue renomear uma pasta acima. Junção no caminho também não vale: aponta para outro lugar.
+        public static string WhyNotProtectedFolder(string folderPath)
+        {
+            try
+            {
+                var folder = new DirectoryInfo(folderPath);
+                if ((folder.Attributes & FileAttributes.ReparsePoint) != 0) return folder.FullName + " é uma junção ou um link";
+                return Check(folder.GetAccessControl(), FolderChange, folder.FullName) ?? CheckAncestors(folder);
+            }
+            catch (Exception ex) { return "não foi possível ler as permissões de " + folderPath + ": " + ex.Message; }
+        }
+
+        static string CheckAncestors(DirectoryInfo folder)
+        {
+            for (var ancestor = folder.Parent; ancestor != null; ancestor = ancestor.Parent)
+            {
+                var problem = Check(ancestor.GetAccessControl(), AncestorChange, ancestor.FullName);
+                if (problem != null) return problem;
+            }
+            return null;
         }
 
         static string Check(FileSystemSecurity security, FileSystemRights dangerous, string path)
