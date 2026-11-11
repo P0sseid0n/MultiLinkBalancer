@@ -95,7 +95,14 @@ namespace MultiLink.App
                     break;
                 case "lan":
                     Settings.AllowLan = Convert.ToBoolean(value);
-                    if (Proxy.Running) { Proxy.Stop(); StartProxy(); } // reabre a porta na interface certa
+                    if (Proxy.Running)
+                    {
+                        Proxy.Stop();
+                        StartProxy(); // reabre a porta na interface certa
+                        // não reabriu (o erro já está no registro): o proxy do Windows e a captura continuariam apontando
+                        // para a porta, agora livre para outro programa, e os programas ficariam sem internet
+                        if (!Proxy.Running) TurnOff();
+                    }
                     break;
                 case "system":
                     // preferência: com o MultiLink ligado, o Windows passa pelo proxy
