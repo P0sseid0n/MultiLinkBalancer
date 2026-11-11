@@ -227,7 +227,8 @@ npm run dev          # http://localhost:5173 com dados simulados e hot reload (u
 ```
 
 Para ver a UI em desenvolvimento dentro do app real (com dados reais), abra o app com a variável
-`MULTILINK_DEV_URL=http://localhost:5173` (o DevTools fica habilitado nesse modo).
+`MULTILINK_DEV_URL=http://localhost:5173` (o DevTools fica habilitado nesse modo). A variável só vale no build de
+desenvolvimento (com o `build.ps1` ao lado do .exe), sem administrador e para um endereço do próprio PC.
 
 ## Compilar
 

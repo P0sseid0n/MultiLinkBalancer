@@ -30,7 +30,7 @@ namespace MultiLink.Ui
 
         readonly MainWindow window;
         readonly AppController app;
-        readonly string devServerUrl = Environment.GetEnvironmentVariable("MULTILINK_DEV_URL"); // npm run dev, com DevTools
+        readonly Uri devServerUrl = DevServerUrl(); // npm run dev, com DevTools
         readonly JavaScriptSerializer json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
         CoreWebView2Environment environment;
         CoreWebView2Controller controller;
@@ -94,7 +94,20 @@ namespace MultiLink.Ui
                 webView.AddWebResourceRequestedFilter(Origin + "/*", CoreWebView2WebResourceContext.All);
                 webView.WebResourceRequested += ServeUi;
             }
-            webView.Navigate(devMode ? devServerUrl : Origin + "/");
+            webView.Navigate(devMode ? devServerUrl.AbsoluteUri : Origin + "/");
+        }
+
+        // MULTILINK_DEV_URL troca a origem em que a ponte confia. Vale só no build de desenvolvimento (build.ps1 ao lado
+        // do .exe), sem administrador e para um servidor no próprio PC: a variável vem do ambiente do usuário, que
+        // qualquer programa dele altera, e a instância elevada passaria a obedecer a página desse programa.
+        static Uri DevServerUrl()
+        {
+            var value = Environment.GetEnvironmentVariable("MULTILINK_DEV_URL");
+            Uri url;
+            if (string.IsNullOrEmpty(value) || !DevBuild.Available || Elevation.IsAdmin) return null;
+            if (!Uri.TryCreate(value, UriKind.Absolute, out url) || (url.Scheme != Uri.UriSchemeHttp && url.Scheme != Uri.UriSchemeHttps) ||
+                !(url.IsLoopback || string.Equals(url.Host, "localhost", StringComparison.OrdinalIgnoreCase))) return null;
+            return url;
         }
 
         public void Destroy()
@@ -132,9 +145,12 @@ namespace MultiLink.Ui
 
         bool IsOwnOrigin(string uri)
         {
-            if (uri == null) return false;
-            if (devServerUrl != null) return uri.StartsWith(devServerUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
-            return uri.StartsWith(Origin + "/", StringComparison.OrdinalIgnoreCase);
+            // compara esquema, host e porta (com StartsWith, "http://localhost:5173.exemplo.com" passaria)
+            Uri parsed;
+            if (uri == null || !Uri.TryCreate(uri, UriKind.Absolute, out parsed)) return false;
+            var origin = devServerUrl ?? new Uri(Origin + "/");
+            return parsed.Scheme == origin.Scheme && parsed.Port == origin.Port &&
+                   string.Equals(parsed.Host, origin.Host, StringComparison.OrdinalIgnoreCase);
         }
 
         void ServeUi(object sender, CoreWebView2WebResourceRequestedEventArgs e)
