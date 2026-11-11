@@ -34,10 +34,13 @@ namespace MultiLink.Proxy
         static async Task<ProxyRequest> Read(NetworkStream client, byte firstByte, byte[] buffer)
         {
             buffer[0] = firstByte;
-            int length = 1, headerEnd;
-            while ((headerEnd = FindHeaderEnd(buffer, length)) < 0)
+            int length = 1, headerEnd, scanned = 0;
+            // cada leitura procura o fim do cabeçalho só no que chegou (e nos 3 bytes antes): voltar ao começo a cada
+            // pedaço deixava um cliente mandando 1 byte por vez custar ~2 bilhões de comparações num cabeçalho de 64 KiB
+            while ((headerEnd = FindHeaderEnd(buffer, scanned, length)) < 0)
             {
                 if (length == buffer.Length) return null;
+                scanned = Math.Max(0, length - 3);
                 int read = await client.ReadAsync(buffer, length, buffer.Length - length);
                 if (read <= 0) return null;
                 length += read;
@@ -119,10 +122,10 @@ namespace MultiLink.Proxy
             return host.Length > 0;
         }
 
-        // Posição do "\r\n\r\n" que termina o cabeçalho, ou -1.
-        static int FindHeaderEnd(byte[] buffer, int length)
+        // Posição do "\r\n\r\n" que termina o cabeçalho, ou -1. start: até onde já foi procurado.
+        static int FindHeaderEnd(byte[] buffer, int start, int length)
         {
-            for (int i = 0; i + 3 < length; i++)
+            for (int i = start; i + 3 < length; i++)
                 if (buffer[i] == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' && buffer[i + 3] == '\n') return i;
             return -1;
         }
