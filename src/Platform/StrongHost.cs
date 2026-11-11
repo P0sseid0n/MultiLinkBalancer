@@ -10,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management;
+using System.Net.NetworkInformation;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using MultiLink.Common;
 using MultiLink.Storage;
@@ -19,6 +21,7 @@ namespace MultiLink.Platform
     public class StrongHost
     {
         const string KeyPrefix = "stronghost.";
+        static readonly Regex SavedValues = new Regex("^weakhostsend=(enabled|disabled) forwarding=(enabled|disabled)$");
         // O Windows volta a ligar o weak host do IPv6 sozinho (visto depois de recriar o adaptador da captura), e um
         // link novo pode chegar com a captura ligada: a verificação se repete. A consulta é pelo WMI, sem abrir processo.
         static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(10);
@@ -117,6 +120,7 @@ namespace MultiLink.Platform
             var keys = settings.KeysStartingWith(KeyPrefix);
             if (keys.Count == 0) return;
             var restored = new List<string>();
+            var adapters = new HashSet<string>(NetworkInterface.GetAllNetworkInterfaces().Select(adapter => adapter.Name), StringComparer.OrdinalIgnoreCase);
             foreach (var key in keys)
             {
                 var saved = settings.Get(key, "");
@@ -125,7 +129,15 @@ namespace MultiLink.Platform
                 var family = key.Substring(KeyPrefix.Length).Split('.')[0];
                 if (separator <= 0 || (family != "ipv4" && family != "ipv6")) continue;
                 var name = saved.Substring(0, separator);
-                var error = SetInterface(family, "interface=\"" + name + "\"", saved.Substring(separator + 1));
+                var values = saved.Substring(separator + 1);
+                // O config.ini pode ser alterado por qualquer programa do usuário, e o netsh roda como administrador: só
+                // volta o que este app grava (um adaptador que existe e os dois valores em Apply), nada mais na linha.
+                if (!adapters.Contains(name) || name.IndexOf('"') >= 0 || !SavedValues.IsMatch(values))
+                {
+                    log.Add("Ignorado no config.ini um valor de weak host send/forwarding que não foi gravado pelo MultiLink: " + key + ".", ActivityLog.Error);
+                    continue;
+                }
+                var error = SetInterface(family, "interface=\"" + name + "\"", values);
                 if (error == null) restored.Add(name + " (" + (family == "ipv4" ? "IPv4" : "IPv6") + ")");
                 else log.Add("[" + name + "] não foi possível devolver o weak host send e o forwarding: " + error, ActivityLog.Error);
             }
