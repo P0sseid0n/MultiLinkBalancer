@@ -85,6 +85,9 @@ recebem tudo por props (exceto `Toasts` e `ConfirmDialog`, que exibem o estado g
 
 A interface manda `{ id, cmd, args }` e recebe `{ type: "reply", id, ok, result | error }`.
 O app também envia, sem pedido, `{ type: "state", data }` a cada segundo e `{ type: "log", entries }`.
+Ao reabrir o painel com a interface que ficou escondida na bandeja (o WebView2 vive mais 5 min depois de fechar o
+painel), envia `{ type: "panel.opened" }`: a interface volta à tela inicial e descarta a pergunta e os avisos abertos.
+Escondida, ela não recebe `state`; o estado atual chega logo depois do `panel.opened`.
 
 - Comandos: `AppController.Handle` (C#) e `api/mock.js` (simulador) — os dois precisam continuar iguais.
 - Medição: `measure` mede cada link e ajusta os pesos (estado `measuring`); `measure.sum` faz o teste

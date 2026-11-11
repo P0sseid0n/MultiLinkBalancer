@@ -177,7 +177,7 @@ Medido nesta máquina (memória privada):
 
 | Situação | Uso |
 |---|---|
-| Na bandeja (WebView2 é destruído) | ~29 MB |
+| Na bandeja (o WebView2 é destruído 5 min depois de fechar o painel) | ~29 MB |
 | Janela aberta (app + WebView2, renderização por software) | ~131 MB |
 
 ## Privacidade

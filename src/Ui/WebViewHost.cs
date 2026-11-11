@@ -1,6 +1,7 @@
 // A interface web dentro da janela (WebView2). Serve o index.html embutido no .exe, recebe os
 // comandos da interface e devolve as respostas e o estado.
-// O WebView2 só existe enquanto a janela está visível; na bandeja ele é destruído para economizar memória.
+// Ao ir para a bandeja, o WebView2 fica escondido e suspenso por alguns minutos (reabrir logo depois é imediato) e
+// então é destruído para economizar memória.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -41,16 +42,55 @@ namespace MultiLink.Ui
         // trás e desiste, sem prender a próxima: fechado o WebView no meio da limpeza do perfil, ela nunca termina.
         int generation;
         const int ProfileClearTimeoutMs = 10000;
+        const int KeepAliveMs = 5 * 60 * 1000;      // escondido na bandeja por mais tempo que isso: destrói
+        const int CrashReopenIntervalMs = 30 * 1000; // navegador parou: reabre sozinho no máximo uma vez nesse intervalo
+        readonly Timer keepAlive = new Timer { Interval = KeepAliveMs };
+        DateTime lastCrashReopen = DateTime.MinValue;
 
         public WebViewHost(MainWindow window, AppController app)
         {
             this.window = window;
             this.app = app;
+            keepAlive.Tick += (sender, e) => { keepAlive.Stop(); if (!window.Visible) Destroy(); };
         }
 
         public bool IsOpen { get { return controller != null; } }
 
-        public async void EnsureCreated()
+        // Painel aberto: mostra o WebView que ficou escondido ou cria um.
+        public void Open()
+        {
+            keepAlive.Stop();
+            if (controller == null) { EnsureCreated(); return; }
+            controller.IsVisible = true; // também tira da suspensão
+            try { controller.CoreWebView2.MemoryUsageTargetLevel = CoreWebView2MemoryUsageTargetLevel.Normal; } catch { }
+            FitToWindow();
+            NotifyMoved();
+            // a interface volta à tela inicial, como numa abertura nova, e recebe o estado atual de uma vez
+            Post(new Dictionary<string, object> { { "type", "panel.opened" } });
+            PostState();
+        }
+
+        // Painel foi para a bandeja: o WebView fica escondido e suspenso, e é destruído se o painel não reabrir a tempo.
+        public void Conceal()
+        {
+            keepAlive.Stop();
+            keepAlive.Start();
+            if (controller != null) Suspend();
+        }
+
+        async void Suspend()
+        {
+            try
+            {
+                controller.IsVisible = false;
+                var webView = controller.CoreWebView2;
+                webView.MemoryUsageTargetLevel = CoreWebView2MemoryUsageTargetLevel.Low;
+                await webView.TrySuspendAsync(); // para os timers e a renderização da página
+            }
+            catch { } // destruído ou reaberto no meio: nada a fazer
+        }
+
+        async void EnsureCreated()
         {
             if (controller != null || creating || !window.Visible) return;
             creating = true;
@@ -62,11 +102,12 @@ namespace MultiLink.Ui
                     environment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(AppPaths.Local, "WebView2"),
                                                                            new CoreWebView2EnvironmentOptions(BrowserArguments));
                 var created = await environment.CreateCoreWebView2ControllerAsync(window.Handle);
-                // foi para a bandeja (ou outra abertura começou) enquanto criava
-                if (attempt != generation || !window.Visible) { created.Close(); return; }
+                if (attempt != generation) { created.Close(); return; } // destruído enquanto criava
                 controller = created;
                 controller.DefaultBackgroundColor = window.BackColor;
                 FitToWindow();
+                // foi para a bandeja enquanto criava: termina de carregar escondido, pronto para a próxima abertura
+                if (!window.Visible) controller.IsVisible = false;
                 await Configure(controller.CoreWebView2, attempt);
             }
             catch (WebView2RuntimeNotFoundException)
@@ -111,6 +152,7 @@ namespace MultiLink.Ui
             webView.WebMessageReceived += OnWebMessage;
             webView.NavigationStarting += (sender, e) => { if (!IsOwnOrigin(e.Uri)) e.Cancel = true; };
             webView.NewWindowRequested += (sender, e) => { e.Handled = true; };
+            webView.ProcessFailed += OnProcessFailed;
             if (!devMode)
             {
                 webView.AddWebResourceRequestedFilter(Origin + "/*", CoreWebView2WebResourceContext.All);
@@ -135,6 +177,27 @@ namespace MultiLink.Ui
                 if (attempt != generation) return; // foi para a bandeja enquanto limpava
             }
             webView.Navigate(devMode ? devServerUrl.AbsoluteUri : Origin + "/");
+            if (!window.Visible) Suspend(); // carregada escondida (ver EnsureCreated)
+        }
+
+        // Com o WebView vivo por mais tempo (escondido na bandeja), o navegador ou a página podem parar no meio. Sem isso
+        // o painel ficaria vazio até o app reiniciar.
+        void OnProcessFailed(object sender, CoreWebView2ProcessFailedEventArgs e)
+        {
+            if (e.ProcessFailedKind == CoreWebView2ProcessFailedKind.BrowserProcessExited)
+            {
+                Destroy();
+                environment = null; // o ambiente morre com o navegador
+                bool reopen = window.Visible && (DateTime.UtcNow - lastCrashReopen).TotalMilliseconds > CrashReopenIntervalMs;
+                app.Log.Add("O navegador da interface (WebView2) parou" + (reopen ? "; abrindo de novo." : "."), ActivityLog.Error);
+                if (reopen) { lastCrashReopen = DateTime.UtcNow; EnsureCreated(); }
+            }
+            else if (e.ProcessFailedKind == CoreWebView2ProcessFailedKind.RenderProcessExited ||
+                     e.ProcessFailedKind == CoreWebView2ProcessFailedKind.RenderProcessUnresponsive)
+            {
+                app.Log.Add("A página da interface parou (" + e.ProcessFailedKind + "); recarregando.", ActivityLog.Error);
+                try { ((CoreWebView2)sender).Reload(); } catch { }
+            }
         }
 
         // MULTILINK_DEV_URL troca a origem em que a ponte confia. Vale só no build de desenvolvimento (build.ps1 ao lado
@@ -152,6 +215,7 @@ namespace MultiLink.Ui
 
         public void Destroy()
         {
+            keepAlive.Stop();
             generation++;
             creating = false;
             if (controller == null) return;
@@ -161,7 +225,7 @@ namespace MultiLink.Ui
 
         public void FitToWindow() { if (controller != null) controller.Bounds = window.ClientRectangle; }
 
-        public void Show() { if (controller != null) controller.IsVisible = true; }
+        public void Show() { if (controller != null && window.Visible) controller.IsVisible = true; }
 
         // Janela do processo do WebView2 (o DevTools, por exemplo).
         public bool OwnsWindow(IntPtr hwnd)
@@ -182,7 +246,8 @@ namespace MultiLink.Ui
 
         public void PostState()
         {
-            if (controller != null) Post(new Dictionary<string, object> { { "type", "state" }, { "data", app.GetState() } });
+            // escondido na bandeja não recebe: ao reabrir, o Open manda o estado atual
+            if (controller != null && window.Visible) Post(new Dictionary<string, object> { { "type", "state" }, { "data", app.GetState() } });
         }
 
         bool IsOwnOrigin(string uri)

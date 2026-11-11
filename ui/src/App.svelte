@@ -1,6 +1,7 @@
 <script>
   // Raiz da interface: troca entre as telas e mostra os avisos e confirmações globais.
   import { app, initStore } from './state/app.svelte.js';
+  import { onMessage } from './api/bridge.js';
   import HomeScreen from './screens/home/HomeScreen.svelte';
   import SettingsScreen from './screens/settings/SettingsScreen.svelte';
   import HistoryScreen from './screens/history/HistoryScreen.svelte';
@@ -12,9 +13,17 @@
 
   let screen = $state('home'); // 'home' | 'settings' | 'history'
   const goHome = () => (screen = 'home');
+  let scroller;
+
+  // painel reaberto com a interface que ficou escondida na bandeja: começa da tela inicial, como numa abertura nova
+  onMessage((message) => {
+    if (message.type !== 'panel.opened') return;
+    screen = 'home';
+    if (scroller) scroller.scrollTop = 0;
+  });
 </script>
 
-<div class="scroll">
+<div class="scroll" bind:this={scroller}>
   <div class="frame">
     {#if !app.state}
       <LoadingSkeleton />

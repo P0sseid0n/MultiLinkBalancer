@@ -225,8 +225,8 @@ namespace MultiLink.Ui
         protected override void OnVisibleChanged(EventArgs e)
         {
             base.OnVisibleChanged(e);
-            if (Visible) { BeginInvoke(new Action(ApplyPanelBounds)); webView.EnsureCreated(); }
-            else webView.Destroy();
+            if (Visible) { BeginInvoke(new Action(ApplyPanelBounds)); webView.Open(); }
+            else webView.Conceal();
         }
 
         protected override void OnResize(EventArgs e)

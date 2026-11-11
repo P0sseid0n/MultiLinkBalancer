@@ -20,6 +20,11 @@ export function initStore() {
   onMessage((message) => {
     if (message.type === 'state') app.state = message.data;
     else if (message.type === 'log') app.log = [...app.log, ...message.entries].slice(-MAX_LOG);
+    else if (message.type === 'panel.opened') {
+      // reaberto da bandeja: a pergunta e os avisos de antes não valem mais (antes a página era recriada)
+      answer(false);
+      app.toasts = [];
+    }
   });
   call('ui.ready').then((initial) => {
     app.log = initial.log || [];
