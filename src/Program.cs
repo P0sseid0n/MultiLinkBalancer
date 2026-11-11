@@ -42,6 +42,7 @@ namespace MultiLink
             // entrada "Run": a tarefa já abriu o app (o normal) ou ela abre agora; sem tarefa, segue sem elevação
             if (launcher && (SingleInstance.Running() || StartupRegistration.RunTask())) return;
             if (HasArgument(args, Installation.UninstallArgument)) { Installation.UninstallFromArgument(); return; }
+            if (!background && OpenInstalledAsAdmin(args)) return;
             WaitForPreviousInstance(args);
             // instalação pedida sem administrador: esta instância elevada instala, abre a cópia instalada e fecha
             if (HasArgument(args, Installation.InstallArgument) && Elevation.IsAdmin && Installation.InstallFromArgument()) return;
@@ -66,6 +67,21 @@ namespace MultiLink
                 Application.SetCompatibleTextRenderingDefault(false);
                 Run(background);
             }
+        }
+
+        // Instalado, o app é aberto como administrador (captura, rotas): sem elevação (atalho do Menu Iniciar, duplo
+        // clique), reabre pedindo a confirmação do Windows. Já aberto (na bandeja), só mostra o painel, sem perguntar.
+        // Recusada a confirmação, segue sem administrador. Junto com o Windows (/tray) não pergunta: lá vale a tarefa.
+        static bool OpenInstalledAsAdmin(string[] args)
+        {
+            if (!Installation.IsInstalled || Elevation.IsAdmin || SingleInstance.Running()) return false;
+            var arguments = string.Join(" ", args.Select(arg => "\"" + arg.Replace("\"", "") + "\""));
+            try
+            {
+                Process.Start(new ProcessStartInfo(Application.ExecutablePath, arguments) { UseShellExecute = true, Verb = "runas" }).Dispose();
+                return true;
+            }
+            catch (System.ComponentModel.Win32Exception) { return false; } // recusada no aviso do UAC
         }
 
         static bool HasArgument(string[] args, string argument)
