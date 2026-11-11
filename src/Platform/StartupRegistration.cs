@@ -18,6 +18,9 @@ namespace MultiLink.Platform
         const string Name = "MultiLinkBalancer";
         public const string TrayArgument = "/tray";       // aberto junto com o Windows: fica só na bandeja
         public const string LauncherArgument = "/startup"; // entrada da chave "Run" ao lado da tarefa agendada
+        // Prioridade da tarefa: 4 é a prioridade normal. O padrão do Agendador (7) roda o app abaixo do normal, e o
+        // WebView2 herda isso: com o PC ocupado, o painel demorava a aparecer.
+        const int TaskPriority = 4;
 
         static string RunValue
         {
@@ -119,12 +122,23 @@ namespace MultiLink.Platform
             catch { return false; }
         }
 
-        // Tarefa no logon com privilégio máximo, sem limite de tempo e também na bateria.
+        // Tarefa das versões anteriores, criada com a prioridade padrão do Agendador: passa para a normal. Vale a partir
+        // da próxima vez que a tarefa abrir o app. true se mudou.
+        public static async Task<bool> FixTaskPriority()
+        {
+            if (!Elevation.IsAdmin || !ScheduledTaskExists()) return false;
+            var result = await PowerShell.Run("$t = Get-ScheduledTask -TaskName " + PowerShell.Quote(Name) + " -ErrorAction Stop; " +
+                                              "if ($t.Settings.Priority -ne " + TaskPriority + ") { $t.Settings.Priority = " + TaskPriority + "; " +
+                                              "Set-ScheduledTask -InputObject $t -ErrorAction Stop | Out-Null; 'mudou' }", false);
+            return result.Ok && result.Output != null && result.Output.Contains("mudou");
+        }
+
+        // Tarefa no logon com privilégio máximo, prioridade normal, sem limite de tempo e também na bateria.
         static Task<CommandResult> RegisterElevatedTask(string exePath)
         {
             return PowerShell.Run("$a = New-ScheduledTaskAction -Execute " + PowerShell.Quote(exePath) + " -Argument '" + TrayArgument + "'; " +
                                   "$t = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME; " +
-                                  "$s = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries; " +
+                                  "$s = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Priority " + TaskPriority + "; " +
                                   "$p = New-ScheduledTaskPrincipal -UserId $env:USERNAME -RunLevel Highest -LogonType Interactive; " +
                                   "Register-ScheduledTask -TaskName " + PowerShell.Quote(Name) + " -Action $a -Trigger $t -Settings $s -Principal $p -Force | Out-Null", false);
         }

@@ -44,6 +44,11 @@ namespace MultiLink
             if (HasArgument(args, Installation.UninstallArgument)) { Installation.UninstallFromArgument(); return; }
             if (!background && OpenInstalledAsAdmin(args)) return;
             WaitForPreviousInstance(args);
+            // aberto por uma tarefa das versões anteriores (prioridade abaixo do normal, ver StartupRegistration.TaskPriority):
+            // volta ao normal já nesta execução, antes de abrir o WebView2, que herda a prioridade
+            using (var self = Process.GetCurrentProcess())
+                if (self.PriorityClass == ProcessPriorityClass.BelowNormal || self.PriorityClass == ProcessPriorityClass.Idle)
+                    try { self.PriorityClass = ProcessPriorityClass.Normal; } catch { }
             // instalação pedida sem administrador: esta instância elevada instala, abre a cópia instalada e fecha
             if (HasArgument(args, Installation.InstallArgument) && Elevation.IsAdmin && Installation.InstallFromArgument()) return;
             Installation.UpdateRequested = HasArgument(args, Installation.UpdateArgument) && Elevation.IsAdmin;

@@ -143,6 +143,8 @@ namespace MultiLink.App
                 startupRegistered = StartupRegistration.IsRegistered;
                 // a tarefa das versões anteriores ganha a entrada que aparece no Gerenciador de Tarefas
                 if (IsAdmin) StartupRegistration.AddLauncherIfMissing();
+                if (await StartupRegistration.FixTaskPriority())
+                    Log.Add("Tarefa de iniciar com o Windows passou para a prioridade normal (antes abaixo do normal, o que atrasava o painel).");
             });
             // como administrador: troca o atalho "Run" (sem elevação) pela tarefa agendada elevada, se o .exe está num
             // lugar seguro para isso
