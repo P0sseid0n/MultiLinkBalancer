@@ -1,4 +1,4 @@
-// Ícone da bandeja: abre o painel com um clique, mostra o estado (verde ou vermelho, com a
+// Ícone da bandeja: abre o painel com um clique, mostra o estado (verde, vermelho ou cinza quando desligado, com a
 // velocidade ou os links fora do ar na dica) e tem um menu com os comandos mais usados.
 using System;
 using System.Collections.Generic;
@@ -17,11 +17,13 @@ namespace MultiLink.Ui
 
         static readonly string[] ModeNames = { "Proporcional aos pesos", "Menos conexões", "Só um link, com reserva", "Menor latência" };
 
+        enum Look { On, Alert, Off }
+
         readonly AppController app;
         readonly NotifyIcon notifyIcon;
-        readonly Icon normalIcon, alertIcon;
+        readonly Icon normalIcon, alertIcon, offIcon;
         readonly Action showPanel, exit;
-        bool alerting;
+        Look look;
 
         public TrayIcon(AppController app, Action togglePanel, Action showPanel, Action exit)
         {
@@ -30,16 +32,18 @@ namespace MultiLink.Ui
             this.exit = exit;
             normalIcon = MakeIcon(AppIcon.On);
             alertIcon = MakeIcon(AppIcon.Alert);
+            offIcon = MakeIcon(AppIcon.Off, true);
+            look = app.Proxy.Running ? Look.On : Look.Off;
 
             var menu = new ContextMenuStrip();
             menu.Items.Add("Abrir MultiLink"); // o menu é montado de novo a cada abertura, com o estado atual
             menu.Opening += (sender, e) => { BuildMenu(menu); e.Cancel = false; };
-            notifyIcon = new NotifyIcon { Icon = normalIcon, Text = "MultiLink Balancer", Visible = true, ContextMenuStrip = menu };
+            notifyIcon = new NotifyIcon { Icon = CurrentIcon, Text = "MultiLink Balancer", Visible = true, ContextMenuStrip = menu };
             notifyIcon.MouseClick += (sender, e) => { if (e.Button == MouseButtons.Left) togglePanel(); };
             notifyIcon.BalloonTipClicked += (sender, e) => showPanel();
         }
 
-        public Icon CurrentIcon { get { return alerting ? alertIcon : normalIcon; } }
+        public Icon CurrentIcon { get { return look == Look.Alert ? alertIcon : look == Look.Off ? offIcon : normalIcon; } }
 
         public void ShowBalloon(int timeoutMs, string title, string text, ToolTipIcon icon)
         {
@@ -49,12 +53,15 @@ namespace MultiLink.Ui
         // Atualiza ícone e dica. Devolve true se o ícone mudou.
         public bool UpdateStatus(List<string> downLinks, double downRate, double upRate)
         {
-            var tooltip = downLinks.Count > 0 ? "MultiLink: fora do ar " + string.Join(", ", downLinks)
-                                              : "MultiLink: ↓ " + Mbps(downRate) + "  ↑ " + Mbps(upRate);
+            // desligado vale mais que o alerta: com o MultiLink parado, um link fora do ar não muda nada
+            bool running = app.Proxy.Running;
+            var tooltip = !running ? "MultiLink: desligado"
+                        : downLinks.Count > 0 ? "MultiLink: fora do ar " + string.Join(", ", downLinks)
+                        : "MultiLink: ↓ " + Mbps(downRate) + "  ↑ " + Mbps(upRate);
             notifyIcon.Text = tooltip.Length > MaxTooltipLength ? tooltip.Substring(0, MaxTooltipLength) : tooltip;
-            bool shouldAlert = downLinks.Count > 0;
-            if (shouldAlert == alerting) return false;
-            alerting = shouldAlert;
+            var next = !running ? Look.Off : downLinks.Count > 0 ? Look.Alert : Look.On;
+            if (next == look) return false;
+            look = next;
             notifyIcon.Icon = CurrentIcon;
             return true;
         }
@@ -149,9 +156,9 @@ namespace MultiLink.Ui
         }
 
         // Ícone no tamanho que o Windows usa nesta tela (16 px a 100%, 24 px a 150%...).
-        static Icon MakeIcon(Color accent)
+        static Icon MakeIcon(Color accent, bool hollowHub = false)
         {
-            using (var bitmap = AppIcon.Render(SystemInformation.SmallIconSize.Width, accent))
+            using (var bitmap = AppIcon.Render(SystemInformation.SmallIconSize.Width, accent, hollowHub))
                 return Icon.FromHandle(bitmap.GetHicon());
         }
     }

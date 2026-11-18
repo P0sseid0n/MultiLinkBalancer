@@ -1,5 +1,5 @@
 // Ícone do MultiLink: bloco grafite (o fundo da interface) com três links que convergem num só.
-// O mesmo desenho gera o ícone da bandeja (verde ou vermelho) e o .ico do executável (build.ps1).
+// O mesmo desenho gera o ícone da bandeja (verde, vermelho ou cinza) e o .ico do executável (build.ps1).
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -11,12 +11,14 @@ namespace MultiLink.Ui
     {
         public static readonly Color On = Color.FromArgb(0x4c, 0xc3, 0x8a);    // --on da interface
         public static readonly Color Alert = Color.FromArgb(0xe5, 0x53, 0x4b); // --critical
+        public static readonly Color Off = Color.FromArgb(0x7d, 0x87, 0x92);   // --ink-3: desligado
         static readonly Color TileTop = Color.FromArgb(0x26, 0x2d, 0x36), TileBottom = Color.FromArgb(0x13, 0x17, 0x1c);
 
         static readonly int[] IcoSizes = { 16, 20, 24, 32, 40, 48, 64, 256 };
 
         // Desenha numa grade de 64 unidades; em tamanhos pequenos os traços engrossam para continuar legíveis.
-        public static Bitmap Render(int size, Color accent)
+        // hollowHub: nó de saída vazado também na bandeja (desligado), para não depender só da cor.
+        public static Bitmap Render(int size, Color accent, bool hollowHub = false)
         {
             var bitmap = new Bitmap(size, size, PixelFormat.Format32bppArgb);
             using (var graphics = Graphics.FromImage(bitmap))
@@ -27,7 +29,7 @@ namespace MultiLink.Ui
                 graphics.ScaleTransform(size / 64f, size / 64f);
                 bool small = size <= 24;
                 DrawTile(graphics, small);
-                DrawLinks(graphics, small, accent);
+                DrawLinks(graphics, small, accent, hollowHub);
             }
             return bitmap;
         }
@@ -47,7 +49,7 @@ namespace MultiLink.Ui
 
         // Três links entrando no mesmo ponto. Nos tamanhos da bandeja: desenho maior, nós mais
         // afastados e linhas retas (curvas viram borrão).
-        static void DrawLinks(Graphics graphics, bool small, Color accent)
+        static void DrawLinks(Graphics graphics, bool small, Color accent, bool hollowHub)
         {
             float stroke = small ? 7f : 4.5f, inputRadius = small ? 6.5f : 4.5f, hubRadius = small ? 10f : 7.5f;
             float left = small ? 15 : 18;
@@ -66,10 +68,11 @@ namespace MultiLink.Ui
                 foreach (var y in inputsY) graphics.FillEllipse(brush, left - inputRadius, y - inputRadius, inputRadius * 2, inputRadius * 2);
                 graphics.FillEllipse(brush, hub.X - hubRadius, hub.Y - hubRadius, hubRadius * 2, hubRadius * 2);
             }
-            // miolo escuro no nó de saída: dá leitura de "conector" nos tamanhos maiores
-            if (!small)
+            // miolo escuro no nó de saída: dá leitura de "conector" nos tamanhos maiores e marca o desligado na bandeja
+            float holeRadius = small ? (hollowHub ? 5f : 0f) : 3f;
+            if (holeRadius > 0)
                 using (var hole = new SolidBrush(TileBottom))
-                    graphics.FillEllipse(hole, hub.X - 3f, hub.Y - 3f, 6f, 6f);
+                    graphics.FillEllipse(hole, hub.X - holeRadius, hub.Y - holeRadius, holeRadius * 2, holeRadius * 2);
         }
 
         static GraphicsPath Rounded(RectangleF rectangle, float radius)
