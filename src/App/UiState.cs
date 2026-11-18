@@ -22,7 +22,7 @@ namespace MultiLink.App
                 { "admin", app.IsAdmin },
                 { "installed", Installation.IsInstalled }, // em Arquivos de Programas (Platform/Installation)
                 { "proxy", new Dictionary<string, object> {
-                    { "running", app.Proxy.Running }, { "port", settings.Port }, { "lan", settings.AllowLan },
+                    { "running", app.Proxy.Running }, { "transition", app.Transition }, { "port", settings.Port }, { "lan", settings.AllowLan },
                     { "system", settings.UseSystemProxy }, { "systemApplied", settings.SystemProxyApplied } } },
                 { "settings", new Dictionary<string, object> {
                     { "mode", (int)app.Balancer.Mode }, { "affinity", app.Balancer.Affinity }, { "quality", app.Balancer.QualityAware },

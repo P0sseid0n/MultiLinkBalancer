@@ -58,6 +58,7 @@ namespace MultiLink.Ui
             StartupTimeline.Mark("configuração");
             tray = new TrayIcon(app, TogglePanelFromTray, () => ShowPanel(true), Exit);
             Icon = tray.CurrentIcon;
+            app.TransitionChanged += OnTransitionChanged;
             StartupTimeline.Mark("ícone da bandeja");
             app.Log.Add("Etapas da partida: " + StartupTimeline.Summary() + ".");
             ListenForSecondInstance();
@@ -94,7 +95,20 @@ namespace MultiLink.Ui
         void OnTick()
         {
             app.Tick();
+            UpdateTray();
+            webView.PostState();
+        }
+
+        void UpdateTray()
+        {
             if (tray.UpdateStatus(app.Links.DownLinkNames(), app.TotalDownRate(), app.TotalUpRate())) Icon = tray.CurrentIcon;
+        }
+
+        // Ligando ou desligando, por qualquer caminho (painel, bandeja, atalho): a bandeja e o painel mudam na hora.
+        void OnTransitionChanged()
+        {
+            if (tray == null) return; // a partida liga o proxy antes de o ícone existir
+            UpdateTray();
             webView.PostState();
         }
 
@@ -137,9 +151,11 @@ namespace MultiLink.Ui
             if (busy.Count > 0) app.Log.Add("Atalho já usado por outro programa: " + string.Join(", ", busy), ActivityLog.Error);
         }
 
-        void OnTogglePressed()
+        async void OnTogglePressed()
         {
-            bool on = app.ToggleRunning();
+            var result = await app.ToggleRunning();
+            if (result == null) return; // já estava ligando ou desligando
+            bool on = result.Value;
             // aviso curto: o atalho é usado com o painel fechado
             tray.ShowBalloon(2500, on ? "MultiLink ligado" : "MultiLink desligado",
                 on ? "Conexões divididas entre os links." : "O Windows voltou à conexão normal.", ToolTipIcon.Info);

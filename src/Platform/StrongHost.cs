@@ -112,34 +112,69 @@ namespace MultiLink.Platform
             }
         }
 
+        class Restore
+        {
+            public string Key, Name, Family, Values, Error;
+        }
+
         // Ao desligar a captura e na abertura (depois de um fechamento inesperado). Devolve pelo nome do adaptador: depois
         // de reiniciar o Windows o mesmo índice pode ser de outro adaptador (e os valores originais já voltaram sozinhos).
         public void RestoreAll()
         {
+            var pending = PendingRestores();
+            if (pending == null) return;
+            foreach (var item in pending) item.Error = SetInterface(item.Family, "interface=\"" + item.Name + "\"", item.Values);
+            FinishRestores(pending);
+        }
+
+        // O mesmo, com o netsh fora da thread da janela (o painel e a bandeja continuam respondendo ao desligar). Os ajustes
+        // só são lidos e gravados na thread de quem chamou, e as chaves saem do config.ini depois do netsh: um fechamento
+        // no meio ainda deixa a abertura seguinte saber o que devolver.
+        public async Task RestoreAllAsync()
+        {
+            var pending = PendingRestores();
+            if (pending == null) return;
+            await Task.Run(() => { foreach (var item in pending) item.Error = SetInterface(item.Family, "interface=\"" + item.Name + "\"", item.Values); });
+            FinishRestores(pending);
+        }
+
+        // null: nada gravado. Os valores inválidos já saem do config.ini aqui (com aviso no registro).
+        List<Restore> PendingRestores()
+        {
             lastCheck = DateTime.MinValue;
             var keys = settings.KeysStartingWith(KeyPrefix);
-            if (keys.Count == 0) return;
-            var restored = new List<string>();
+            if (keys.Count == 0) return null;
+            var pending = new List<Restore>();
             var adapters = new HashSet<string>(NetworkInterface.GetAllNetworkInterfaces().Select(adapter => adapter.Name), StringComparer.OrdinalIgnoreCase);
             foreach (var key in keys)
             {
                 var saved = settings.Get(key, "");
-                settings.Remove(key);
                 int separator = saved.LastIndexOf('|');
                 var family = key.Substring(KeyPrefix.Length).Split('.')[0];
-                if (separator <= 0 || (family != "ipv4" && family != "ipv6")) continue;
+                if (separator <= 0 || (family != "ipv4" && family != "ipv6")) { settings.Remove(key); continue; }
                 var name = saved.Substring(0, separator);
                 var values = saved.Substring(separator + 1);
                 // O config.ini pode ser alterado por qualquer programa do usuário, e o netsh roda como administrador: só
                 // volta o que este app grava (um adaptador que existe e os dois valores em Apply), nada mais na linha.
                 if (!adapters.Contains(name) || name.IndexOf('"') >= 0 || !SavedValues.IsMatch(values))
                 {
+                    settings.Remove(key);
                     log.Add("Ignorado no config.ini um valor de weak host send/forwarding que não foi gravado pelo MultiLink: " + key + ".", ActivityLog.Error);
                     continue;
                 }
-                var error = SetInterface(family, "interface=\"" + name + "\"", values);
-                if (error == null) restored.Add(name + " (" + (family == "ipv4" ? "IPv4" : "IPv6") + ")");
-                else log.Add("[" + name + "] não foi possível devolver o weak host send e o forwarding: " + error, ActivityLog.Error);
+                pending.Add(new Restore { Key = key, Name = name, Family = family, Values = values });
+            }
+            return pending;
+        }
+
+        void FinishRestores(List<Restore> pending)
+        {
+            var restored = new List<string>();
+            foreach (var item in pending)
+            {
+                settings.Remove(item.Key);
+                if (item.Error == null) restored.Add(item.Name + " (" + (item.Family == "ipv4" ? "IPv4" : "IPv6") + ")");
+                else log.Add("[" + item.Name + "] não foi possível devolver o weak host send e o forwarding: " + item.Error, ActivityLog.Error);
             }
             settings.Save();
             if (restored.Count > 0) log.Add("Weak host send e forwarding devolvidos ao que eram em " + string.Join(", ", restored) + ".");

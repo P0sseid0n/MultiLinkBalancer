@@ -95,7 +95,31 @@ namespace MultiLink.Platform
             await Launch(socksPort);
         }
 
+        // Ao fechar o app e ao desligar só a captura nos ajustes: espera tudo terminar.
         public void Stop()
+        {
+            var running = MarkStopped();
+            strongHost.RestoreAll(); // depois de tirar a captura: sem as rotas dela, o weak host não atrapalha mais
+            ipv6Block.RemoveNow();
+            if (running == null) return;
+            EndProcess(running);
+            log.Add("Captura de todos os programas desligada. O adaptador virtual foi removido.");
+        }
+
+        // Ao desligar o MultiLink: o mesmo, com o netsh, o PowerShell e a espera do tun2socks fora da thread da janela
+        // (até uns 20 s no pior caso), para o painel e a bandeja mostrarem que está desligando.
+        public async Task StopAsync()
+        {
+            var running = MarkStopped();
+            await strongHost.RestoreAllAsync();
+            await ipv6Block.RemoveAsync();
+            if (running == null) return;
+            await Task.Run(() => EndProcess(running));
+            log.Add("Captura de todos os programas desligada. O adaptador virtual foi removido.");
+        }
+
+        // O estado muda na hora: Launch, OnExited, SyncIpv6 e SyncLinks param de mexer na captura.
+        Process MarkStopped()
         {
             wanted = false;
             Active = false;
@@ -103,11 +127,12 @@ namespace MultiLink.Platform
             Ipv6 = false;
             var running = process;
             process = null;
-            strongHost.RestoreAll(); // depois de tirar a captura: sem as rotas dela, o weak host não atrapalha mais
-            ipv6Block.RemoveNow();
-            if (running == null) return;
+            return running;
+        }
+
+        static void EndProcess(Process running)
+        {
             try { if (!running.HasExited) { running.Kill(); running.WaitForExit(5000); } } catch { }
-            log.Add("Captura de todos os programas desligada. O adaptador virtual foi removido.");
         }
 
         async Task Launch(int socksPort)

@@ -130,7 +130,7 @@ namespace MultiLink.App
             Log.Add(names.Count > 0 ? "MultiLink aberto com " + string.Join(" e ", names) + "." : "MultiLink aberto. Nenhuma conexão com internet encontrada.");
 
             // Primeiro o proxy: com o proxy do Windows ligado, os programas ficam sem internet até a porta abrir.
-            if (Settings.WasRunning || startedFromTray) TurnOn();
+            if (Settings.WasRunning || startedFromTray) { var ignored = TurnOn(); } // o proxy abre já aqui; a captura termina depois
             Log.Add(string.Format("Partida concluída {0:0.0} s depois de o processo abrir.", (DateTime.Now - processStart).TotalSeconds));
 
             // O que não é urgente fica para depois (o schtasks.exe demora na partida do Windows).
@@ -303,35 +303,67 @@ namespace MultiLink.App
         public double TotalUpRate() { return Links.All().Sum(link => link.Traffic.RateUp); }
 
         // ------------------------------------------------------------ ligar e desligar
-        // Pelo atalho ou pela bandeja. Devolve o novo estado.
-        public bool ToggleRunning()
+        public const string Starting = "starting", Stopping = "stopping";
+
+        // Ligando ou desligando (Starting/Stopping), ou null. Com a captura, cada sentido leva de 1 a 20 s (adaptador
+        // virtual, netsh, PowerShell): nesse tempo o painel e a bandeja mostram a transição e não aceitam outro pedido.
+        public string Transition { get; private set; }
+        public event Action TransitionChanged;
+
+        // Pelo atalho ou pela bandeja. Devolve o novo estado, ou null se já estava ligando ou desligando.
+        public async Task<bool?> ToggleRunning()
         {
-            if (Proxy.Running) TurnOff();
-            else TurnOn();
+            if (Transition != null) return null;
+            if (Proxy.Running) await TurnOff();
+            else await TurnOn();
             Settings.WasRunning = Proxy.Running;
             Settings.Save();
             return Proxy.Running;
         }
 
-        // Proxy local e, conforme os ajustes, proxy do Windows e captura de todos os programas.
-        void TurnOn()
+        // Comandos que mexem no proxy, na porta ou na captura esperam a transição terminar.
+        void EnsureIdle()
         {
-            StartProxy();
-            if (!Proxy.Running) return;
-            if (Settings.UseSystemProxy) try { SetSystemProxy(true); } catch { }
-            if (Settings.CaptureAllPrograms)
-            {
-                if (IsAdmin) StartCapture();
-                else Log.Add("A captura de todos os programas está ligada, mas só funciona com o MultiLink aberto como administrador.", ActivityLog.Error);
-            }
+            if (Transition == Starting) throw new Exception("O MultiLink está ligando. Espere terminar.");
+            if (Transition == Stopping) throw new Exception("O MultiLink está desligando. Espere terminar.");
         }
 
-        void TurnOff()
+        void SetTransition(string transition)
         {
-            Capture.Stop(); // sem o proxy, o adaptador virtual deixaria os programas sem internet
-            SetSystemProxy(false); // nunca deixar o Windows apontando para um proxy parado
-            Proxy.Stop();
-            Log.Add("Proxy parado.");
+            Transition = transition;
+            var handler = TransitionChanged;
+            if (handler != null) handler();
+        }
+
+        // Proxy local e, conforme os ajustes, proxy do Windows e captura de todos os programas.
+        async Task TurnOn()
+        {
+            SetTransition(Starting);
+            try
+            {
+                StartProxy();
+                if (!Proxy.Running) return;
+                if (Settings.UseSystemProxy) try { SetSystemProxy(true); } catch { }
+                if (Settings.CaptureAllPrograms)
+                {
+                    if (IsAdmin) await StartCapture();
+                    else Log.Add("A captura de todos os programas está ligada, mas só funciona com o MultiLink aberto como administrador.", ActivityLog.Error);
+                }
+            }
+            finally { SetTransition(null); }
+        }
+
+        async Task TurnOff()
+        {
+            SetTransition(Stopping);
+            try
+            {
+                await Capture.StopAsync(); // sem o proxy, o adaptador virtual deixaria os programas sem internet
+                SetSystemProxy(false); // nunca deixar o Windows apontando para um proxy parado
+                Proxy.Stop();
+                Log.Add("Proxy parado.");
+            }
+            finally { SetTransition(null); }
         }
 
         void StartProxy()
@@ -347,7 +379,7 @@ namespace MultiLink.App
             catch (Exception ex) { Log.Add("Não foi possível abrir a porta " + port + ": " + ex.Message, ActivityLog.Error); }
         }
 
-        void StartCapture() { var ignored = Capture.Start(Settings.Port, Links.AnyHasIpv6, Links.InterfaceIndexes, Balancer.Ipv6Allowed); }
+        Task StartCapture() { return Capture.Start(Settings.Port, Links.AnyHasIpv6, Links.InterfaceIndexes, Balancer.Ipv6Allowed); }
 
         void SetSystemProxy(bool enabled)
         {

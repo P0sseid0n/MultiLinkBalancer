@@ -17,10 +17,11 @@ namespace MultiLink.App
             switch (command)
             {
                 case "proxy.start":
-                    TurnOn();
+                    EnsureIdle();
+                    await TurnOn();
                     if (!Proxy.Running) throw new Exception("Não foi possível abrir a porta " + Settings.Port + ". Outro programa pode estar usando.");
                     return null;
-                case "proxy.stop": TurnOff(); return null;
+                case "proxy.stop": EnsureIdle(); await TurnOff(); return null;
                 case "settings.set": return await SetSetting(Text(args, "key"), args.ContainsKey("value") ? args["value"] : null);
 
                 case "link.set":
@@ -78,6 +79,7 @@ namespace MultiLink.App
         // Devolve { needsAdmin } nos ajustes que só funcionam como administrador.
         async Task<object> SetSetting(string key, object value)
         {
+            if (key == "port" || key == "lan" || key == "system" || key == "capture") EnsureIdle();
             switch (key)
             {
                 case "port":
@@ -105,7 +107,7 @@ namespace MultiLink.App
                         StartProxy(); // reabre a porta na interface certa
                         // não reabriu (o erro já está no registro): o proxy do Windows e a captura continuariam apontando
                         // para a porta, agora livre para outro programa, e os programas ficariam sem internet
-                        if (!Proxy.Running) TurnOff();
+                        if (!Proxy.Running) await TurnOff();
                     }
                     break;
                 case "system":
@@ -134,7 +136,7 @@ namespace MultiLink.App
             Settings.CaptureAllPrograms = enabled;
             Settings.Save();
             if (!enabled) Capture.Stop();
-            else if (IsAdmin && Proxy.Running) StartCapture();
+            else if (IsAdmin && Proxy.Running) { var ignored = StartCapture(); }
             return NeedsAdmin(enabled && !IsAdmin);
         }
 

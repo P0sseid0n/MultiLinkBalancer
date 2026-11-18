@@ -39,6 +39,17 @@ namespace MultiLink.Platform
             else log.Add("Não foi possível tirar a regra de IPv6 do firewall: " + result.Result.Output, ActivityLog.Error);
         }
 
+        // O mesmo sem prender a thread de quem chama (desligar pelo painel, pela bandeja ou pelo atalho).
+        public async Task RemoveAsync()
+        {
+            if (blocked == false) return;
+            var running = PowerShell.Run(RemoveScript + "exit 0", false);
+            if (await Task.WhenAny(running, Task.Delay(15000)) != running) return;
+            var result = await running;
+            if (result.Ok) blocked = false;
+            else log.Add("Não foi possível tirar a regra de IPv6 do firewall: " + result.Output, ActivityLog.Error);
+        }
+
         public bool Blocked { get { return blocked == true; } }
 
         // block: a regra deve existir. Não repete o comando se nada mudou; uma falha é avisada e tentada de novo 1 min depois.

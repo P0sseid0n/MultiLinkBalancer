@@ -75,8 +75,11 @@ namespace MultiLink.Ui
             bool hotkeys = app.Settings.Hotkeys;
             menu.Items.Clear();
 
-            var power = new ToolStripMenuItem(app.Proxy.Running ? "Desligar MultiLink" : "Ligar MultiLink", null, (sender, e) => app.ToggleRunning())
-                { ShortcutKeyDisplayString = hotkeys ? GlobalHotkeys.ToggleShortcut : null };
+            var transition = app.Transition;
+            var powerText = transition == AppController.Starting ? "Ligando…" : transition == AppController.Stopping ? "Desligando…"
+                          : app.Proxy.Running ? "Desligar MultiLink" : "Ligar MultiLink";
+            var power = new ToolStripMenuItem(powerText, null, (sender, e) => TogglePower())
+                { ShortcutKeyDisplayString = hotkeys ? GlobalHotkeys.ToggleShortcut : null, Enabled = transition == null };
             power.Font = new Font(power.Font, FontStyle.Bold);
             menu.Items.Add(power);
             menu.Items.Add(new ToolStripMenuItem("Abrir painel", null, (sender, e) => showPanel())
@@ -130,6 +133,12 @@ namespace MultiLink.Ui
             }
             if (linksMenu.DropDownItems.Count == 0) linksMenu.Enabled = false;
             return linksMenu;
+        }
+
+        async void TogglePower()
+        {
+            try { await app.ToggleRunning(); }
+            catch (Exception ex) { ShowBalloon(5000, "MultiLink", ex.Message, ToolTipIcon.Warning); }
         }
 
         void StartBuild()
