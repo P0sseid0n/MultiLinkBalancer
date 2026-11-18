@@ -30,19 +30,26 @@
     return amounts.map((amount) => (sum ? Math.round((amount / sum) * 100) : 0));
   });
 
+  // ligando ou desligando (o app publica a transição, inclusive quando ela começou pela bandeja ou pelo atalho);
+  // switchingTo cobre o instante entre o clique e o primeiro estado que chega
+  let switchingTo = $state(null);
+  const pending = $derived(app.state.proxy.transition ?? switchingTo);
+  const capturing = $derived(app.state.capture.on && app.state.admin);
+
   const subtitle = $derived(
-    !on ? 'Toque para dividir as conexões'
+    pending === 'starting' ? (capturing ? 'Preparando a captura de todos os programas' : 'Abrindo o proxy')
+    : pending === 'stopping' ? 'Devolvendo a conexão normal ao Windows'
+    : !on ? 'Toque para dividir as conexões'
     : downLinks.length ? `${downLinks.length} de ${links.length} links fora do ar`
     : usableLinks.length === 0 ? 'Nenhum link disponível'
     : usableLinks.length === 1 ? 'Usando 1 link'
     : `Dividindo conexões entre ${usableLinks.length} links`,
   );
 
-  let switching = $state(false);
   async function togglePower() {
-    switching = true;
+    switchingTo = on ? 'stopping' : 'starting';
     try { await run(on ? 'proxy.stop' : 'proxy.start'); } catch {}
-    switching = false;
+    switchingTo = null;
   }
 
   let expandedId = $state(null);
@@ -63,7 +70,7 @@
 
 <EventBar />
 
-<PowerButton {on} busy={switching} {subtitle} warning={on && downLinks.length > 0} onToggle={togglePower} />
+<PowerButton {on} {pending} {subtitle} warning={on && !pending && downLinks.length > 0} onToggle={togglePower} />
 
 <p class="total" class:off={!on} aria-label="Recebendo agora: {total.value} {total.unit}">
   <span class="value num">{total.value}</span><span class="unit">{total.unit}</span>

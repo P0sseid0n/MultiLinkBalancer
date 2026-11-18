@@ -123,8 +123,26 @@ export function createMock(deliver) {
 
   const handlers = {
     'ui.ready': () => ({ state: structuredClone(state), log }),
-    'proxy.start': () => { state.proxy.running = true; addLog('Proxy iniciado em 127.0.0.1:1080 (SOCKS4/SOCKS5/HTTP)'); },
-    'proxy.stop': () => { state.proxy.running = false; state.proxy.systemApplied = false; addLog('Proxy parado.'); },
+    // a transição imita a captura: ligar e desligar levam alguns segundos
+    'proxy.start': async () => {
+      if (state.proxy.transition) throw new Error('O MultiLink está desligando. Espere terminar.');
+      state.proxy.transition = 'starting';
+      deliver({ type: 'state', data: structuredClone(state) });
+      await sleep(1500);
+      state.proxy.running = true;
+      state.proxy.transition = null;
+      addLog('Proxy iniciado em 127.0.0.1:1080 (SOCKS4/SOCKS5/HTTP)');
+    },
+    'proxy.stop': async () => {
+      if (state.proxy.transition) throw new Error('O MultiLink está ligando. Espere terminar.');
+      state.proxy.transition = 'stopping';
+      deliver({ type: 'state', data: structuredClone(state) });
+      await sleep(2500);
+      state.proxy.running = false;
+      state.proxy.systemApplied = false;
+      state.proxy.transition = null;
+      addLog('Proxy parado.');
+    },
     'settings.set': ({ key, value }) => {
       if (key === 'port') {
         if (state.proxy.running) throw new Error('Pare o proxy antes de mudar a porta.');

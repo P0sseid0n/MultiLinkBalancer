@@ -1,5 +1,6 @@
 // Ícone do MultiLink: bloco grafite (o fundo da interface) com três links que convergem num só.
-// O mesmo desenho gera o ícone da bandeja (verde, vermelho ou cinza) e o .ico do executável (build.ps1).
+// O mesmo desenho gera o ícone da bandeja (verde, vermelho ou cinza, e os quadros de "ligando/desligando") e o .ico do
+// executável (build.ps1).
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -12,6 +13,8 @@ namespace MultiLink.Ui
         public static readonly Color On = Color.FromArgb(0x4c, 0xc3, 0x8a);    // --on da interface
         public static readonly Color Alert = Color.FromArgb(0xe5, 0x53, 0x4b); // --critical
         public static readonly Color Off = Color.FromArgb(0x7d, 0x87, 0x92);   // --ink-3: desligado
+        public static readonly Color Stopping = Color.FromArgb(0xc4, 0xcb, 0xd2); // aceso na animação de desligar
+        static readonly Color Unlit = Color.FromArgb(0x4a, 0x52, 0x5c);       // --ink-4: links apagados na animação
         static readonly Color TileTop = Color.FromArgb(0x26, 0x2d, 0x36), TileBottom = Color.FromArgb(0x13, 0x17, 0x1c);
 
         static readonly int[] IcoSizes = { 16, 20, 24, 32, 40, 48, 64, 256 };
@@ -19,6 +22,19 @@ namespace MultiLink.Ui
         // Desenha numa grade de 64 unidades; em tamanhos pequenos os traços engrossam para continuar legíveis.
         // hollowHub: nó de saída vazado também na bandeja (desligado), para não depender só da cor.
         public static Bitmap Render(int size, Color accent, bool hollowHub = false)
+        {
+            return Draw(size, accent, -1, hollowHub);
+        }
+
+        // Quadro da animação de ligando/desligando na bandeja: um dos três links aceso (litInput, de cima para baixo) e
+        // o nó de saída aceso; os outros dois apagados. Passando pelos três, parece o tráfego entrando.
+        public static Bitmap RenderBusyFrame(int size, Color lit, int litInput)
+        {
+            return Draw(size, lit, litInput, false);
+        }
+
+        // litInput -1: os três acesos.
+        static Bitmap Draw(int size, Color accent, int litInput, bool hollowHub)
         {
             var bitmap = new Bitmap(size, size, PixelFormat.Format32bppArgb);
             using (var graphics = Graphics.FromImage(bitmap))
@@ -29,7 +45,7 @@ namespace MultiLink.Ui
                 graphics.ScaleTransform(size / 64f, size / 64f);
                 bool small = size <= 24;
                 DrawTile(graphics, small);
-                DrawLinks(graphics, small, accent, hollowHub);
+                DrawLinks(graphics, small, accent, litInput, hollowHub);
             }
             return bitmap;
         }
@@ -49,25 +65,31 @@ namespace MultiLink.Ui
 
         // Três links entrando no mesmo ponto. Nos tamanhos da bandeja: desenho maior, nós mais
         // afastados e linhas retas (curvas viram borrão).
-        static void DrawLinks(Graphics graphics, bool small, Color accent, bool hollowHub)
+        static void DrawLinks(Graphics graphics, bool small, Color accent, int litInput, bool hollowHub)
         {
             float stroke = small ? 7f : 4.5f, inputRadius = small ? 6.5f : 4.5f, hubRadius = small ? 10f : 7.5f;
             float left = small ? 15 : 18;
             var hub = new PointF(small ? 47 : 44, 32);
             float[] inputsY = small ? new float[] { 14, 32, 50 } : new float[] { 17, 32, 47 };
 
-            using (var pen = new Pen(accent, stroke) { StartCap = LineCap.Round, EndCap = LineCap.Round })
-                foreach (var y in inputsY)
+            // os apagados primeiro: o aceso fica por cima onde as linhas se encontram
+            for (int pass = 0; pass < 2; pass++)
+                for (int i = 0; i < inputsY.Length; i++)
                 {
-                    if (small || y == 32) graphics.DrawLine(pen, left, y, hub.X, hub.Y);
-                    else graphics.DrawBezier(pen, left, y, 31, y, 31, hub.Y, hub.X, hub.Y);
+                    bool lit = litInput < 0 || litInput == i;
+                    if (lit != (pass == 1)) continue;
+                    float y = inputsY[i];
+                    using (var pen = new Pen(lit ? accent : Unlit, stroke) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+                    {
+                        if (small || y == 32) graphics.DrawLine(pen, left, y, hub.X, hub.Y);
+                        else graphics.DrawBezier(pen, left, y, 31, y, 31, hub.Y, hub.X, hub.Y);
+                    }
+                    using (var brush = new SolidBrush(lit ? accent : Unlit))
+                        graphics.FillEllipse(brush, left - inputRadius, y - inputRadius, inputRadius * 2, inputRadius * 2);
                 }
 
             using (var brush = new SolidBrush(accent))
-            {
-                foreach (var y in inputsY) graphics.FillEllipse(brush, left - inputRadius, y - inputRadius, inputRadius * 2, inputRadius * 2);
                 graphics.FillEllipse(brush, hub.X - hubRadius, hub.Y - hubRadius, hubRadius * 2, hubRadius * 2);
-            }
             // miolo escuro no nó de saída: dá leitura de "conector" nos tamanhos maiores e marca o desligado na bandeja
             float holeRadius = small ? (hollowHub ? 5f : 0f) : 3f;
             if (holeRadius > 0)

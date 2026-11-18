@@ -1,7 +1,10 @@
 <script>
   // Botão I/O da tela inicial com o estado embaixo. Ligado: anel verde que se desenha em volta,
-  // uma onda única ao ligar e algumas respirações lentas logo depois.
-  let { on, busy, subtitle, warning = false, onToggle } = $props();
+  // uma onda única ao ligar e algumas respirações lentas logo depois. Ligando ou desligando (pending: "starting" ou
+  // "stopping"): um arco gira em volta do botão, verde ao ligar e cinza ao desligar, e o botão não aceita clique.
+  let { on, pending = null, subtitle, warning = false, onToggle } = $props();
+
+  const label = $derived(pending === 'starting' ? 'Ligando…' : pending === 'stopping' ? 'Desligando…' : on ? 'Ligado' : 'Desligado');
 
   let waves = $state(0);
   let wasOn; // indefinido na primeira vez: abrir a tela com o MultiLink já ligado não dispara a onda
@@ -12,13 +15,14 @@
 </script>
 
 <section class="power">
-  <button class="io" class:on aria-pressed={on} aria-label={on ? 'Desligar o MultiLink' : 'Ligar o MultiLink'} disabled={busy} onclick={onToggle}>
+  <button class="io" class:on class:stopping={pending === 'stopping'} aria-pressed={on} aria-busy={pending != null} aria-label={on ? 'Desligar o MultiLink' : 'Ligar o MultiLink'} disabled={pending != null} onclick={onToggle}>
     <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8" /><path d="M6.4 6.6a8 8 0 1 0 11.2 0" /></svg>
     <svg class="ring" viewBox="0 0 152 152" aria-hidden="true"><circle cx="76" cy="76" r="75" pathLength="100" /></svg>
+    {#if pending}<svg class="spinner" class:stopping={pending === 'stopping'} viewBox="0 0 152 152" aria-hidden="true"><circle cx="76" cy="76" r="75" pathLength="100" /></svg>{/if}
     {#key waves}{#if waves}<span class="wave" aria-hidden="true"></span>{/if}{/key}
   </button>
   <div class="status">
-    <span class="label" class:on>{on ? 'Ligado' : 'Desligado'}</span>
+    <span class="label" class:on={on && !pending} aria-live="polite">{label}</span>
     <span class="subtitle" class:warning>{subtitle}</span>
   </div>
 </section>
@@ -73,6 +77,18 @@
     pointer-events: none;
   }
   @keyframes breathe { 0% { opacity: .35; transform: scale(1); } 100% { opacity: 0; transform: scale(1.22); } }
+  /* arco que gira enquanto liga ou desliga: só transform (sem redesenhar o traço) e só durante a transição */
+  .spinner {
+    position: absolute; inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px);
+    pointer-events: none; overflow: visible;
+    animation: spin 1s linear infinite;
+  }
+  .spinner circle { fill: none; stroke: var(--on); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 22 78; }
+  .spinner.stopping circle { stroke: var(--ink-2); }
+  /* desligando: o anel verde se desfaz enquanto o arco gira */
+  .io.on.stopping .ring circle { stroke-dashoffset: 100; }
+  .io.on.stopping::after { animation: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .io:disabled { cursor: progress; }
   .io:disabled svg { opacity: .6; }
   .io:focus-visible { outline-offset: 6px; }
