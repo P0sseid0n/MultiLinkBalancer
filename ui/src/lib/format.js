@@ -40,7 +40,10 @@ export function since(epochMs) {
   if (seconds < 60) return `há ${seconds} s`;
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `há ${minutes} min`;
-  return `há ${Math.floor(minutes / 60)} h ${minutes % 60} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `há ${hours} h ${minutes % 60} min`;
+  const days = Math.floor(hours / 24);
+  return `há ${days} ${days === 1 ? 'dia' : 'dias'} ${hours % 24} h`;
 }
 
 /** Duração entre dois instantes (ms), como "3 min" ou "1 h 20 min". */
