@@ -31,11 +31,13 @@ namespace MultiLink.Platform
             };
             using (var process = Process.Start(startInfo))
             {
-                var output = new ProcessOutput
-                {
-                    StandardOutput = process.StandardOutput.ReadToEnd(),
-                    StandardError = process.StandardError.ReadToEnd()
-                };
+                // As duas saídas ao mesmo tempo: lendo uma até o fim antes da outra, o programa que enche o buffer do pipe
+                // da segunda (4 KB) para de escrever, e os dois ficam esperando um pelo outro para sempre. O PowerShell
+                // com a saída redirecionada escreve o progresso de cada cmdlet no stderr (CLIXML, ~600 bytes por cmdlet):
+                // um script com uns 7 cmdlets já travava assim.
+                var error = process.StandardError.ReadToEndAsync();
+                var output = new ProcessOutput { StandardOutput = process.StandardOutput.ReadToEnd() };
+                output.StandardError = error.Result;
                 process.WaitForExit();
                 output.ExitCode = process.ExitCode;
                 return output;
