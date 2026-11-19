@@ -3,6 +3,7 @@
 // usar os outros. Quando ele volta, a métrica original é devolvida.
 // A métrica original fica no config.ini ("metric.<id>" = "nome|valor") até ser restaurada, para
 // que um fechamento inesperado não deixe o Windows com rotas alteradas.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MultiLink.Common;
@@ -16,8 +17,14 @@ namespace MultiLink.Monitoring
     {
         const string KeyPrefix = "metric.";
 
+        // Devolução que não pegou: nova tentativa depois deste tempo (sem abrir um PowerShell por segundo).
+        static readonly TimeSpan RestoreRetryDelay = TimeSpan.FromSeconds(30);
+
         readonly AppSettings settings;
         readonly ActivityLog log;
+        // por link: quando tentar devolver de novo e se a falha já foi para o registro (uma vez só até dar certo)
+        readonly Dictionary<string, DateTime> restoreRetryAt = new Dictionary<string, DateTime>();
+        readonly HashSet<string> restoreFailureLogged = new HashSet<string>();
 
         public bool Enabled;
 
@@ -35,7 +42,7 @@ namespace MultiLink.Monitoring
                 if (link.MetricBusy || !link.Enabled) continue;
                 bool shouldRaise = link.Present && link.Health != LinkHealth.Ok && anyHealthy;
                 if (shouldRaise && !link.MetricRaised) Raise(link);
-                else if (!shouldRaise && link.MetricRaised && link.Health == LinkHealth.Ok) Restore(link);
+                else if (!shouldRaise && link.MetricRaised && link.Health == LinkHealth.Ok && CanRetryRestore(link)) Restore(link);
             }
         }
 
@@ -70,11 +77,26 @@ namespace MultiLink.Monitoring
                     settings.Remove(key);
                     settings.Save();
                     link.MetricRaised = false;
-                    log.Add("[" + link.Name + "] devolvido ao roteamento do Windows");
+                    restoreRetryAt.Remove(link.Id);
+                    bool failedBefore = restoreFailureLogged.Remove(link.Id);
+                    log.Add("[" + link.Name + "] devolvido ao roteamento do Windows" + (failedBefore ? " (depois de novas tentativas)" : ""));
                 }
-                else log.Add("[" + link.Name + "] não foi possível restaurar a rota: " + result.Output);
+                else
+                {
+                    // a chave e o MetricRaised ficam: o Apply tenta de novo depois do intervalo
+                    restoreRetryAt[link.Id] = DateTime.UtcNow + RestoreRetryDelay;
+                    if (restoreFailureLogged.Add(link.Id))
+                        log.Add("[" + link.Name + "] não foi possível devolver ao roteamento do Windows: " + result.Output +
+                                ". Nova tentativa a cada " + (int)RestoreRetryDelay.TotalSeconds + " s.", ActivityLog.Error);
+                }
             }
             finally { link.MetricBusy = false; }
+        }
+
+        bool CanRetryRestore(Link link)
+        {
+            DateTime retryAt;
+            return !restoreRetryAt.TryGetValue(link.Id, out retryAt) || DateTime.UtcNow >= retryAt;
         }
 
         // Na abertura, sem esperar: versões antigas gravavam a métrica alta também no registro, e o DHCP a levava

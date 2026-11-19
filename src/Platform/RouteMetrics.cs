@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -25,19 +26,37 @@ namespace MultiLink.Platform
                                   "Get-NetIPInterface -InterfaceAlias " + alias + " -PolicyStore ActiveStore | Set-NetIPInterface -PolicyStore ActiveStore -InterfaceMetric " + HighMetric, false);
         }
 
+        const string StuckPrefix = "presa:";
+
         // saved: o que Raise devolveu (null = volta à métrica automática).
-        public static Task<CommandResult> Restore(string adapterName, string saved)
+        // Confere depois de aplicar (IPv4 e IPv6): o Set-NetIPInterface dá certo e, às vezes, a interface continua com a
+        // métrica alta (regravada pelo Windows logo depois). Tenta mais uma vez e, se ainda não pegou, devolve falha.
+        public static async Task<CommandResult> Restore(string adapterName, string saved)
         {
             // saved vem do config.ini, que qualquer programa do usuário pode alterar: a métrica só entra no script como
             // número; qualquer outra coisa volta à métrica automática. A métrica alta também: é a do MultiLink, nunca a
             // original (gravada assim por versões anteriores).
             var parts = (saved ?? "Enabled;0").Split(';');
-            int metric;
+            int metric = 0;
             bool manual = parts[0] != "Enabled" && parts.Length >= 2 &&
                           int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out metric) && metric >= 1 && metric <= 9999 &&
                           metric != HighMetric;
-            var setting = manual ? "-InterfaceMetric " + int.Parse(parts[1], CultureInfo.InvariantCulture) : "-AutomaticMetric Enabled";
-            return PowerShell.Run("Get-NetIPInterface -InterfaceAlias " + PowerShell.Quote(adapterName) + " -PolicyStore ActiveStore | Set-NetIPInterface -PolicyStore ActiveStore " + setting, false);
+            var alias = PowerShell.Quote(adapterName);
+            var setting = manual ? "-InterfaceMetric " + metric : "-AutomaticMetric Enabled";
+            var wrong = manual ? "$_.InterfaceMetric -ne " + metric
+                               : "$_.AutomaticMetric -ne 'Enabled' -or $_.InterfaceMetric -eq " + HighMetric;
+            var script =
+                "function Set-Original { Get-NetIPInterface -InterfaceAlias " + alias + " -PolicyStore ActiveStore | Set-NetIPInterface -PolicyStore ActiveStore " + setting + " }; " +
+                "function Get-Stuck { @(Get-NetIPInterface -InterfaceAlias " + alias + " -PolicyStore ActiveStore | Where-Object { " + wrong + " }) }; " +
+                "Set-Original; $stuck = Get-Stuck; " +
+                "if ($stuck.Count -gt 0) { Start-Sleep -Milliseconds 1500; Set-Original; $stuck = Get-Stuck }; " +
+                "if ($stuck.Count -gt 0) { Write-Output ('" + StuckPrefix + "' + (($stuck | ForEach-Object { '{0}={1}' -f $_.AddressFamily, $_.InterfaceMetric }) -join ', ')) }";
+            // sem voltar à thread da janela: RestoreAll espera este Task nela (com Wait), e a continuação travaria
+            var result = await PowerShell.Run(script, false).ConfigureAwait(false);
+            if (result.Ok && result.Output.StartsWith(StuckPrefix, StringComparison.Ordinal))
+                return CommandResult.Failure("o Windows aceitou, mas a interface continuou com a métrica alta (" +
+                                             result.Output.Substring(StuckPrefix.Length).Replace("=", ": ") + ")");
+            return result;
         }
 
         // Limpa o que versões antigas deixaram gravado: a métrica 9000 no registro (que o DHCP usa na rota padrão) e
