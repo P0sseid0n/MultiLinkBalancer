@@ -62,7 +62,12 @@ namespace MultiLink.Platform
         // Limpa o que versões antigas deixaram gravado: a métrica 9000 no registro (que o DHCP usa na rota padrão) e
         // a rota padrão que já ficou com 9000. Devolve os nomes dos adaptadores corrigidos, um por linha.
         // adapters: id do adaptador ("{guid}") -> nome.
-        public static Task<CommandResult> RepairLeftovers(IDictionary<string, string> adapters)
+        // notRaised: nomes dos adaptadores que o MultiLink não retirou (sem devolução pendente). Se um deles está com a
+        // métrica alta no estado ativo, ela sobrou de uma sessão anterior (devolução que não pegou, ou uma versão que
+        // gravava a métrica alta como original) e volta à automática; o nome sai com o prefixo ActiveLeftover.
+        public const string ActiveLeftover = "ativa:";
+
+        public static Task<CommandResult> RepairLeftovers(IDictionary<string, string> adapters, ICollection<string> notRaised)
         {
             var script = string.Join(" ", adapters.Select(adapter =>
                 "$fixed = $false; " +
@@ -70,7 +75,11 @@ namespace MultiLink.Platform
                 "if ((Get-ItemProperty $key -Name InterfaceMetric -ErrorAction SilentlyContinue).InterfaceMetric -eq " + HighMetric + ") { Remove-ItemProperty $key -Name InterfaceMetric; $fixed = $true }; " +
                 "Get-NetRoute -InterfaceAlias " + PowerShell.Quote(adapter.Value) + " -DestinationPrefix 0.0.0.0/0 -PolicyStore ActiveStore -ErrorAction SilentlyContinue | " +
                 "Where-Object RouteMetric -eq " + HighMetric + " | ForEach-Object { $_ | Set-NetRoute -RouteMetric 0; $fixed = $true }; " +
-                "if ($fixed) { Write-Output " + PowerShell.Quote(adapter.Value) + " };"));
+                "if ($fixed) { Write-Output " + PowerShell.Quote(adapter.Value) + " };" +
+                (notRaised.Contains(adapter.Value)
+                    ? " $high = @(Get-NetIPInterface -InterfaceAlias " + PowerShell.Quote(adapter.Value) + " -PolicyStore ActiveStore -ErrorAction SilentlyContinue | Where-Object InterfaceMetric -eq " + HighMetric + "); " +
+                      "if ($high.Count -gt 0) { $high | Set-NetIPInterface -PolicyStore ActiveStore -AutomaticMetric Enabled; Write-Output (" + PowerShell.Quote(ActiveLeftover) + " + " + PowerShell.Quote(adapter.Value) + ") };"
+                    : "")));
             return PowerShell.Run(script, false);
         }
     }
