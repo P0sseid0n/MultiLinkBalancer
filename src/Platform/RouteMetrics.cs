@@ -13,11 +13,15 @@ namespace MultiLink.Platform
         const int HighMetric = 9000;
 
         // Devolve, em caso de sucesso, a configuração original no formato "AutomaticMetric;InterfaceMetric".
+        // Se a interface já está com a métrica alta, ela não é a original (é a do próprio MultiLink, que o Windows pode
+        // regravar depois de uma devolução: o HNS do Hyper-V e o ICS regravam a interface inteira, com o que leram antes).
+        // Gravada como original, cada devolução seguinte a punha de volta, e o link nunca mais voltava ao roteamento.
         public static Task<CommandResult> Raise(string adapterName)
         {
             var alias = PowerShell.Quote(adapterName);
             return PowerShell.Run("$i = Get-NetIPInterface -InterfaceAlias " + alias + " -AddressFamily IPv4 -PolicyStore ActiveStore; " +
-                                  "Write-Output ('{0};{1}' -f $i.AutomaticMetric, $i.InterfaceMetric); " +
+                                  "if ($i.InterfaceMetric -eq " + HighMetric + ") { Write-Output 'Enabled;0' } " +
+                                  "else { Write-Output ('{0};{1}' -f $i.AutomaticMetric, $i.InterfaceMetric) }; " +
                                   "Get-NetIPInterface -InterfaceAlias " + alias + " -PolicyStore ActiveStore | Set-NetIPInterface -PolicyStore ActiveStore -InterfaceMetric " + HighMetric, false);
         }
 
@@ -25,11 +29,13 @@ namespace MultiLink.Platform
         public static Task<CommandResult> Restore(string adapterName, string saved)
         {
             // saved vem do config.ini, que qualquer programa do usuário pode alterar: a métrica só entra no script como
-            // número; qualquer outra coisa volta à métrica automática.
+            // número; qualquer outra coisa volta à métrica automática. A métrica alta também: é a do MultiLink, nunca a
+            // original (gravada assim por versões anteriores).
             var parts = (saved ?? "Enabled;0").Split(';');
             int metric;
             bool manual = parts[0] != "Enabled" && parts.Length >= 2 &&
-                          int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out metric) && metric >= 1 && metric <= 9999;
+                          int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out metric) && metric >= 1 && metric <= 9999 &&
+                          metric != HighMetric;
             var setting = manual ? "-InterfaceMetric " + int.Parse(parts[1], CultureInfo.InvariantCulture) : "-AutomaticMetric Enabled";
             return PowerShell.Run("Get-NetIPInterface -InterfaceAlias " + PowerShell.Quote(adapterName) + " -PolicyStore ActiveStore | Set-NetIPInterface -PolicyStore ActiveStore " + setting, false);
         }
