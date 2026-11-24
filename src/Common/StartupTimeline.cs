@@ -11,15 +11,18 @@ namespace MultiLink.Common
     {
         static readonly List<string> steps = new List<string>();
         static DateTime last = Process.GetCurrentProcess().StartTime;
+        static bool finished;
 
-        // step: o que terminou desde a marca anterior
+        // step: o que terminou desde a marca anterior. Depois do resumo não marca mais (a janela, por exemplo, é
+        // recriada com o app aberto e passaria de novo pelas mesmas marcas).
         public static void Mark(string step)
         {
+            if (finished) return;
             var now = DateTime.Now;
             steps.Add(step + " " + (now - last).TotalSeconds.ToString("0.0") + " s");
             last = now;
         }
 
-        public static string Summary() { return string.Join(", ", steps); }
+        public static string Summary() { finished = true; return string.Join(", ", steps); }
     }
 }

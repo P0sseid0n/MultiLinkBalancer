@@ -40,7 +40,6 @@ namespace MultiLink.Ui
             app = new AppController(this);
             // sem isso o WinForms mostra a caixa de erro e a janela para (inclusive o registro de eventos, gravado no ciclo de 1 s)
             Application.ThreadException += (sender, e) => app.OnUnexpectedError(e.Exception, false);
-            StartupTimeline.Mark("ajustes e histórico");
             webView = new WebViewHost(this, app); // antes de definir o tamanho: OnResize já o usa
             Text = "MultiLink Balancer" + (app.IsAdmin ? " (administrador)" : "");
             AutoScaleMode = AutoScaleMode.Dpi;
@@ -51,11 +50,10 @@ namespace MultiLink.Ui
             placement.Gap = ScaleToDpi(new Size(12, 12)).Width;
             scaledPanelSize = ScaleToDpi(PanelSize);
             Size = scaledPanelSize; // sem moldura: o tamanho da janela é o da interface
-            StartupTimeline.Mark("janela");
+            StartupTimeline.Mark("tamanho da janela");
 
             // A rede antes do ícone: na partida do Windows, a bandeja (Explorer) pode demorar a responder.
             app.Init(startedFromTray);
-            StartupTimeline.Mark("configuração");
             tray = new TrayIcon(app, TogglePanelFromTray, () => ShowPanel(true), Exit);
             Icon = tray.CurrentIcon;
             app.TransitionChanged += OnTransitionChanged;
@@ -215,6 +213,7 @@ namespace MultiLink.Ui
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
+            StartupTimeline.Mark("criar a janela"); // na partida, pelo CreateGraphics do construtor
             int enabled = 1;
             NativeMethods.DwmSetWindowAttribute(Handle, NativeMethods.DWMWA_USE_IMMERSIVE_DARK_MODE, ref enabled, 4);
             // sem área não cliente o Windows 11 não arredonda os cantos sozinho
@@ -224,6 +223,7 @@ namespace MultiLink.Ui
             hotkeys.TogglePressed += OnTogglePressed;
             hotkeys.PanelPressed += () => { if (Visible) HidePanel(); else ShowPanel(false); };
             SetHotkeys(app.Settings.Hotkeys);
+            StartupTimeline.Mark("visual e atalhos da janela");
             app.Links.MeasureOnFirstRun();
         }
 

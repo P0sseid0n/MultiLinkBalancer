@@ -57,6 +57,7 @@ namespace MultiLink.App
 
         public AppController(IAppHost host)
         {
+            StartupTimeline.Mark("ajustes e histórico"); // os campos acima: config.ini, eventos.log, history.json
             this.host = host;
             Proxy = new ProxyServer(Balancer, Log);
             Links = new LinkManager(Balancer, Settings, Log);
@@ -65,10 +66,12 @@ namespace MultiLink.App
             RouteFailover = new RouteFailover(Settings, Log);
             Downloads = new DownloadManager(Log);
             Ports = new PortUsageMonitor(Log);
+            StartupTimeline.Mark("serviços");
             Monitor.HealthChanged += OnHealthChanged;
             Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
             Microsoft.Win32.SystemEvents.SessionEnding += OnSessionEnding;
             AppDomain.CurrentDomain.UnhandledException += (sender, e) => OnUnexpectedError(e.ExceptionObject as Exception, true);
+            StartupTimeline.Mark("avisos do Windows"); // o SystemEvents cria a janela escondida dele aqui
         }
 
         // O Windows vai desligar ou fazer logoff: devolve o proxy já, na thread dos eventos. O fechamento pela janela
@@ -116,7 +119,9 @@ namespace MultiLink.App
             Log.Add(string.Format("Iniciando ({0}; processo aberto às {1:HH:mm:ss}, há {2:0.0} s).",
                 startedFromTray ? "junto com o Windows" : "aberto por você", processStart, (DateTime.Now - processStart).TotalSeconds));
             RecoverFromPreviousSession();
+            StartupTimeline.Mark("sessão anterior");
             ProxyWatchdog.Start(Log); // antes de apontar o proxy
+            StartupTimeline.Mark("vigia do proxy");
 
             Balancer.Mode = (BalanceMode)Math.Max(0, Math.Min(3, Settings.BalanceMode));
             Balancer.Affinity = Settings.Affinity;
@@ -128,9 +133,11 @@ namespace MultiLink.App
             Links.Start();
             var names = Links.All().Where(link => link.Present).Select(link => link.Name).OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase).ToList();
             Log.Add(names.Count > 0 ? "MultiLink aberto com " + string.Join(" e ", names) + "." : "MultiLink aberto. Nenhuma conexão com internet encontrada.");
+            StartupTimeline.Mark("links");
 
             // Primeiro o proxy: com o proxy do Windows ligado, os programas ficam sem internet até a porta abrir.
             if (Settings.WasRunning || startedFromTray) { var ignored = TurnOn(); } // o proxy abre já aqui; a captura termina depois
+            StartupTimeline.Mark("proxy");
             Log.Add(string.Format("Partida concluída {0:0.0} s depois de o processo abrir.", (DateTime.Now - processStart).TotalSeconds));
 
             // O que não é urgente fica para depois (o schtasks.exe demora na partida do Windows).
@@ -153,6 +160,7 @@ namespace MultiLink.App
             Ports.Start();
             RouteFailover.RepairLeftovers(Links.All());
             if (Installation.UpdateRequested) { var ignored = UpdateAfterElevation(); }
+            StartupTimeline.Mark("resto da configuração");
         }
 
         // Aberto elevado só para atualizar a cópia instalada (o botão Atualizar sem administrador).

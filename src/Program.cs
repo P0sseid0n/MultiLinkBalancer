@@ -55,13 +55,15 @@ namespace MultiLink
             // per-monitor v2: interface nítida em telas com escala
             try { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); }
             catch { try { SetProcessDPIAware(); } catch { } }
+            StartupTimeline.Mark("verificações iniciais");
 
             bool firstInstance;
             using (new Mutex(true, SingleInstance.MutexName, out firstInstance))
             {
                 if (!firstInstance) { if (!background) ShowExistingInstance(); return; }
+                StartupTimeline.Mark("instância única");
                 PrepareWebView2();
-                StartupTimeline.Mark("instância única e WebView2");
+                StartupTimeline.Mark("DLLs do WebView2");
                 ServicePointManager.DefaultConnectionLimit = 1000;
                 // O DNS do .NET Framework ocupa uma thread do pool até responder. Numa rajada de conexões (página
                 // pesada) o pool esgota e só ganha uma thread nova a cada ~0,5 s: as conexões ficam na fila.
