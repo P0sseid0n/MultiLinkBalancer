@@ -99,8 +99,11 @@ namespace MultiLink.Ui
             {
                 if (environment == null && Elevation.IsAdmin) ClearWebView2Variables();
                 if (environment == null)
+                {
+                    PrepareLoader();
                     environment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(AppPaths.Local, "WebView2"),
                                                                            new CoreWebView2EnvironmentOptions(BrowserArguments));
+                }
                 var created = await environment.CreateCoreWebView2ControllerAsync(window.Handle);
                 if (attempt != generation) { created.Close(); return; } // destruído enquanto criava
                 controller = created;
@@ -121,6 +124,17 @@ namespace MultiLink.Ui
                 app.Log.Add("Erro ao abrir a interface: " + ex.Message, ActivityLog.Error);
             }
             finally { if (attempt == generation) creating = false; }
+        }
+
+        // WebView2Loader.dll embutido no .exe: extraído e conferido na primeira abertura do painel (ver EmbeddedFiles e
+        // Program.RegisterWebView2Resolver). O WebView2 só aceita a pasta antes do primeiro ambiente criado.
+        static bool loaderReady;
+
+        static void PrepareLoader()
+        {
+            if (loaderReady) return;
+            CoreWebView2Environment.SetLoaderDllFolderPath(EmbeddedFiles.ExtractWebView2());
+            loaderReady = true;
         }
 
         // O carregador e o runtime do WebView2 leem variáveis WEBVIEW2_* (pasta do navegador, argumentos extras como

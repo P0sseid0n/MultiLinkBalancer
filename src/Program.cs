@@ -24,8 +24,6 @@ namespace MultiLink
     {
         static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
 
-        static string webView2Folder;
-
         [DllImport("user32.dll")] static extern bool SetProcessDpiAwarenessContext(IntPtr value);
         [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
 
@@ -61,9 +59,8 @@ namespace MultiLink
             using (new Mutex(true, SingleInstance.MutexName, out firstInstance))
             {
                 if (!firstInstance) { if (!background) ShowExistingInstance(); return; }
+                RegisterWebView2Resolver();
                 StartupTimeline.Mark("instância única");
-                PrepareWebView2();
-                StartupTimeline.Mark("DLLs do WebView2");
                 ServicePointManager.DefaultConnectionLimit = 1000;
                 // O DNS do .NET Framework ocupa uma thread do pool até responder. Numa rajada de conexões (página
                 // pesada) o pool esgota e só ganha uma thread nova a cada ~0,5 s: as conexões ficam na fila.
@@ -121,20 +118,13 @@ namespace MultiLink
             Application.Run(new MainWindow(startedFromTray));
         }
 
-        // As DLLs do WebView2 vão embutidas no .exe e são extraídas na primeira execução.
-        static void PrepareWebView2()
+        // As DLLs do WebView2 vão embutidas no .exe e são extraídas (e conferidas) só quando o painel abre pela primeira
+        // vez, ao carregar os tipos do WebView2: na partida do Windows, extrair na abertura atrasava a rede.
+        static void RegisterWebView2Resolver()
         {
-            webView2Folder = EmbeddedFiles.ExtractWebView2();
             AppDomain.CurrentDomain.AssemblyResolve += (sender, e) =>
                 new AssemblyName(e.Name).Name == Path.GetFileNameWithoutExtension(EmbeddedFiles.WebView2Core)
-                    ? Assembly.LoadFrom(Path.Combine(webView2Folder, EmbeddedFiles.WebView2Core)) : null;
-            SetLoaderFolder();
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static void SetLoaderFolder()
-        {
-            Microsoft.Web.WebView2.Core.CoreWebView2Environment.SetLoaderDllFolderPath(webView2Folder);
+                    ? Assembly.LoadFrom(Path.Combine(EmbeddedFiles.ExtractWebView2(), EmbeddedFiles.WebView2Core)) : null;
         }
     }
 }

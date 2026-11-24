@@ -40,6 +40,11 @@ namespace MultiLink.Ui
             app = new AppController(this);
             // sem isso o WinForms mostra a caixa de erro e a janela para (inclusive o registro de eventos, gravado no ciclo de 1 s)
             Application.ThreadException += (sender, e) => app.OnUnexpectedError(e.Exception, false);
+            app.TransitionChanged += OnTransitionChanged;
+            // A rede antes da janela e do ícone: na partida do Windows, criar a janela (DWM, atalhos) e a bandeja
+            // (Explorer) chegou a levar mais de 15 s, e com o proxy do Windows ligado os programas ficam sem internet
+            // até a porta abrir.
+            app.Init(startedFromTray);
             webView = new WebViewHost(this, app); // antes de definir o tamanho: OnResize já o usa
             Text = "MultiLink Balancer" + (app.IsAdmin ? " (administrador)" : "");
             AutoScaleMode = AutoScaleMode.Dpi;
@@ -52,11 +57,8 @@ namespace MultiLink.Ui
             Size = scaledPanelSize; // sem moldura: o tamanho da janela é o da interface
             StartupTimeline.Mark("tamanho da janela");
 
-            // A rede antes do ícone: na partida do Windows, a bandeja (Explorer) pode demorar a responder.
-            app.Init(startedFromTray);
             tray = new TrayIcon(app, TogglePanelFromTray, () => ShowPanel(true), Exit);
             Icon = tray.CurrentIcon;
-            app.TransitionChanged += OnTransitionChanged;
             StartupTimeline.Mark("ícone da bandeja");
             app.Log.Add("Etapas da partida: " + StartupTimeline.Summary() + ".");
             ListenForSecondInstance();
